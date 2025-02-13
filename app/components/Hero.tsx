@@ -11,7 +11,7 @@ export default function Hero() {
             Optimiza tus operaciones y aumenta la eficiencia con nuestro software de gestión de inventario.
           </p>
           <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-100">
-            Comenzar prueba gratuita
+            Comenzar prueba gratis
           </Button>
         </div>
         <div className="md:w-1/2">
