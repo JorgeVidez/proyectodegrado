@@ -7,6 +7,14 @@ CREATE TABLE usuarios (
     rol ENUM('administrador', 'operador', 'veterinario') NOT NULL
 );
 
+ -- Tabla de proveedores
+CREATE TABLE proveedores (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    telefono VARCHAR(50),
+    direccion VARCHAR(255)
+);
+
 -- Tabla de ganado
 CREATE TABLE ganado (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
@@ -15,7 +23,9 @@ CREATE TABLE ganado (
     edad INT NOT NULL,
     peso DECIMAL(5,2) NOT NULL,
     estado_salud VARCHAR(255) NOT NULL,
-    fecha_ingreso DATE NOT NULL
+    fecha_ingreso DATE NOT NULL,
+    proveedor_id BIGINT NOT NULL,
+    FOREIGN KEY (proveedor_id) REFERENCES proveedores(id) ON DELETE CASCADE
 );
 
 -- Tabla de controles (pesajes, chequeos, vacunaciones)

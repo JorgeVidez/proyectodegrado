@@ -5,9 +5,7 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
-import { ModeToggle } from "./mode-toggle";
 
 export function TeamSwitcher({
   teams,
@@ -18,7 +16,6 @@ export function TeamSwitcher({
     plan: string;
   }[];
 }) {
-  const { isMobile } = useSidebar();
   const activeTeam = teams[0]; // Se muestra solo el primer equipo
 
   return (
@@ -37,11 +34,6 @@ export function TeamSwitcher({
           <div className="grid flex-1 text-left text-sm leading-tight">
             <span className="truncate font-semibold">{activeTeam.name}</span>
             <span className="truncate text-xs">{activeTeam.plan}</span>
-          </div>
-
-          {/* Modo Toggle responsivo */}
-          <div className={isMobile ? "size-6" : "size-auto"}>
-            <ModeToggle />
           </div>
         </SidebarMenuButton>
       </SidebarMenuItem>

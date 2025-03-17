@@ -9,6 +9,7 @@ import {
   useCallback,
 } from "react";
 import { useRouter } from "next/navigation";
+import axios from "axios";
 
 interface User {
   id: string;
@@ -21,16 +22,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (
-    nombre: string,
-    email: string,
-    rol: string,
-    password: string
-  ) => Promise<void>;
-  getUsers: () => Promise<User[]>;
-  getUserById: (id: string) => Promise<User>;
-  updateUser: (id: string, userData: Partial<User>) => Promise<void>;
-  deleteUser: (id: string) => Promise<void>;
+
   refreshAuthToken: () => Promise<void>;
   logout: () => void;
 }
@@ -41,24 +33,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const fetchUser = useCallback(async (token: string) => {
     try {
-      const res = await fetch("http://localhost:8000/api/usuarios/me", {
+      const res = await axios.get("http://localhost:8000/api/usuarios/me", {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      if (!res.ok) {
-        console.error(`Error al obtener usuario: ${res.status}`);
-        setUser(null);
-        return;
-      }
-
-      const data = await res.json();
-      setUser(data);
+      setUser(res.data);
     } catch (error) {
       console.error("Error al obtener usuario:", error);
-      setUser(null);
+      logout();
     } finally {
       setLoading(false);
     }
@@ -73,32 +59,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [fetchUser]);
 
-  const getAuthHeaders = (): Record<string, string> => {
-    const token = localStorage.getItem("token");
-    return token
-      ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
-      : { "Content-Type": "application/json" };
-  };
-
   const login = async (email: string, password: string) => {
     try {
-      const res = await fetch("http://127.0.0.1:8000/api/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+      const res = await axios.post("http://127.0.0.1:8000/api/login", {
+        email,
+        password,
       });
 
-      if (!res.ok) throw new Error("Credenciales incorrectas");
+      const token = res.data.access_token;
+      const refreshToken = res.data.refresh_token;
 
-      const responseData = await res.json(); // Ahora sí esperas la respuesta JSON
-
-      console.log("Response Data:", responseData);
-
-      const token = responseData.access_token; // Asegúrate de extraer la clave correcta
       localStorage.setItem("token", token);
-      console.log("Token guardado:", token);
+      localStorage.setItem("refreshToken", refreshToken);
+
       await fetchUser(token);
-      console.log("User", user);
       router.push("/dashboard");
     } catch (error) {
       console.error(error);
@@ -106,118 +80,64 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const register = async (
-    nombre: string,
-    email: string,
-    rol: string,
-    password: string
-  ) => {
-    try {
-      const res = await fetch("http://localhost:8000/api/usuarios/", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ nombre, email, rol, password }),
-      });
-
-      if (!res.ok) throw new Error("Error en el registro");
-
-      const { token }: { token: string } = await res.json();
-      localStorage.setItem("token", token);
-      await fetchUser(token);
-      router.push("/dashboard");
-    } catch (error) {
-      console.error(error);
-      throw new Error("Error al registrar usuario");
-    }
-  };
-
-  const getUsers = async (): Promise<User[]> => {
-    try {
-      const res = await fetch("http://localhost:8000/api/usuarios/", {
-        headers: getAuthHeaders(),
-      });
-
-      if (!res.ok) throw new Error("Error al obtener usuarios");
-
-      return await res.json();
-    } catch (error) {
-      console.error(error);
-      throw new Error("Error al obtener la lista de usuarios");
-    }
-  };
-
-  const getUserById = async (id: string): Promise<User> => {
-    try {
-      const res = await fetch(`http://localhost:8000/api/usuarios/${id}`, {
-        headers: getAuthHeaders(),
-      });
-
-      if (!res.ok) throw new Error("Error al obtener usuario");
-
-      return await res.json();
-    } catch (error) {
-      console.error(error);
-      throw new Error("Error al obtener usuario por ID");
-    }
-  };
-
-  const updateUser = async (id: string, userData: Partial<User>) => {
-    try {
-      const res = await fetch(`http://localhost:8000/api/usuarios/${id}`, {
-        method: "PUT",
-        headers: getAuthHeaders(),
-        body: JSON.stringify(userData),
-      });
-
-      if (!res.ok) throw new Error("Error al actualizar usuario");
-
-      const { token }: { token: string } = await res.json();
-      localStorage.setItem("token", token);
-      await fetchUser(token);
-    } catch (error) {
-      console.error(error);
-      throw new Error("Error al actualizar la información");
-    }
-  };
-
-  const deleteUser = async (id: string) => {
-    try {
-      const res = await fetch(`http://localhost:8000/api/usuarios/${id}`, {
-        method: "DELETE",
-        headers: getAuthHeaders(),
-      });
-
-      if (!res.ok) throw new Error("Error al eliminar usuario");
-
-      logout();
-    } catch (error) {
-      console.error(error);
-      throw new Error("Error al eliminar la cuenta");
-    }
-  };
-
   const refreshAuthToken = async () => {
+    if (isRefreshing) return; // Evita múltiples llamadas simultáneas
+    setIsRefreshing(true);
+
     try {
-      const res = await fetch("http://localhost:8000/api/refresh", {
-        method: "POST",
-        headers: getAuthHeaders(),
+      const refreshToken = localStorage.getItem("refreshToken");
+      if (!refreshToken) {
+        logout();
+        return;
+      }
+
+      const res = await axios.post("http://localhost:8000/api/refresh", {
+        refresh_token: refreshToken, // Enviar el refresh token en el body, no en headers
       });
 
-      if (!res.ok) throw new Error("Error al refrescar token");
-
-      const { token }: { token: string } = await res.json();
-      localStorage.setItem("token", token);
+      const newToken = res.data.access_token;
+      localStorage.setItem("token", newToken);
+      return newToken;
     } catch (error) {
-      console.error(error);
-      throw new Error("Error al refrescar el token");
+      console.error("Error al refrescar el token:", error);
+      logout();
+    } finally {
+      setIsRefreshing(false);
     }
   };
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("refreshToken");
     setUser(null);
     router.push("/login");
   };
+
+  // Interceptores para manejar errores 401 y refrescar el token automáticamente
+  useEffect(() => {
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        if (error.response?.status === 401) {
+          console.warn("Token expirado. Intentando renovar...");
+
+          if (!isRefreshing) {
+            const newToken = await refreshAuthToken();
+            if (newToken) {
+              error.config.headers.Authorization = `Bearer ${newToken}`;
+              return axios(error.config);
+            }
+          }
+        }
+
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, [isRefreshing]);
 
   return (
     <AuthContext.Provider
@@ -225,11 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         user,
         login,
         logout,
-        register,
-        getUsers,
-        getUserById,
-        updateUser,
-        deleteUser,
+
         refreshAuthToken,
         loading,
       }}

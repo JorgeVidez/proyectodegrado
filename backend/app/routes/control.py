@@ -5,7 +5,7 @@ from sqlalchemy.orm import selectinload
 from typing import List
 
 from app.database import get_db
-from app.models.control import Controles
+from app.models.control import Control
 from app.schemas.control import ControlCreate, ControlResponse, ControlUpdate  # Agregar `ControlUpdate`
 
 # 📌 Definir el router con prefijo y tags
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/controles", tags=["Controles"])
 # 📌 Obtener todos los controles
 @router.get("/", response_model=List[ControlResponse])
 async def get_controles(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Controles))
+    result = await db.execute(select(Control))
     controles = result.scalars().all()
 
     if not controles:
@@ -25,7 +25,7 @@ async def get_controles(db: AsyncSession = Depends(get_db)):
 # 📌 Obtener un solo control por ID
 @router.get("/{control_id}", response_model=ControlResponse)
 async def get_control(control_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Controles).where(Controles.id == control_id))
+    result = await db.execute(select(Control).where(Control.id == control_id))
     control = result.scalars().first()
 
     if not control:
@@ -36,7 +36,7 @@ async def get_control(control_id: int, db: AsyncSession = Depends(get_db)):
 # 📌 Crear un nuevo control
 @router.post("/", response_model=ControlResponse, status_code=201)
 async def create_control(control: ControlCreate, db: AsyncSession = Depends(get_db)):
-    nuevo_control = Controles(**control.model_dump())
+    nuevo_control = Control(**control.model_dump())
 
     try:
         db.add(nuevo_control)
@@ -51,7 +51,7 @@ async def create_control(control: ControlCreate, db: AsyncSession = Depends(get_
 # 📌 Actualizar un control existente
 @router.put("/{control_id}", response_model=ControlResponse)
 async def update_control(control_id: int, control_data: ControlUpdate, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Controles).where(Controles.id == control_id))
+    result = await db.execute(select(Control).where(Control.id == control_id))
     control = result.scalars().first()
 
     if not control:
@@ -72,7 +72,7 @@ async def update_control(control_id: int, control_data: ControlUpdate, db: Async
 # 📌 Eliminar un control
 @router.delete("/{control_id}", status_code=204)
 async def delete_control(control_id: int, db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Controles).where(Controles.id == control_id))
+    result = await db.execute(select(Control).where(Control.id == control_id))
     control = result.scalars().first()
 
     if not control:

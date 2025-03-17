@@ -2,7 +2,7 @@ from sqlalchemy import Column, Integer, ForeignKey, Date, Float, Text
 from sqlalchemy.orm import relationship
 from app.database import Base
 
-class Controles(Base):
+class Control(Base):
     __tablename__ = "controles"
 
     id = Column(Integer, primary_key=True, index=True)

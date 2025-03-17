@@ -11,7 +11,8 @@ class GanadoBase(BaseModel):
     fecha_ingreso: date = Field(..., description="Fecha de ingreso del ganado")
 
 class GanadoCreate(GanadoBase):
-    pass
+    proveedor_id: int  # ✅ Se agrega proveedor_id obligatorio en la creación
+
 
 class GanadoUpdate(BaseModel):
     tipo: Optional[str] = Field(None, min_length=2, max_length=100)
@@ -20,9 +21,11 @@ class GanadoUpdate(BaseModel):
     peso: Optional[float] = Field(None, gt=0)
     estado_salud: Optional[str] = Field(None, min_length=2, max_length=255)
     fecha_ingreso: Optional[date] = Field(None)
+    proveedor_id: Optional[int] = Field(None)  # ✅ Se permite actualizar proveedor_id
 
 class GanadoResponse(GanadoBase):
     id: int
+    proveedor_id: int  # ✅ Se incluye proveedor_id en la respuesta
 
     class Config:
         from_attributes = True

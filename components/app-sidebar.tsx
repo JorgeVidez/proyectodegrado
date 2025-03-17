@@ -25,118 +25,129 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-
-// Datos para el dashboard del inventario
-const data = {
-  user: {
-    name: "Raúl Herrera",
-    email: "raulherreracruz18@gmail.com",
-    avatar: "/images/userdefault.webp",
-  },
-  teams: [
-    {
-      name: "Estancia Nazario",
-      logo: GalleryVerticalEnd,
-      plan: "Inventario",
-    },
-    {
-      name: "Ganadería Santa Cruz",
-      logo: AudioWaveform,
-      plan: "Básico",
-    },
-    {
-      name: "Finca Los Andes",
-      logo: Command,
-      plan: "Estándar",
-    },
-  ],
-  navMain: [
-    {
-      title: "Ganado",
-      url: "/ganado",
-      icon: SquareStack,
-      isActive: true,
-      items: [
-        {
-          title: "Listado",
-          url: "/dashboard/ganado/listado",
-        },
-        {
-          title: "Agregar",
-          url: "/ganado/agregar",
-        },
-        {
-          title: "Historial",
-          url: "/ganado/historial",
-        },
-      ],
-    },
-    {
-      title: "Controles",
-      url: "/controles",
-      icon: CalendarCheck,
-      items: [
-        {
-          title: "Registro de controles",
-          url: "/controles/registro",
-        },
-        {
-          title: "Reportes",
-          url: "/controles/reportes",
-        },
-      ],
-    },
-    {
-      title: "Ventas",
-      url: "/ventas",
-      icon: DollarSign,
-      items: [
-        {
-          title: "Historial de ventas",
-          url: "/ventas/historial",
-        },
-        {
-          title: "Nueva venta",
-          url: "/ventas/nueva",
-        },
-      ],
-    },
-    {
-      title: "Usuarios",
-      url: "/usuarios",
-      icon: Users,
-      items: [
-        {
-          title: "Listado",
-          url: "/usuarios/listado",
-        },
-        {
-          title: "Agregar",
-          url: "/usuarios/agregar",
-        },
-      ],
-    },
-  ],
-  projects: [
-    {
-      name: "Monitoreo de Salud",
-      url: "/proyectos/salud",
-      icon: Frame,
-    },
-    {
-      name: "Optimización de Ventas",
-      url: "/proyectos/ventas",
-      icon: PieChart,
-    },
-    {
-      name: "Gestión de Alimentación",
-      url: "/proyectos/alimentacion",
-      icon: Map,
-    },
-  ],
-};
+import { useAuth } from "@/app/context/AuthContext";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth(); // Obtiene el usuario autenticado
+
+  // Si el usuario no está autenticado, usa valores por defecto
+  const userData = user
+    ? {
+        name: user.nombre,
+        email: user.email,
+        avatar: "/images/userdefault.webp", // Puedes actualizar esto si el usuario tiene una imagen
+      }
+    : {
+        name: "Invitado",
+        email: "No autenticado",
+        avatar: "/images/userdefault.webp",
+      };
+  // Datos para el dashboard del inventario
+  const data = {
+    user: userData,
+    teams: [
+      {
+        name: "Estancia Nazario",
+        logo: GalleryVerticalEnd,
+        plan: "Inventario",
+      },
+      {
+        name: "Ganadería Santa Cruz",
+        logo: AudioWaveform,
+        plan: "Básico",
+      },
+      {
+        name: "Finca Los Andes",
+        logo: Command,
+        plan: "Estándar",
+      },
+    ],
+    navMain: [
+      {
+        title: "Ganado",
+        url: "/ganado",
+        icon: SquareStack,
+        isActive: true,
+        items: [
+          {
+            title: "Listado",
+            url: "/dashboard/ganado/listado",
+          },
+          {
+            title: "Agregar",
+            url: "/dashboard/ganado/agregar",
+          },
+          {
+            title: "Proveedores",
+            url: "/dashboard/ganado/proveedores",
+          },
+        ],
+      },
+      {
+        title: "Controles",
+        url: "/controles",
+        icon: CalendarCheck,
+        items: [
+          {
+            title: "Registro de controles",
+            url: "/dashboard/controles/registro",
+          },
+          {
+            title: "Reportes",
+            url: "/dashboard/controles/reportes",
+          },
+        ],
+      },
+      {
+        title: "Ventas",
+        url: "/ventas",
+        icon: DollarSign,
+        items: [
+          {
+            title: "Historial de ventas",
+            url: "/dashboard/ventas/historial",
+          },
+          {
+            title: "Nueva venta",
+            url: "/dashboard/ventas/nueva",
+          },
+        ],
+      },
+      {
+        title: "Usuarios",
+        url: "/usuarios",
+        icon: Users,
+        items: [
+          {
+            title: "Listado",
+            url: "/dashboard/usuarios/listado",
+          },
+          {
+            title: "Agregar",
+            url: "/dashboard/usuarios/agregar",
+          },
+        ],
+      },
+    ],
+    projects: [
+      {
+        name: "Monitoreo de Salud",
+        url: "/dashboard/proyectos/salud",
+        icon: Frame,
+      },
+      {
+        name: "Prediccion de Ventas",
+        url: "/dashboard/predicciones",
+        icon: PieChart,
+      },
+      {
+        name: "Gestión de Alimentación",
+        url: "/proyectos/alimentacion",
+        icon: Map,
+      },
+    ],
+  };
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

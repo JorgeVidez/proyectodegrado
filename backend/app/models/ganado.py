@@ -1,7 +1,6 @@
-from sqlalchemy import Column, Integer, String, Float, Date
-from app.database import Base
+from sqlalchemy import Column, Integer, String, Float, Date, ForeignKey
 from sqlalchemy.orm import relationship
-
+from app.database import Base
 
 class Ganado(Base):
     __tablename__ = "ganado"
@@ -13,8 +12,11 @@ class Ganado(Base):
     peso = Column(Float, nullable=False)
     estado_salud = Column(String(255), nullable=False)
     fecha_ingreso = Column(Date, nullable=False)
-    
-    controles = relationship("Controles", back_populates="ganado", cascade="all, delete")
-    # Relación con las ventas
-    ventas = relationship("Venta", back_populates="ganado", cascade="all, delete")
+    proveedor_id = Column(Integer, ForeignKey("proveedores.id"), nullable=False)  # ✅ Clave foránea obligatoria
 
+    # Relación con proveedor
+    proveedor = relationship("Proveedor", back_populates="ganado")
+
+    # Relación con otras tablas
+    controles = relationship("Control", back_populates="ganado", cascade="all, delete")
+    ventas = relationship("Venta", back_populates="ganado", cascade="all, delete")

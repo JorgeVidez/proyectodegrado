@@ -1,113 +1,219 @@
-import useSWR from "swr";
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import axios, { AxiosError } from "axios";
 
-const API_URL = "http://localhost:8000/api/usuarios/"; // Ajusta la URL según tu backend
-const LOGIN_URL = "http://localhost:8000/api/login";
-
-// Función fetcher para SWR
-const fetcher = (url: string) => axios.get(url).then((res) => res.data);
-
-export function useUsuarios() {
-  const { data, error, mutate } = useSWR(API_URL, fetcher);
-
-  return {
-    usuarios: data || [],
-    isLoading: !error && !data,
-    isError: error,
-    refetch: mutate,
-  };
-}
-
-export async function loginUsuario(email: string, password: string) {
-  try {
-    const response = await axios.post(
-      LOGIN_URL,
-      { email, password }, // Ahora enviamos JSON
-      {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      }
-    );
-
-    console.log(response.data);
-
-    const { access_token } = response.data;
-    localStorage.setItem("token", access_token); // Guardar el token
-    return { success: true, token: access_token };
-  } catch (error: unknown) {
-    if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data?.detail || "Error al iniciar sesión"
-      );
-    }
-    throw new Error("Error desconocido al iniciar sesión");
-  }
-}
-
-// Verificar si el usuario está autenticado
-export function isAuthenticated(): boolean {
-  return !!localStorage.getItem("token");
-}
-
-// Logout
-export function logoutUsuario() {
-  localStorage.removeItem("token");
-}
-
-// Crear usuario
-export async function createUsuario(usuario: {
+export interface User {
+  id: string;
   nombre: string;
   email: string;
   rol: string;
-  password: string;
-}) {
-  try {
-    const response = await axios.post(API_URL, usuario);
-    return response.data;
-  } catch (error: unknown) {
-    if (error instanceof AxiosError) {
-      throw new Error(error.response?.data?.detail || "Error al crear usuario");
-    }
-    throw new Error("Error desconocido al crear usuario");
-  }
 }
 
-// Actualizar usuario
-export async function updateUsuario(
-  id: number,
-  usuarioData: Partial<{
-    nombre: string;
-    email: string;
-    rol: string;
-    password: string;
-  }>
-) {
-  try {
-    const response = await axios.put(`${API_URL}${id}`, usuarioData);
-    return response.data;
-  } catch (error: unknown) {
-    if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data?.detail || "Error al actualizar usuario"
-      );
-    }
-    throw new Error("Error desconocido al actualizar usuario");
-  }
+interface UseUsuariosResult {
+  user: User | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
+  register: (
+    nombre: string,
+    email: string,
+    rol: string,
+    password: string
+  ) => Promise<void>;
+  getUsers: () => Promise<User[]>;
+  getUserById: (id: string) => Promise<User>;
+  updateUser: (id: string, userData: Partial<User>) => Promise<void>;
+  deleteUser: (id: string) => Promise<void>;
+  refreshAuthToken: () => Promise<boolean>;
+  logout: () => void;
 }
 
-// Eliminar usuario
-export async function deleteUsuario(id: number) {
-  try {
-    await axios.delete(`${API_URL}${id}`);
-    return { message: "Usuario eliminado correctamente" };
-  } catch (error: unknown) {
+export const useUsuarios = (): UseUsuariosResult => {
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const router = useRouter();
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
+  const getToken = (): string | null => localStorage.getItem("token");
+
+  const getAuthHeaders = (): Record<string, string> => {
+    const token = getToken();
+    return token
+      ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }
+      : { "Content-Type": "application/json" };
+  };
+
+  const extractErrorMessage = (error: unknown): string => {
     if (error instanceof AxiosError) {
-      throw new Error(
-        error.response?.data?.detail || "Error al eliminar usuario"
-      );
+      if (error.response?.data?.detail?.error) {
+        try {
+          const match =
+            error.response.data.detail.error.match(/'error':\s*'([^']+)'/);
+          return match ? match[1] : error.response.data.detail.error;
+        } catch (parseError) {
+          console.error("Error al procesar el mensaje de error:", parseError);
+        }
+      }
     }
-    throw new Error("Error desconocido al eliminar usuario");
-  }
-}
+    return "Ocurrió un error inesperado.";
+  };
+
+  const fetchUser = useCallback(async () => {
+    const token = getToken();
+    if (!token) {
+      setLoading(false);
+      return;
+    }
+    try {
+      const res = await axios.get(`${API_BASE_URL}/usuarios/me`, {
+        headers: getAuthHeaders(),
+      });
+      setUser(res.data);
+    } catch (error) {
+      console.error("Error al obtener usuario:", extractErrorMessage(error));
+      setUser(null);
+    } finally {
+      setLoading(false);
+    }
+  }, [API_BASE_URL]);
+
+  useEffect(() => {
+    fetchUser();
+  }, [fetchUser]);
+
+  const login = async (email: string, password: string) => {
+    try {
+      const res = await axios.post(`${API_BASE_URL}/login`, {
+        email,
+        password,
+      });
+      const token = res.data.access_token;
+      if (token) {
+        localStorage.setItem("token", token);
+        await fetchUser();
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      console.error("Error al iniciar sesión:", extractErrorMessage(error));
+      throw new Error(extractErrorMessage(error));
+    }
+  };
+
+  const register = async (
+    nombre: string,
+    email: string,
+    rol: string,
+    password: string
+  ) => {
+    try {
+      const res = await axios.post(`${API_BASE_URL}/usuarios/`, {
+        nombre,
+        email,
+        rol,
+        password,
+      });
+      const token = res.data.token;
+      if (token) {
+        localStorage.setItem("token", token);
+        await fetchUser();
+        router.push("/dashboard");
+      }
+    } catch (error) {
+      console.error("Error al registrar usuario:", extractErrorMessage(error));
+      throw new Error(extractErrorMessage(error));
+    }
+  };
+
+  const getUsers = async (): Promise<User[]> => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/usuarios/`, {
+        headers: getAuthHeaders(),
+      });
+      return res.data;
+    } catch (error) {
+      console.error("Error al obtener usuarios:", extractErrorMessage(error));
+      throw new Error(extractErrorMessage(error));
+    }
+  };
+
+  const getUserById = async (id: string): Promise<User> => {
+    try {
+      const res = await axios.get(`${API_BASE_URL}/usuarios/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      return res.data;
+    } catch (error) {
+      console.error(
+        "Error al obtener usuario por ID:",
+        extractErrorMessage(error)
+      );
+      throw new Error(extractErrorMessage(error));
+    }
+  };
+
+  const updateUser = async (id: string, userData: Partial<User>) => {
+    try {
+      const res = await axios.put(`${API_BASE_URL}/usuarios/${id}`, userData, {
+        headers: getAuthHeaders(),
+      });
+      if (res.data.token) {
+        localStorage.setItem("token", res.data.token);
+        await fetchUser();
+      }
+    } catch (error) {
+      console.error("Error al actualizar usuario:", extractErrorMessage(error));
+      throw new Error(extractErrorMessage(error));
+    }
+  };
+
+  const deleteUser = async (id: string) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/usuarios/${id}`, {
+        headers: getAuthHeaders(),
+      });
+      logout();
+    } catch (error) {
+      console.error("Error al eliminar usuario:", extractErrorMessage(error));
+      throw new Error(extractErrorMessage(error));
+    }
+  };
+
+  const refreshAuthToken = async (): Promise<boolean> => {
+    try {
+      const res = await axios.post(
+        `${API_BASE_URL}/refresh`,
+        {},
+        { headers: getAuthHeaders() }
+      );
+      const token = res.data.token;
+      if (token) {
+        localStorage.setItem("token", token);
+        return true;
+      }
+    } catch (error) {
+      console.error("Error al refrescar token:", extractErrorMessage(error));
+      logout();
+    }
+    return false;
+  };
+
+  const logout = () => {
+    localStorage.removeItem("token");
+    setUser(null);
+    router.push("/login");
+  };
+
+  return {
+    user,
+    login,
+    logout,
+    register,
+    getUsers,
+    getUserById,
+    updateUser,
+    deleteUser,
+    refreshAuthToken,
+    loading,
+  };
+};
