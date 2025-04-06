@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from app.routes import usuario, control, ganado, ventas, proveedor, reporte
+from app.routes import usuario, control, ganado, ventas, proveedor, reporte, rol_usuario, especie, raza
 from app.database import engine, Base, initialize_data
 from fastapi.responses import JSONResponse
 from fastapi.exception_handlers import http_exception_handler
@@ -36,6 +36,10 @@ def read_root():
     return {"message": "Bienvenido a la API de administración de inventario"}
 
 # Incluir routers
+app.include_router(rol_usuario.router, prefix="/api", tags=["Roles de Usuario"])
+app.include_router(especie.router, prefix="/api", tags=["Especies"])
+app.include_router(raza.router, prefix="/api", tags=["Razas"])
+
 app.include_router(ganado.router, prefix="/api", tags=["Ganado"])
 app.include_router(usuario.router, prefix="/api", tags=["Usuarios"])
 app.include_router(control.router, prefix="/api", tags=["Controles"])
