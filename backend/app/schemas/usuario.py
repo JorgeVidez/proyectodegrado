@@ -1,36 +1,40 @@
 from pydantic import BaseModel, EmailStr
 from typing import Optional
-from app.models.usuario import RolUsuario  # Importamos el Enum de roles
+from datetime import datetime
 
 class UsuarioBase(BaseModel):
     nombre: str
     email: EmailStr
-    rol: RolUsuario  # ✅ Ahora el rol es un Enum, asegurando valores válidos
+    rol_id: int
+    activo: Optional[bool] = True
 
 class UsuarioCreate(UsuarioBase):
-    password: str  # Solo se usa al crear un usuario
+    password: str
 
 class UsuarioUpdate(BaseModel):
     nombre: Optional[str] = None
     email: Optional[EmailStr] = None
-    rol: Optional[RolUsuario] = None  # ✅ Asegura que solo acepte valores válidos
-    password: Optional[str] = None  # Si se envía, se encripta antes de guardar
+    rol_id: Optional[int] = None
+    activo: Optional[bool] = None
+    password: Optional[str] = None
 
 class UsuarioOut(UsuarioBase):
-    id: int
+    usuario_id: int
+    fecha_creacion: datetime
+    fecha_actualizacion: Optional[datetime] = None
 
     class Config:
-        from_attributes = True  # ✅ Reemplaza orm_mode (más actualizado en Pydantic)
+        from_attributes = True  # ✅ Soporte para ORM
 
 class LoginSchema(BaseModel):
     email: EmailStr
     password: str
 
 class UsuarioMe(BaseModel):
-    id: int
+    usuario_id: int
     nombre: str
     email: EmailStr
-    rol: RolUsuario  # ✅ Usa el Enum en la respuesta
+    rol: str  # ✅ Usamos string para evitar problemas con JSON y Enums
 
     class Config:
-        from_attributes = True  # ✅ Asegura compatibilidad con SQLAlchemy
+        from_attributes = True

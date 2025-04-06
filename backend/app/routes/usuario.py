@@ -6,7 +6,9 @@ from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.database import get_db
-from app.models.usuario import Usuario, RolUsuario
+from app.models.usuario import Usuario
+from app.models.rol_usuario import RolUsuario
+from app.models.control import Control
 from app.schemas.usuario import UsuarioCreate, UsuarioOut, UsuarioUpdate, LoginSchema, UsuarioMe
 from passlib.context import CryptContext
 from typing import List
@@ -21,11 +23,9 @@ SECRET_KEY = "1924828c313d833c45c558745655220e8a99fd3f4651bda9b2a1d19773eab4bf3c
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-# Configuración de logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ✅ Generar token con email y rol
 def generate_token(email: str, rol: str):
     access_token_expires = datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {
@@ -35,18 +35,13 @@ def generate_token(email: str, rol: str):
     }
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
-# ✅ Verificar contraseña hasheada
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
-# ✅ Hashear contraseña antes de almacenarla
 def hash_password(password):
     return pwd_context.hash(password)
 
-# ✅ Obtener usuario actual a partir del token
 async def get_current_user(token: str = Security(oauth2_scheme), db: AsyncSession = Depends(get_db)):
-    logger.info(f"Token recibido: {token}")
-
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email = payload.get("sub")
@@ -55,14 +50,13 @@ async def get_current_user(token: str = Security(oauth2_scheme), db: AsyncSessio
         if not email or not rol:
             raise HTTPException(status_code=401, detail={"error": "Token inválido"})
 
-        stmt = select(Usuario).where(Usuario.email == email)
-        result = await db.execute(stmt)
+        result = await db.execute(select(Usuario).where(Usuario.email == email))
         user = result.scalars().first()
 
         if not user:
             raise HTTPException(status_code=401, detail={"error": "Usuario no encontrado"})
 
-        if user.rol.value != rol:
+        if user.rol.nombre_rol != rol:
             raise HTTPException(status_code=401, detail={"error": "Token inválido"})
 
         return user
@@ -71,21 +65,18 @@ async def get_current_user(token: str = Security(oauth2_scheme), db: AsyncSessio
     except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail={"error": "Token inválido"})
 
-# ✅ Obtener información del usuario autenticado
 @router.get("/usuarios/me", response_model=UsuarioMe)
 async def get_me(current_user: Usuario = Depends(get_current_user)):
     return current_user
 
-# ✅ Obtener todos los usuarios (Solo Administradores)
 @router.get("/usuarios/", response_model=List[UsuarioOut])
 async def get_usuarios(db: AsyncSession = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    if current_user.rol != RolUsuario.administrador:
+    if current_user.rol.nombre_rol != "administrador":
         raise HTTPException(status_code=403, detail={"error": "No tienes permisos para ver usuarios"})
 
     result = await db.execute(select(Usuario))
     return result.scalars().all()
 
-# ✅ Obtener un usuario por ID
 @router.get("/usuarios/{usuario_id}", response_model=UsuarioOut)
 async def get_usuario(usuario_id: int, db: AsyncSession = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     usuario = await db.get(Usuario, usuario_id)
@@ -93,42 +84,38 @@ async def get_usuario(usuario_id: int, db: AsyncSession = Depends(get_db), curre
         raise HTTPException(status_code=404, detail={"error": "Usuario no encontrado"})
     return usuario
 
-# ✅ Crear un nuevo usuario
 @router.post("/usuarios/", response_model=UsuarioOut)
 async def create_usuario(data: UsuarioCreate, db: AsyncSession = Depends(get_db)):
-    try:
-        result = await db.execute(select(Usuario).where(Usuario.email == data.email))
-        if result.scalars().first():
-            raise HTTPException(status_code=400, detail={"error": "El correo ya está registrado"})
+    result = await db.execute(select(Usuario).where(Usuario.email == data.email))
+    if result.scalars().first():
+        raise HTTPException(status_code=400, detail={"error": "El correo ya está registrado"})
 
-        usuario = Usuario(
-            nombre=data.nombre,
-            email=data.email,
-            rol=data.rol,
-            password=hash_password(data.password)
-        )
-        db.add(usuario)
-        await db.commit()
-        await db.refresh(usuario)
-        return usuario
-    except Exception as e:
-        raise HTTPException(status_code=500, detail={"error": str(e)})
+    usuario = Usuario(
+        nombre=data.nombre,
+        email=data.email,
+        rol_id=data.rol_id,
+        password_hash=hash_password(data.password),
+        activo=data.activo if data.activo is not None else True,
+    )
+    db.add(usuario)
+    await db.commit()
+    await db.refresh(usuario)
+    return usuario
 
-# ✅ Actualizar usuario
 @router.put("/usuarios/{usuario_id}", response_model=UsuarioOut)
 async def update_usuario(usuario_id: int, usuario_data: UsuarioUpdate, db: AsyncSession = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
     usuario = await db.get(Usuario, usuario_id)
     if not usuario:
         raise HTTPException(status_code=404, detail={"error": "Usuario no encontrado"})
 
-    if current_user.rol != RolUsuario.administrador and current_user.id != usuario.id:
+    if current_user.rol.nombre_rol != "administrador" and current_user.usuario_id != usuario.usuario_id:
         raise HTTPException(status_code=403, detail={"error": "No tienes permisos para actualizar este usuario"})
 
     update_data = usuario_data.model_dump(exclude_unset=True)
 
     if "password" in update_data:
-        if not verify_password(update_data["password"], usuario.password):
-            update_data["password"] = hash_password(update_data["password"])
+        update_data["password_hash"] = hash_password(update_data["password"])
+        del update_data["password"]
 
     for key, value in update_data.items():
         setattr(usuario, key, value)
@@ -137,10 +124,9 @@ async def update_usuario(usuario_id: int, usuario_data: UsuarioUpdate, db: Async
     await db.refresh(usuario)
     return usuario
 
-# ✅ Eliminar usuario (Solo Administradores)
 @router.delete("/usuarios/{usuario_id}")
 async def delete_usuario(usuario_id: int, db: AsyncSession = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    if current_user.rol != RolUsuario.administrador:
+    if current_user.rol.nombre_rol != "administrador":
         raise HTTPException(status_code=403, detail={"error": "No tienes permisos para eliminar usuarios"})
 
     usuario = await db.get(Usuario, usuario_id)
@@ -151,27 +137,24 @@ async def delete_usuario(usuario_id: int, db: AsyncSession = Depends(get_db), cu
     await db.commit()
     return {"message": "Usuario eliminado correctamente"}
 
-# ✅ Login y generación de token
 @router.post("/login")
 async def login(data: LoginSchema, db: AsyncSession = Depends(get_db)):
     result = await db.execute(select(Usuario).where(Usuario.email == data.email))
     usuario = result.scalars().first()
 
-    if not usuario or not verify_password(data.password, usuario.password):
+    if not usuario or not verify_password(data.password, usuario.password_hash):
         raise HTTPException(status_code=400, detail={"error": "Credenciales incorrectas"})
 
-    return {"access_token": generate_token(usuario.email, usuario.rol.value), "token_type": "bearer"}
+    rol_result = await db.execute(select(RolUsuario.nombre_rol).where(RolUsuario.rol_id == usuario.rol_id))
+    rol_name = rol_result.scalars().first()
 
-# ✅ Refrescar token
+    return {"access_token": generate_token(usuario.email, rol_name), "token_type": "bearer"}
+
 @router.post("/refresh")
 async def refresh_token(token: str = Depends(oauth2_scheme)):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        new_token = jwt.encode(
-            {"sub": payload["sub"], "rol": payload["rol"], "exp": datetime.datetime.utcnow() + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)},
-            SECRET_KEY,
-            algorithm=ALGORITHM
-        )
+        new_token = generate_token(payload["sub"], payload["rol"])
         return {"access_token": new_token, "token_type": "bearer"}
     except jwt.ExpiredSignatureError:
         raise HTTPException(status_code=401, detail={"error": "Token expirado, vuelve a iniciar sesión"})
