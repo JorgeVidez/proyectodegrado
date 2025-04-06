@@ -17,6 +17,4 @@ class Usuario(Base):
     fecha_actualizacion = Column(DateTime(timezone=True), onupdate=func.now())
 
     rol = relationship("RolUsuario") #Relacion con la tabla de roles
-    controles = relationship("Control", back_populates="veterinario")
-    reportes = relationship("Reporte", back_populates="usuario", cascade="all, delete")
 

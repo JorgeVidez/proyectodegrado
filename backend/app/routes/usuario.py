@@ -8,7 +8,6 @@ from sqlalchemy.future import select
 from app.database import get_db
 from app.models.usuario import Usuario
 from app.models.rol_usuario import RolUsuario
-from app.models.control import Control
 from app.schemas.usuario import UsuarioCreate, UsuarioOut, UsuarioUpdate, LoginSchema, UsuarioMe
 from passlib.context import CryptContext
 from typing import List
