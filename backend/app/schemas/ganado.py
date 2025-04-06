@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from datetime import date
-from typing import Optional
+from typing import Optional, List
+from app.schemas.control import ControlResponse  # ✅ Importar el modelo de Controlres para la relación
+from app.schemas.proveedor import ProveedorResponse  # ✅ Importar el modelo de ProveedorBase para la relación
 
 class GanadoBase(BaseModel):
     tipo: str = Field(..., min_length=2, max_length=100, description="Tipo de ganado (ejemplo: bovino, ovino)")
@@ -26,6 +28,8 @@ class GanadoUpdate(BaseModel):
 class GanadoResponse(GanadoBase):
     id: int
     proveedor_id: int  # ✅ Se incluye proveedor_id en la respuesta
+    proveedor: ProveedorResponse  # ✅ Se incluye proveedor_id en la respuesta
+    controles: List[ControlResponse] = []
 
     class Config:
         from_attributes = True

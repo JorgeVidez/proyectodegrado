@@ -7,13 +7,16 @@ from app.models.proveedor import Proveedor  # ✅ Importar Proveedor para valida
 from app.models.ganado import Ganado
 from app.schemas.ganado import GanadoCreate, GanadoResponse, GanadoUpdate
 from typing import List
+from sqlalchemy.orm import selectinload, joinedload
+from app.models.control import Control  # ✅ Importar ControlResponse para la relación
+
 
 router = APIRouter()
 
 # ✅ Obtener todos los registros de ganado
 @router.get("/ganado/", response_model=List[GanadoResponse])
 async def get_ganado(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Ganado))
+    result = await db.execute(select(Ganado).options(selectinload(Ganado.proveedor), selectinload(Ganado.controles).options(joinedload(Control.veterinario))))
     return result.scalars().all()
 
 # ✅ Obtener un solo registro de ganado por ID
