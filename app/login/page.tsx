@@ -21,7 +21,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, role } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -41,7 +41,19 @@ export default function LoginPage() {
     const success = await login(data.email, data.password);
 
     if (success) {
-      router.push("/dashboard");
+      switch (role) {
+        case "Administrador":
+          router.push("/dashboard");
+          break;
+        case "Operador":
+          router.push("/operador");
+          break;
+        case "Veterinario":
+          router.push("/veterinario");
+          break;
+        default:
+          router.push("/dashboard");
+      }
     } else {
       setError("Credenciales inválidas o error del servidor");
     }
