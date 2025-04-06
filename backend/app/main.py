@@ -15,7 +15,7 @@ app = FastAPI(title="Sistema de Ganado API")
 # Habilitar CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],  # Permitir peticiones desde el frontend
+    allow_origins=["*"],  # Permitir todos los orígenes    
     allow_credentials=True,
     allow_methods=["*"],  # Permitir todos los métodos (GET, POST, PUT, DELETE, etc.)
     allow_headers=["*"],  # Permitir todos los encabezados
@@ -33,7 +33,7 @@ async def startup_event():
 
 @app.get("/")
 def read_root():
-    return {"message": "Bienvenido a la API de administración de ganado"}
+    return {"message": "Bienvenido a la API de administración de inventario"}
 
 # Incluir routers
 app.include_router(ganado.router, prefix="/api", tags=["Ganado"])
@@ -46,6 +46,7 @@ app.include_router(proveedor.router, prefix="/api", tags=["Proveedores"])
 app.include_router(prediccion.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
 
 # Ejecutar Uvicorn solo si el script se ejecuta directamente
+#usar uvicorn main:app --reload para correr el servidor
 if __name__ == "__main__":
     import asyncio
     asyncio.run(init_db())  # Asegura que la DB esté lista antes de iniciar Uvicorn
