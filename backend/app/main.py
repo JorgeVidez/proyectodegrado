@@ -44,9 +44,10 @@ app.include_router(tipo_vacuna.router, prefix="/api", tags=["Tipos de Vacuna"])
 app.include_router(medicamento.router, prefix="/api", tags=["Medicamentos"])
 app.include_router(ubicacion.router, prefix="/api", tags=["Ubicaciones"])
 app.include_router(lote.router, prefix="/api", tags=["Lotes"])
+app.include_router(usuario.router, prefix="/api", tags=["Usuarios"])
+
 
 app.include_router(ganado.router, prefix="/api", tags=["Ganado"])
-app.include_router(usuario.router, prefix="/api", tags=["Usuarios"])
 app.include_router(control.router, prefix="/api", tags=["Controles"])
 app.include_router(ventas.router, prefix="/api", tags=["Ventas"])
 app.include_router(reporte.router, prefix="/api", tags=["Reportes"])
