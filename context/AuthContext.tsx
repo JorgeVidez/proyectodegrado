@@ -1,6 +1,12 @@
 "use client";
 
-import { createContext, useContext, useEffect, useState } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { useUsuariosApi } from "../hooks/useUsuariosApi";
 import { useRouter } from "next/navigation";
 
@@ -28,6 +34,7 @@ type AuthContextType = {
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   hasPermission: (path: string) => boolean;
+  fetchUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
@@ -37,35 +44,63 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const { login: loginApi, getUsuarioActual } = useUsuariosApi(
-    token || undefined
-  );
   const router = useRouter();
+  const usuariosApi = useUsuariosApi(); // Inicializamos sin token
+
+  // Función para actualizar el token en la instancia de axios
+  const updateApiToken = useCallback(
+    (newToken: string | null) => {
+      usuariosApi.updateToken(newToken || null);
+    },
+    [usuariosApi]
+  );
+
+  const logout = useCallback(() => {
+    setUser(null);
+    setToken(null);
+    updateApiToken(null);
+    localStorage.removeItem("token");
+    router.push("/login");
+  }, [router, updateApiToken]);
+
+  // Función para obtener los datos del usuario actual
+  const fetchUser = useCallback(async () => {
+    if (!token) return;
+
+    try {
+      setLoading(true);
+      const userData = await usuariosApi.getUsuarioActual();
+      setUser(userData || null);
+    } catch (err) {
+      console.error("Error obteniendo usuario:", err);
+      logout(); // Limpia todo en caso de error
+    } finally {
+      setLoading(false);
+    }
+  }, [token]); // Solo depende de token
 
   const login = async (email: string, password: string) => {
     try {
-      const res = await loginApi({ email, password });
+      setLoading(true);
+      const res = await usuariosApi.login({ email, password });
+
       if (!res?.access_token) throw new Error("Token no recibido");
 
-      setToken(res.access_token);
+      // Actualizar todo sincrónicamente
       localStorage.setItem("token", res.access_token);
+      updateApiToken(res.access_token);
+      setToken(res.access_token); // Último en actualizarse
 
-      const userData = await getUsuarioActual();
-      if (!userData) throw new Error("Error obteniendo usuario");
+      await fetchUser();
 
-      setUser(userData);
       return true;
     } catch (err) {
+      console.error("Error en login:", err);
       logout();
       return false;
+    } finally {
+      setLoading(false);
     }
-  };
-
-  const logout = () => {
-    setUser(null);
-    setToken(null);
-    localStorage.removeItem("token");
-    router.push("/login");
   };
 
   const role = user?.rol?.nombre_rol || null;
@@ -81,27 +116,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return permisosPorRol[role]?.includes(path) ?? false;
   };
 
+  // Efecto para cargar el token inicial
   useEffect(() => {
-    const tokenFromStorage = localStorage.getItem("token");
-    if (tokenFromStorage) {
-      setToken(tokenFromStorage);
-      getUsuarioActual()
-        .then((res) => {
-          if (res) setUser(res);
-          setLoading(false);
-        })
-        .catch(() => {
-          logout();
-          setLoading(false);
-        });
+    const storedToken = localStorage.getItem("token");
+    if (storedToken) {
+      updateApiToken(storedToken);
+      setToken(storedToken); // Dispara el efecto secundario automáticamente
     } else {
       setLoading(false);
     }
-  }, []);
+  }, []); // Sin dependencias
+
+  // Efecto para cargar los datos del usuario cuando cambia el token
+  useEffect(() => {
+    if (token) {
+      fetchUser();
+    }
+  }, [token]); // Eliminar fetchUser de las dependencias
 
   return (
     <AuthContext.Provider
-      value={{ user, token, login, logout, role, loading, hasPermission }}
+      value={{
+        user,
+        token,
+        login,
+        logout,
+        role,
+        loading,
+        hasPermission,
+        fetchUser,
+      }}
     >
       {children}
     </AuthContext.Provider>

@@ -6,9 +6,7 @@ import {
   CalendarCheck,
   Command,
   DollarSign,
-  Frame,
   GalleryVerticalEnd,
-  Map,
   PieChart,
   SquareStack,
   Users,
@@ -28,7 +26,7 @@ import {
 import { useAuth } from "@/context/AuthContext";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user } = useAuth(); // Obtiene el usuario autenticado
+  const { user, hasPermission } = useAuth(); // Obtiene el usuario y hasPermission del AuthContext
 
   // Si el usuario no está autenticado, usa valores por defecto
   const userData = user
@@ -138,6 +136,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ],
   };
 
+  // Filtrar el menú basado en los permisos del usuario
+  const filteredNavMain = data.navMain.filter((item) =>
+    hasPermission(item.url)
+  );
+  const filteredProjects = data.projects.filter((project) =>
+    hasPermission(project.url)
+  );
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -148,7 +154,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={userData} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

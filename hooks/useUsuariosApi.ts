@@ -43,84 +43,101 @@ type LoginResponse = {
   token_type: string
 }
 
-export function useUsuariosApi(token?: string) {
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+export function useUsuariosApi(initialToken?: string) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState(initialToken);
 
   const axiosInstance = axios.create({
     baseURL: API_BASE_URL,
     headers: {
-      'Content-Type': 'application/json',
+      "Content-Type": "application/json",
       ...(token && { Authorization: `Bearer ${token}` }),
     },
-  })
+  });
+
+  // Interceptor para actualizar el token en cada request
+  axiosInstance.interceptors.request.use((config) => {
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    } else {
+      delete config.headers.Authorization;
+    }
+    return config;
+  });
+
+  // Método para actualizar el token
+  const updateToken = (newToken: string | null) => {
+    setToken(newToken || undefined);
+  };
 
   const handleRequest = async <T>(
     path: string,
     config: AxiosRequestConfig
   ): Promise<T | null> => {
-    setLoading(true)
-    setError(null)
+    setLoading(true);
+    setError(null);
 
     try {
       const response = await axiosInstance.request<T>({
         url: path,
         ...config,
-      })
-      return response.data
+      });
+      return response.data;
     } catch (err: any) {
       const message =
         err?.response?.data?.detail?.error ||
         err?.response?.data?.error ||
         err?.message ||
-        'Error inesperado'
-      setError(message)
-      return null
+        "Error inesperado";
+      setError(message);
+      return null;
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return {
+    updateToken,
     loading,
     error,
 
     getUsuarioActual: () =>
-      handleRequest<UsuarioOut>('/usuarios/me', {
-        method: 'GET',
+      handleRequest<UsuarioOut>("/usuarios/me", {
+        method: "GET",
       }),
 
     getUsuarios: () =>
-      handleRequest<UsuarioOut[]>('/usuarios/', {
-        method: 'GET',
+      handleRequest<UsuarioOut[]>("/usuarios/", {
+        method: "GET",
       }),
 
     getUsuarioPorId: (id: number) =>
       handleRequest<UsuarioOut>(`/usuarios/${id}`, {
-        method: 'GET',
+        method: "GET",
       }),
 
     crearUsuario: (data: UsuarioCreate) =>
-      handleRequest<UsuarioOut>('/usuarios/', {
-        method: 'POST',
+      handleRequest<UsuarioOut>("/usuarios/", {
+        method: "POST",
         data,
       }),
 
     actualizarUsuario: (id: number, data: UsuarioUpdate) =>
       handleRequest<UsuarioOut>(`/usuarios/${id}`, {
-        method: 'PUT',
+        method: "PUT",
         data,
       }),
 
     eliminarUsuario: (id: number) =>
       handleRequest<{ message: string }>(`/usuarios/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       }),
 
     login: (data: LoginData) =>
-      handleRequest<LoginResponse>('/login', {
-        method: 'POST',
+      handleRequest<LoginResponse>("/login", {
+        method: "POST",
         data,
       }),
-  }
+  };
 }
