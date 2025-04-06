@@ -45,14 +45,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       //si el error es 401, significa que el token ha expirado
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        console.warn("Token expirado. Intentando renovar...");
-        const newToken = await refreshAuthToken();
-        if (newToken) {
-          await fetchUser(newToken);
-        } else {
-          logout();
-        }
+        console.warn("Token expirado");
+        logout();
+      } else {
+        // Manejo de otros errores
+        console.error("Error al obtener el usuario:", error);
       }
+      
+      
     } finally {
       setLoading(false);
     }
