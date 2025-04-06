@@ -22,7 +22,7 @@ export function TeamSwitcher({
   return (
     <SidebarMenu>
       <SidebarMenuItem>
-        <div className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground ">
+        <div className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground flex">
           {/* Logo del equipo */}
 
           {/* <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
@@ -31,9 +31,12 @@ export function TeamSwitcher({
           </div>} */}
 
           {/* Información del equipo */}
-          <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground"> <ModeToggle/> </div> 
+          <div className=" flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+            {" "}
+            <ModeToggle />{" "}
+          </div>
 
-          <div className=" grid flex-1 text-left text-sm leading-tight">
+          <div className="ms-2 grid flex-1 text-left text-sm leading-tight">
             <span className="truncate font-semibold">{activeTeam.name}</span>
             <span className="truncate text-xs">{activeTeam.plan}</span>
           </div>
