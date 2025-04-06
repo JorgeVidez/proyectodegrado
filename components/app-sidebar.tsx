@@ -131,19 +131,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ],
     projects: [
       {
-        name: "Monitoreo de Salud",
-        url: "/dashboard/proyectos/salud",
-        icon: Frame,
-      },
-      {
         name: "Prediccion de Ventas",
         url: "/dashboard/predicciones",
         icon: PieChart,
-      },
-      {
-        name: "Gestión de Alimentación",
-        url: "/proyectos/alimentacion",
-        icon: Map,
       },
     ],
   };
