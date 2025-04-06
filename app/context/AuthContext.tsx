@@ -11,6 +11,8 @@ import {
 import { useRouter } from "next/navigation";
 import axios from "axios";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 interface User {
   id: string;
   nombre: string;
@@ -22,7 +24,6 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-
   refreshAuthToken: () => Promise<void>;
   logout: () => void;
 }
@@ -37,14 +38,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const fetchUser = useCallback(async (token: string) => {
     try {
-      const res = await axios.get("http://localhost:8000/api/usuarios/me", {
+      const res = await axios.get(`${API_BASE_URL}/usuarios/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       setUser(res.data);
     } catch (error) {
-      console.error("Error al obtener usuario:", error);
-      logout();
+      //si el error es 401, significa que el token ha expirado
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        console.warn("Token expirado. Intentando renovar...");
+        const newToken = await refreshAuthToken();
+        if (newToken) {
+          await fetchUser(newToken);
+        } else {
+          logout();
+        }
+      }
     } finally {
       setLoading(false);
     }
@@ -61,7 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const login = async (email: string, password: string) => {
     try {
-      const res = await axios.post("http://127.0.0.1:8000/api/login", {
+      const res = await axios.post(`${API_BASE_URL}/login`, {
         email,
         password,
       });
@@ -81,7 +89,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const refreshAuthToken = async () => {
-    if (isRefreshing) return; // Evita múltiples llamadas simultáneas
+    if (isRefreshing) return;
     setIsRefreshing(true);
 
     try {
@@ -91,8 +99,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return;
       }
 
-      const res = await axios.post("http://localhost:8000/api/refresh", {
-        refresh_token: refreshToken, // Enviar el refresh token en el body, no en headers
+      const res = await axios.post(`${API_BASE_URL}/refresh`, {
+        refresh_token: refreshToken,
       });
 
       const newToken = res.data.access_token;
@@ -113,14 +121,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     router.push("/login");
   };
 
-  // Interceptores para manejar errores 401 y refrescar el token automáticamente
   useEffect(() => {
     const interceptor = axios.interceptors.response.use(
       (response) => response,
       async (error) => {
         if (error.response?.status === 401) {
           console.warn("Token expirado. Intentando renovar...");
-
           if (!isRefreshing) {
             const newToken = await refreshAuthToken();
             if (newToken) {
@@ -129,11 +135,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             }
           }
         }
-
         return Promise.reject(error);
       }
     );
-
     return () => {
       axios.interceptors.response.eject(interceptor);
     };
@@ -141,14 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{
-        user,
-        login,
-        logout,
-
-        refreshAuthToken,
-        loading,
-      }}
+      value={{ user, login, logout, refreshAuthToken, loading }}
     >
       {children}
     </AuthContext.Provider>
