@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useUsuarios, User } from "../../../hooks/useUsuarios";
+import { useUsuarios, User } from "../../../../hooks/useUsuarios";
 import {
   Breadcrumb,
   BreadcrumbItem,

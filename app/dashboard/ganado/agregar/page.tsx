@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
-import { useGanado } from "../../../hooks/useGanado";
-import { useProveedores } from "../../../hooks/useProveedores";
+import { useGanado } from "../../../../hooks/useGanado";
+import { useProveedores } from "../../../../hooks/useProveedores";
 import {
   Breadcrumb,
   BreadcrumbItem,

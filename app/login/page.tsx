@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Loader2, Eye, EyeOff } from "lucide-react";
-import { useAuth } from "@/app/context/AuthContext";
+import { useAuth } from "../../context/AuthContext";
 
 const loginSchema = z.object({
   email: z.string().email("Correo inválido"),
@@ -24,7 +24,7 @@ export default function LoginPage() {
   const { login } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // Estado para mostrar/ocultar contraseña
+  const [showPassword, setShowPassword] = useState(false);
 
   const {
     register,
@@ -38,19 +38,15 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    try {
-      await login(data.email, data.password);
-      console.log("Inicio de sesión exitoso");
+    const success = await login(data.email, data.password);
+
+    if (success) {
       router.push("/dashboard");
-    } catch (err) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("Ocurrió un error desconocido. Inténtalo de nuevo.");
-      }
-    } finally {
-      setLoading(false);
+    } else {
+      setError("Credenciales inválidas o error del servidor");
     }
+
+    setLoading(false);
   };
 
   return (

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useVentas } from "../../../hooks/useVentas";
+import { useVentas } from "../../../../hooks/useVentas";
 import { toast } from "sonner";
 import {
   Breadcrumb,

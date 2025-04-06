@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useProveedores } from "../../../hooks/useProveedores";
+import { useProveedores } from "../../../../hooks/useProveedores";
 import {
   Breadcrumb,
   BreadcrumbItem,

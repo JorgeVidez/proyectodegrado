@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useGanado } from "../../../hooks/useGanado";
+import { useGanado } from "../../../../hooks/useGanado";
 import {
   Breadcrumb,
   BreadcrumbItem,

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { useVentas } from "../../../hooks/useVentas";
+import { useVentas } from "../../../../hooks/useVentas";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { CalendarIcon } from "lucide-react";
