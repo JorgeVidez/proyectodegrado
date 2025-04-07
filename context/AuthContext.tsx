@@ -70,6 +70,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       setLoading(true);
       const userData = await usuariosApi.getUsuarioActual();
+      if (userData === null) {
+        console.error("Usuario no encontrado o no autorizado");
+        logout(); // Limpia todo en caso de error
+        router.push("/login"); // Redirigir a login si no se encuentra el usuario
+      }
       setUser(userData || null);
     } catch (err) {
       console.error("Error obteniendo usuario:", err);
