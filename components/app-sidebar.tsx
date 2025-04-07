@@ -10,6 +10,13 @@ import {
   PieChart,
   SquareStack,
   Users,
+  Vegan,
+  MapPinHouse,
+  Wheat,
+  Badge,
+  Handshake,
+  UserRoundCog,
+  LayoutDashboard,
 } from "lucide-react";
 
 import { NavMain } from "@/components/nav-main";
@@ -24,6 +31,8 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
+import { title } from "process";
+import { Item } from "@radix-ui/react-dropdown-menu";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, hasPermission } = useAuth(); // Obtiene el usuario y hasPermission del AuthContext
@@ -62,69 +71,82 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ],
     navMain: [
       {
-        title: "Ganado",
-        url: "/ganado",
-        icon: SquareStack,
+        title: "Animales",
+        url: "/animales",
+        icon: Vegan, // Reemplaza con tu icono
         isActive: true,
         items: [
+          { title: "Inventario", url: "/dashboard/animales/inventario" },
+          { title: "Movimientos", url: "/dashboard/animales/movimientos" },
           {
-            title: "Listado",
-            url: "/dashboard/ganado/listado",
+            title: "Controles Sanitarios",
+            url: "/dashboard/animales/controles",
+          },
+          { title: "Vacunaciones", url: "/dashboard/animales/vacunaciones" },
+          { title: "Tratamientos", url: "/dashboard/animales/tratamientos" },
+        ],
+      },
+      {
+        title: "Lotes y Ubicaciones",
+        url: "/lotes-ubicaciones",
+        icon: MapPinHouse, // Reemplaza con tu icono
+        isActive: false,
+        items: [
+          { title: "Lotes", url: "/dashboard/lotes-ubicaciones/lotes" },
+          {
+            title: "Ubicaciones",
+            url: "/dashboard/lotes-ubicaciones/ubicaciones",
           },
           {
-            title: "Agregar",
-            url: "/dashboard/ganado/agregar",
-          },
-          {
-            title: "Proveedores",
-            url: "/dashboard/ganado/proveedores",
+            title: "Asignación",
+            url: "/dashboard/lotes-ubicaciones/asignacion",
           },
         ],
       },
       {
-        title: "Controles",
-        url: "/controles",
-        icon: CalendarCheck,
+        title: "Alimentación",
+        url: "/alimentacion",
+        icon: Wheat, // Reemplaza con tu icono
+        isActive: false,
         items: [
-          {
-            title: "Registro de controles",
-            url: "/dashboard/controles/registro",
-          },
-          {
-            title: "Reportes",
-            url: "/dashboard/controles/reportes",
-          },
+          { title: "Registro", url: "/dashboard/alimentacion/registro" },
+          { title: "Inventario", url: "/dashboard/alimentacion/inventario" }, //Posiblemente inventario de tipos de alimento
         ],
       },
       {
         title: "Ventas",
         url: "/ventas",
-        icon: DollarSign,
+        icon: Badge, // Reemplaza con tu icono
+        isActive: false,
         items: [
-          {
-            title: "Historial de ventas",
-            url: "/dashboard/ventas/historial",
-          },
-          {
-            title: "Nueva venta",
-            url: "/dashboard/ventas/nueva",
-          },
+          { title: "Registro", url: "/dashboard/ventas/registro" },
+          { title: "Clientes", url: "/dashboard/ventas/clientes" },
         ],
       },
       {
-        title: "Usuarios",
-        url: "/usuarios",
-        icon: Users,
+        title: "Proveedores",
+        url: "/proveedores",
+        icon: Handshake, // Reemplaza con tu icono
+        isActive: false,
+        items: [{ title: "Listado", url: "/dashboard/proveedores/listado" }],
+      },
+      {
+        title: "Administración",
+        url: "/administracion",
+        icon: UserRoundCog, // Reemplaza con tu icono
+        isActive: false,
         items: [
-          {
-            title: "Listado",
-            url: "/dashboard/usuarios/listado",
-          },
-          {
-            title: "Agregar",
-            url: "/dashboard/usuarios/agregar",
-          },
+          { title: "Usuarios", url: "/dashboard/administracion/usuarios" },
+          { title: "Catálogos", url: "/dashboard/administracion/catalogos" }, //Especies, Razas, Medicamentos, Vacunas, etc.
+          { title: "Reportes", url: "/dashboard/administracion/reportes" },
         ],
+      },
+      {
+        title: "Resumen",
+        url: "/resumen",
+        icon: LayoutDashboard, // Reemplaza con tu icono
+        isActive: false,
+        items: [{ title: "General", url: "/dashboard/resumen/general" }],
       },
     ],
     projects: [
