@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, ForeignKey, BigInteger
 from sqlalchemy.orm import relationship
 from app.database import Base
 import enum
@@ -7,7 +7,7 @@ from sqlalchemy.sql import func
 class Usuario(Base):
     __tablename__ = "usuarios"
 
-    usuario_id = Column(Integer, primary_key=True, index=True)
+    usuario_id = Column(BigInteger, primary_key=True, index=True)
     nombre = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, nullable=False)
     password_hash = Column(String(255), nullable=False)
