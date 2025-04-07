@@ -1,4 +1,3 @@
-// app/(dashboard)/usuarios/page.tsx
 "use client";
 
 import React, { useState } from "react";
@@ -30,6 +29,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 type Rol = {
   rol_id: number;
@@ -50,7 +52,7 @@ const mockRoles: Rol[] = [
   { rol_id: 3, nombre_rol: "Viewer" },
 ];
 
-const mockUsuarios: Usuario[] = [
+const initialUsuarios: Usuario[] = [
   {
     usuario_id: 1,
     nombre: "Juan Pérez",
@@ -68,8 +70,23 @@ const mockUsuarios: Usuario[] = [
 ];
 
 export default function UsuariosPage() {
-  const [usuarios, setUsuarios] = useState<Usuario[]>(mockUsuarios);
+  const [usuarios, setUsuarios] = useState<Usuario[]>(initialUsuarios);
   const [roles] = useState<Rol[]>(mockRoles);
+
+  const eliminarUsuario = (id: number) => {
+    setUsuarios((prev) => prev.filter((u) => u.usuario_id !== id));
+  };
+
+  const toggleEstado = (id: number) => {
+    setUsuarios((prev) =>
+      prev.map((u) => (u.usuario_id === id ? { ...u, activo: !u.activo } : u))
+    );
+  };
+
+  const agregarUsuario = (nuevo: Omit<Usuario, "usuario_id">) => {
+    const id = Math.max(...usuarios.map((u) => u.usuario_id)) + 1;
+    setUsuarios([...usuarios, { ...nuevo, usuario_id: id }]);
+  };
 
   const columns: ColumnDef<Usuario>[] = [
     {
@@ -98,52 +115,73 @@ export default function UsuariosPage() {
       id: "actions",
       header: "Acciones",
       cell: ({ row }) => (
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline">Editar Rol</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Editar Rol de {row.original.nombre}</DialogTitle>
-            </DialogHeader>
-            <Select
-              defaultValue={row.original.rol.rol_id.toString()}
-              onValueChange={(value) => {
-                const newRole = roles.find(
-                  (r) => r.rol_id.toString() === value
-                );
-                if (newRole) {
-                  const updated = usuarios.map((u) =>
-                    u.usuario_id === row.original.usuario_id
-                      ? { ...u, rol: newRole }
-                      : u
+        <div className="flex gap-2">
+          {/* Editar Rol */}
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline">Editar</Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Editar a {row.original.nombre}</DialogTitle>
+              </DialogHeader>
+              <Label>Rol</Label>
+              <Select
+                defaultValue={row.original.rol.rol_id.toString()}
+                onValueChange={(value) => {
+                  const newRole = roles.find(
+                    (r) => r.rol_id.toString() === value
                   );
-                  setUsuarios(updated);
-                }
-              }}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecciona un rol" />
-              </SelectTrigger>
-              <SelectContent>
-                {roles.map((rol) => (
-                  <SelectItem key={rol.rol_id} value={rol.rol_id.toString()}>
-                    {rol.nombre_rol}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </DialogContent>
-        </Dialog>
+                  if (newRole) {
+                    setUsuarios((prev) =>
+                      prev.map((u) =>
+                        u.usuario_id === row.original.usuario_id
+                          ? { ...u, rol: newRole }
+                          : u
+                      )
+                    );
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((rol) => (
+                    <SelectItem key={rol.rol_id} value={rol.rol_id.toString()}>
+                      {rol.nombre_rol}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              <div className="mt-4 flex items-center gap-2">
+                <Label>Activo</Label>
+                <Switch
+                  checked={row.original.activo}
+                  onCheckedChange={() => toggleEstado(row.original.usuario_id)}
+                />
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Eliminar */}
+          <Button
+            variant="destructive"
+            onClick={() => eliminarUsuario(row.original.usuario_id)}
+          >
+            Eliminar
+          </Button>
+        </div>
       ),
     },
   ];
 
   return (
     <div>
-      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+      <header className="flex h-16 items-center gap-2">
         <div className="flex items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
+          <SidebarTrigger />
           <Separator orientation="vertical" className="mr-2 h-4" />
           <Breadcrumb>
             <BreadcrumbList>
@@ -158,6 +196,56 @@ export default function UsuariosPage() {
           </Breadcrumb>
         </div>
       </header>
+
+      <div className="p-4 flex justify-end">
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button>Agregar Usuario</Button>
+          </DialogTrigger>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Nuevo Usuario</DialogTitle>
+            </DialogHeader>
+
+            <form
+              onSubmit={(e: any) => {
+                e.preventDefault();
+                const data = new FormData(e.target);
+                const nombre = data.get("nombre")?.toString() || "";
+                const email = data.get("email")?.toString() || "";
+                const rolId = data.get("rol")?.toString();
+                const rol = roles.find((r) => r.rol_id.toString() === rolId);
+                if (nombre && email && rol) {
+                  agregarUsuario({
+                    nombre,
+                    email,
+                    rol,
+                    activo: true,
+                  });
+                  e.target.reset();
+                }
+              }}
+              className="space-y-4"
+            >
+              <Input name="nombre" placeholder="Nombre" required />
+              <Input name="email" placeholder="Correo" required />
+              <Select name="rol" required>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un rol" />
+                </SelectTrigger>
+                <SelectContent>
+                  {roles.map((rol) => (
+                    <SelectItem key={rol.rol_id} value={rol.rol_id.toString()}>
+                      {rol.nombre_rol}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <Button type="submit">Crear</Button>
+            </form>
+          </DialogContent>
+        </Dialog>
+      </div>
 
       <div className="p-4">
         <DataTable columns={columns} data={usuarios} />
