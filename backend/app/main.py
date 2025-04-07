@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from app.routes import usuario, proveedor, rol_usuario, especie, raza, tipo_alimento, tipo_vacuna, medicamento, ubicacion, lote, cliente, animal, inventario_animal, movimientos_animal, controles_sanitarios
+from app.routes import usuario, proveedor, rol_usuario, especie, raza, tipo_alimento, tipo_vacuna, medicamento, ubicacion, lote, cliente, animal, inventario_animal, movimientos_animal, controles_sanitarios, vacunaciones, tratamientos_sanitarios, alimentaciones, ventas, ventas_detalle
 from app.database import engine, Base, initialize_data
 from fastapi.responses import JSONResponse
 from fastapi.exception_handlers import http_exception_handler
@@ -51,6 +51,11 @@ app.include_router(animal.router, prefix="/api", tags=["Animales"])
 app.include_router(inventario_animal.router, prefix="/api", tags=["Inventario Animal"])
 app.include_router(movimientos_animal.router, prefix="/api", tags=["Movimientos Animal"])
 app.include_router(controles_sanitarios.router, prefix="/api", tags=["Controles Sanitarios"])
+app.include_router(vacunaciones.router, prefix="/api", tags=["Vacunaciones"])
+app.include_router(tratamientos_sanitarios.router, prefix="/api", tags=["Tratamientos Sanitarios"])
+app.include_router(alimentaciones.router, prefix="/api", tags=["Alimentaciones"])
+app.include_router(ventas.router, prefix="/api", tags=["Ventas"]) #Incluimos el router de ventas.
+app.include_router(ventas_detalle.router, prefix="/api", tags=["Ventas Detalle"]) #Incluimos el router de ventas_detalle. 
  
 app.include_router(prediccion.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
 
