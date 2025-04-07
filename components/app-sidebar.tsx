@@ -139,6 +139,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           { title: "Usuarios", url: "/dashboard/administracion/usuarios" },
           { title: "Catálogos", url: "/dashboard/administracion/catalogos" }, //Especies, Razas, Medicamentos, Vacunas, etc.
           { title: "Reportes", url: "/dashboard/administracion/reportes" },
+          { title: "Roles", url: "/dashboard/administracion/roles" },
         ],
       },
       {
