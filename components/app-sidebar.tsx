@@ -111,16 +111,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
       {
-        title: "Alimentación",
-        url: "/alimentacion",
-        icon: Wheat, // Reemplaza con tu icono
-        isActive: false,
-        items: [
-          { title: "Registro", url: "/dashboard/alimentacion/registro" },
-          { title: "Inventario", url: "/dashboard/alimentacion/inventario" }, //Posiblemente inventario de tipos de alimento
-        ],
-      },
-      {
         title: "Ventas",
         url: "/ventas",
         icon: Badge, // Reemplaza con tu icono
@@ -131,11 +121,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         ],
       },
       {
-        title: "Proveedores",
-        url: "/proveedores",
+        title: "Proviciones",
+        url: "/proviciones",
         icon: Handshake, // Reemplaza con tu icono
         isActive: false,
-        items: [{ title: "Listado", url: "/dashboard/proveedores/listado" }],
+        items: [
+          { title: "Proveedores", url: "/dashboard/proviciones/proveedores" },
+          { title: "Alimentos", url: "/dashboard/proviciones/alimentos" },
+          { title: "Vacunas", url: "/dashboard/proviciones/vacunas" },
+          { title: "Medicamentos", url: "/dashboard/proviciones/medicamentos" },
+        ],
       },
       {
         title: "Administración",

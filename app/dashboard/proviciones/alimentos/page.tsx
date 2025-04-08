@@ -131,11 +131,11 @@ export default function ListaAlimentos() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">Alimentación </BreadcrumbLink>
+                <BreadcrumbLink href="#">Animales</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Registro de Alimentos</BreadcrumbPage>
+                <BreadcrumbPage>Alimentación</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -153,7 +153,7 @@ export default function ListaAlimentos() {
         )}
         <div>
           <header className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold">Lista de Alimentos</h1>
+            <h1 className="text-2xl font-bold">Tipos de Alimentos</h1>
             <Button onClick={() => setIsCreateDialogOpen(true)}>
               Crear Nuevo Alimento
             </Button>
