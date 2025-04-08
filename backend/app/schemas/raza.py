@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from app.schemas.especie import EspecieOut
 
 class RazaBase(BaseModel):
     especie_id: int
@@ -14,6 +15,7 @@ class RazaUpdate(BaseModel):
 
 class RazaOut(RazaBase):
     raza_id: int
+    especie: EspecieOut
 
     class Config:
         from_attributes = True

@@ -7,20 +7,22 @@ from app.models.raza import Raza
 from app.models.especie import Especie
 from app.schemas.raza import RazaCreate, RazaUpdate, RazaOut
 from typing import List
+from sqlalchemy.orm import selectinload
 
 router = APIRouter()
 
 # ✅ Obtener todas las razas
 @router.get("/razas/", response_model=List[RazaOut])
 async def get_razas(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Raza))
+    result = await db.execute(select(Raza).options(selectinload(Raza.especie))) #Importante incluir selectinload
     razas = result.scalars().all()
     return [RazaOut.from_orm(raza) for raza in razas]
 
 # ✅ Obtener una raza por ID
 @router.get("/razas/{raza_id}", response_model=RazaOut)
 async def get_raza(raza_id: int, db: AsyncSession = Depends(get_db)):
-    raza = await db.get(Raza, raza_id)
+    result = await db.execute(select(Raza).options(selectinload(Raza.especie)).where(Raza.raza_id == raza_id))
+    raza = result.scalars().first()
     if not raza:
         raise HTTPException(status_code=404, detail={"error": "Raza no encontrada"})
     return RazaOut.from_orm(raza)
