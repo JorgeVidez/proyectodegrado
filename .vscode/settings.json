@@ -1,0 +1,15 @@
+{
+    "cSpell.words": [
+        "cientifico",
+        "comun"
+    ],
+    "cSpell.customDictionaries": {
+        "custom-dictionary-workspace": {
+            "name": "custom-dictionary-workspace",
+            "path": "${workspaceFolder:proyectodegrado}/.cspell/custom-dictionary-workspace.txt",
+            "addWords": true,
+            "scope": "workspace"
+        }
+    },
+    "cSpell.enabled": false
+}
