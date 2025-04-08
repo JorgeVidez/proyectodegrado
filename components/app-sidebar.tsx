@@ -71,10 +71,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ],
     navMain: [
       {
+        title: "Resumen",
+        url: "/resumen",
+        icon: LayoutDashboard, // Reemplaza con tu icono
+        isActive: false,
+        items: [{ title: "General", url: "/dashboard/resumen/general" }],
+      },
+      {
         title: "Animales",
         url: "/animales",
         icon: Vegan, // Reemplaza con tu icono
-        isActive: true,
+        isActive: false,
         items: [
           { title: "Inventario", url: "/dashboard/animales/inventario" },
           { title: "Movimientos", url: "/dashboard/animales/movimientos" },
@@ -136,18 +143,12 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: UserRoundCog, // Reemplaza con tu icono
         isActive: false,
         items: [
-          { title: "Usuarios", url: "/dashboard/administracion/usuarios" },
-          { title: "Catálogos", url: "/dashboard/administracion/catalogos" }, //Especies, Razas, Medicamentos, Vacunas, etc.
           { title: "Reportes", url: "/dashboard/administracion/reportes" },
+          { title: "Usuarios", url: "/dashboard/administracion/usuarios" },
           { title: "Roles", url: "/dashboard/administracion/roles" },
+          { title: "Especies", url: "/dashboard/administracion/especies" },
+          { title: "Razas", url: "/dashboard/administracion/razas" },
         ],
-      },
-      {
-        title: "Resumen",
-        url: "/resumen",
-        icon: LayoutDashboard, // Reemplaza con tu icono
-        isActive: false,
-        items: [{ title: "General", url: "/dashboard/resumen/general" }],
       },
     ],
     projects: [
