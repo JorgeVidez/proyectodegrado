@@ -11,15 +11,10 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.config({
-    extends: [
-      "next",
-      "next/core-web-vitals",
-      "next/typescript",
-      "prettier",
-      "airbnb-base",
-      "airbnb-typescript/base",
-      "plugin:prettier/recommended",
-    ],
+    extends: ["next/core-web-vitals", "next/typescript", "prettier"],
+    rules: {
+      semi: ["error"],
+    },
   }),
   {
     parserOptions: {
