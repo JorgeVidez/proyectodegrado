@@ -25,9 +25,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 export default function Welcome() {
-  const { roles, loading, error, createRol, updateRol, deleteRol } =
+  const { roles, loading, error, createRol, updateRol, deleteRol, fetchRoles } =
     useRoles();
   const [newRolName, setNewRolName] = useState("");
   const [newRolDescription, setNewRolDescription] = useState("");
@@ -35,18 +36,27 @@ export default function Welcome() {
   const [updateRolId, setUpdateRolId] = useState<number | null>(null);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState<string | null>(null);
+  const [alertType, setAlertType] = useState<"success" | "error" | null>(null);
 
   const handleCreateRol = async () => {
     const newRol = { nombre_rol: newRolName, descripcion: newRolDescription };
     const createdRol = await createRol(newRol);
     if (createdRol) {
-      alert("Rol Creado");
+      setAlertMessage("Rol Creado");
+      setAlertType("success");
+      fetchRoles(); // Refresh the roles list
       setIsDialogOpen(false);
       setNewRolName("");
       setNewRolDescription("");
     } else {
-      alert("Error al crear el rol");
+      setAlertMessage("Error al crear el rol");
+      setAlertType("error");
     }
+    setTimeout(() => {
+      setAlertMessage(null);
+      setAlertType(null);
+    }, 3000);
   };
 
   const handleUpdateRol = async () => {
@@ -55,23 +65,35 @@ export default function Welcome() {
         descripcion: updateRolDescription,
       });
       if (updatedRol) {
-        alert("Rol Actualizado");
+        setAlertMessage("Rol Actualizado");
+        setAlertType("success");
         setIsEditDialogOpen(false);
         setUpdateRolId(null);
         setUpdateRolDescription("");
       } else {
-        alert("Error al actualizar el rol");
+        setAlertMessage("Error al actualizar el rol");
+        setAlertType("error");
       }
+      setTimeout(() => {
+        setAlertMessage(null);
+        setAlertType(null);
+      }, 3000);
     }
   };
 
   const handleDeleteRol = async (id: number) => {
     const deleted = await deleteRol(id);
     if (deleted) {
-      alert("Rol Eliminado");
+      setAlertMessage("Rol Eliminado");
+      setAlertType("success");
     } else {
-      alert("Error al eliminar el rol");
+      setAlertMessage("Error al eliminar el rol");
+      setAlertType("error");
     }
+    setTimeout(() => {
+      setAlertMessage(null);
+      setAlertType(null);
+    }, 3000);
   };
 
   if (loading) {
@@ -102,6 +124,14 @@ export default function Welcome() {
         </div>
       </header>
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        {alertMessage && alertType && (
+          <Alert variant={alertType === "success" ? "default" : "destructive"}>
+            <AlertTitle>
+              {alertType === "success" ? "Éxito" : "Error"}
+            </AlertTitle>
+            <AlertDescription>{alertMessage}</AlertDescription>
+          </Alert>
+        )}
         <div className=" gap-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {roles &&
             roles.map((rol) => (
@@ -118,11 +148,15 @@ export default function Welcome() {
                     >
                       Eliminar
                     </Button>
-                    <Button onClick={() => {
-                      setUpdateRolId(rol.rol_id);
-                      setUpdateRolDescription(rol.descripcion || '');
-                      setIsEditDialogOpen(true);
-                    }}>Editar</Button>
+                    <Button
+                      onClick={() => {
+                        setUpdateRolId(rol.rol_id);
+                        setUpdateRolDescription(rol.descripcion || "");
+                        setIsEditDialogOpen(true);
+                      }}
+                    >
+                      Editar
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
