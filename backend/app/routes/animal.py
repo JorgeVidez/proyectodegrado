@@ -5,8 +5,9 @@ from sqlalchemy.exc import IntegrityError
 from typing import List
 from app.database import get_db
 from app.models.animal import Animal, EstadoAnimal
-from app.schemas.animal import AnimalCreate, AnimalOut, AnimalUpdate
+from app.schemas.animal import AnimalCreate, AnimalOut, AnimalUpdate, EspecieOut, RazaOut, AnimalSimpleOut
 from pydantic import ValidationError
+from sqlalchemy.orm import selectinload
 
 router = APIRouter()
 
@@ -17,7 +18,28 @@ async def create_animal(data: AnimalCreate, db: AsyncSession = Depends(get_db)):
         db.add(animal)
         await db.commit()
         await db.refresh(animal)
-        return animal
+
+        result = await db.execute(select(Animal).options(
+            selectinload(Animal.especie),
+            selectinload(Animal.raza),
+            selectinload(Animal.madre),
+            selectinload(Animal.padre)
+        ).where(Animal.animal_id == animal.animal_id))
+        animal = result.scalars().first()
+
+        especie_out = EspecieOut.from_orm(animal.especie)
+        raza_out = RazaOut.from_orm(animal.raza)
+        madre_out = AnimalSimpleOut.from_orm(animal.madre) if animal.madre else None
+        padre_out = AnimalSimpleOut.from_orm(animal.padre) if animal.padre else None
+
+        animal_out = AnimalOut.from_orm(animal)
+        animal_out.especie = especie_out
+        animal_out.raza = raza_out
+        animal_out.madre = madre_out
+        animal_out.padre = padre_out
+
+        return animal_out
+
     except ValidationError as e:
         error_details = e.errors()
         for error in error_details:
@@ -37,15 +59,51 @@ async def create_animal(data: AnimalCreate, db: AsyncSession = Depends(get_db)):
 
 @router.get("/animal/", response_model=List[AnimalOut])
 async def get_animales(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Animal))
-    return result.scalars().all()
+    result = await db.execute(select(Animal).options(
+        selectinload(Animal.especie),
+        selectinload(Animal.raza),
+        selectinload(Animal.madre),
+        selectinload(Animal.padre)
+    ))
+    animales = result.scalars().all()
+    animales_out = []
+    for animal in animales:
+        especie_out = EspecieOut.from_orm(animal.especie)
+        raza_out = RazaOut.from_orm(animal.raza)
+        madre_out = AnimalSimpleOut.from_orm(animal.madre) if animal.madre else None
+        padre_out = AnimalSimpleOut.from_orm(animal.padre) if animal.padre else None
+
+        animal_out = AnimalOut.from_orm(animal)
+        animal_out.especie = especie_out
+        animal_out.raza = raza_out
+        animal_out.madre = madre_out
+        animal_out.padre = padre_out
+        animales_out.append(animal_out)
+    return animales_out
 
 @router.get("/animal/{animal_id}", response_model=AnimalOut)
 async def get_animal(animal_id: int, db: AsyncSession = Depends(get_db)):
-    animal = await db.get(Animal, animal_id)
+    result = await db.execute(select(Animal).options(
+        selectinload(Animal.especie),
+        selectinload(Animal.raza),
+        selectinload(Animal.madre),
+        selectinload(Animal.padre)
+    ).where(Animal.animal_id == animal_id))
+    animal = result.scalars().first()
     if not animal:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "Animal no encontrado"})
-    return animal
+
+    especie_out = EspecieOut.from_orm(animal.especie)
+    raza_out = RazaOut.from_orm(animal.raza)
+    madre_out = AnimalSimpleOut.from_orm(animal.madre) if animal.madre else None
+    padre_out = AnimalSimpleOut.from_orm(animal.padre) if animal.padre else None
+
+    animal_out = AnimalOut.from_orm(animal)
+    animal_out.especie = especie_out
+    animal_out.raza = raza_out
+    animal_out.madre = madre_out
+    animal_out.padre = padre_out
+    return animal_out
 
 @router.put("/animal/{animal_id}", response_model=AnimalOut)
 async def update_animal(animal_id: int, animal_data: AnimalUpdate, db: AsyncSession = Depends(get_db)):
@@ -60,7 +118,27 @@ async def update_animal(animal_id: int, animal_data: AnimalUpdate, db: AsyncSess
     try:
         await db.commit()
         await db.refresh(animal)
-        return animal
+
+        result = await db.execute(select(Animal).options(
+            selectinload(Animal.especie),
+            selectinload(Animal.raza),
+            selectinload(Animal.madre),
+            selectinload(Animal.padre)
+        ).where(Animal.animal_id == animal.animal_id))
+        animal = result.scalars().first()
+
+        especie_out = EspecieOut.from_orm(animal.especie)
+        raza_out = RazaOut.from_orm(animal.raza)
+        madre_out = AnimalSimpleOut.from_orm(animal.madre) if animal.madre else None
+        padre_out = AnimalSimpleOut.from_orm(animal.padre) if animal.padre else None
+
+        animal_out = AnimalOut.from_orm(animal)
+        animal_out.especie = especie_out
+        animal_out.raza = raza_out
+        animal_out.madre = madre_out
+        animal_out.padre = padre_out
+        return animal_out
+
     except ValidationError as e:
         error_details = e.errors()
         for error in error_details:
