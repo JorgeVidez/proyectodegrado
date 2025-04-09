@@ -7,20 +7,21 @@ from app.models.tipo_vacuna import TipoVacuna
 from app.models.especie import Especie
 from app.schemas.tipo_vacuna import TipoVacunaCreate, TipoVacunaUpdate, TipoVacunaOut
 from typing import List
+from sqlalchemy.orm import selectinload
 
 router = APIRouter()
 
 # ✅ Obtener todos los tipos de vacuna
 @router.get("/tipos_vacuna/", response_model=List[TipoVacunaOut])
 async def get_tipos_vacuna(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(TipoVacuna))
+    result = await db.execute(select(TipoVacuna).options(selectinload(TipoVacuna.especie_destino)))
     tipos_vacuna = result.scalars().all()
     return [TipoVacunaOut.from_orm(tipo_vacuna) for tipo_vacuna in tipos_vacuna]
 
 # ✅ Obtener un tipo de vacuna por ID
 @router.get("/tipos_vacuna/{tipo_vacuna_id}", response_model=TipoVacunaOut)
 async def get_tipo_vacuna(tipo_vacuna_id: int, db: AsyncSession = Depends(get_db)):
-    tipo_vacuna = await db.get(TipoVacuna, tipo_vacuna_id)
+    tipo_vacuna = await db.get(TipoVacuna, tipo_vacuna_id, options=[selectinload(TipoVacuna.especie_destino)])
     if not tipo_vacuna:
         raise HTTPException(status_code=404, detail={"error": "Tipo de vacuna no encontrado"})
     return TipoVacunaOut.from_orm(tipo_vacuna)

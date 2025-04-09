@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from typing import Optional
+from app.schemas.especie import EspecieOut
 
 class TipoVacunaBase(BaseModel):
     nombre_vacuna: str
@@ -18,6 +19,7 @@ class TipoVacunaUpdate(BaseModel):
 
 class TipoVacunaOut(TipoVacunaBase):
     tipo_vacuna_id: int
+    especie_destino: Optional[EspecieOut]
 
     class Config:
         from_attributes = True
