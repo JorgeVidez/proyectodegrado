@@ -83,6 +83,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: Vegan, // Reemplaza con tu icono
         isActive: false,
         items: [
+          { title: "Registro", url: "/dashboard/animales/registro" },
           { title: "Inventario", url: "/dashboard/animales/inventario" },
           { title: "Movimientos", url: "/dashboard/animales/movimientos" },
           {
