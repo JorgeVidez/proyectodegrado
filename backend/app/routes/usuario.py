@@ -24,37 +24,34 @@ SECRET_KEY = "1924828c313d833c45c558745655220e8a99fd3f4651bda9b2a1d19773eab4bf3c
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
-# Configuración de logging
+# Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ✅ Generar token con email y rol
+
 def generate_token(email: str, rol: str):
-    access_token_expires = datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
-    payload = {
-        "sub": email,
-        "rol": rol,
-        "exp": datetime.datetime.utcnow() + access_token_expires
-    }
+    """Genera un token JWT."""
+    expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    payload = {"sub": email, "rol": rol, "exp": expire}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
-# ✅ Verificar contraseña hasheada
+
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
 
-# ✅ Hashear contraseña antes de almacenarla
+
 def hash_password(password):
     return pwd_context.hash(password)
 
-# ✅ Obtener usuario actual a partir del token
-async def get_current_user(token: str = Security(oauth2_scheme), db: AsyncSession = Depends(get_db)):
+
+async def get_current_user(token: str = Security(oauth2_scheme), db: AsyncSession = Depends(get_db)) -> Usuario:
+    """Valida el token JWT y retorna el usuario actual."""
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         email = payload.get("sub")
-        rol = payload.get("rol")
 
-        if not email or not rol:
-            raise HTTPException(status_code=401, detail={"error": "Token inválido"})
+        if not email:
+            raise HTTPException(status_code=401, detail="Token inválido")
 
         result = await db.execute(
             select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.email == email)
@@ -62,90 +59,94 @@ async def get_current_user(token: str = Security(oauth2_scheme), db: AsyncSessio
         user = result.scalars().first()
 
         if not user:
-            raise HTTPException(status_code=401, detail={"error": "Usuario no encontrado"})
-
-        if user.rol.nombre_rol != rol:
-            raise HTTPException(status_code=401, detail={"error": "Token inválido"})
+            raise HTTPException(status_code=401, detail="Usuario no encontrado")
 
         return user
+
     except jwt.ExpiredSignatureError:
-        raise HTTPException(status_code=401, detail={"error": "Token expirado"})
+        raise HTTPException(status_code=401, detail="Token expirado")
     except jwt.InvalidTokenError:
-        raise HTTPException(status_code=401, detail={"error": "Token inválido"})
+        raise HTTPException(status_code=401, detail="Token inválido")
 
 
-# ✅ Obtener información del usuario autenticado
 @router.get("/usuarios/me", response_model=UsuarioMe)
 async def get_me(current_user: Usuario = Depends(get_current_user)):
+    """Retorna el usuario autenticado."""
     return current_user
 
 
-# ✅ Obtener todos los usuarios (Solo Administradores)
 @router.get("/usuarios/", response_model=List[UsuarioOut])
-async def get_usuarios(db: AsyncSession = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    if current_user.rol.nombre_rol != "administrador":
-        raise HTTPException(status_code=403, detail={"error": "No tienes permisos para ver usuarios"})
-
-    result = await db.execute(
-        select(Usuario).options(selectinload(Usuario.rol))
-    )
-    usuarios = result.scalars().all()
-    return usuarios
+async def get_usuarios(
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """Obtiene la lista de todos los usuarios (requiere autenticación)."""
+    result = await db.execute(select(Usuario).options(selectinload(Usuario.rol)))
+    return result.scalars().all()
 
 
-# ✅ Obtener un usuario por ID
 @router.get("/usuarios/{usuario_id}", response_model=UsuarioOut)
-async def get_usuario(usuario_id: int, db: AsyncSession = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+async def get_usuario(
+    usuario_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """Obtiene un usuario por ID."""
     result = await db.execute(
         select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.usuario_id == usuario_id)
     )
     usuario = result.scalars().first()
 
     if not usuario:
-        raise HTTPException(status_code=404, detail={"error": "Usuario no encontrado"})
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     return usuario
 
 
-# ✅ Crear un nuevo usuario
 @router.post("/usuarios/", response_model=UsuarioOut)
-async def create_usuario(data: UsuarioCreate, db: AsyncSession = Depends(get_db)):
+async def create_usuario(
+    data: UsuarioCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """Crea un nuevo usuario (requiere autenticación)."""
     result = await db.execute(select(Usuario).where(Usuario.email == data.email))
     if result.scalars().first():
-        raise HTTPException(status_code=400, detail={"error": "El correo ya está registrado"})
+        raise HTTPException(status_code=400, detail="El correo ya está registrado")
 
-    usuario = Usuario(
+    nuevo_usuario = Usuario(
         nombre=data.nombre,
         email=data.email,
         rol_id=data.rol_id,
         password_hash=hash_password(data.password),
         activo=data.activo if data.activo is not None else True,
     )
-    db.add(usuario)
+    db.add(nuevo_usuario)
     await db.commit()
-    await db.refresh(usuario)
-    return usuario
+    await db.refresh(nuevo_usuario)
+    return nuevo_usuario
 
 
-# ✅ Actualizar usuario
 @router.put("/usuarios/{usuario_id}", response_model=UsuarioOut)
-async def update_usuario(usuario_id: int, usuario_data: UsuarioUpdate, db: AsyncSession = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
+async def update_usuario(
+    usuario_id: int,
+    usuario_data: UsuarioUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """Actualiza un usuario por ID (requiere autenticación)."""
     result = await db.execute(
         select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.usuario_id == usuario_id)
     )
     usuario = result.scalars().first()
 
     if not usuario:
-        raise HTTPException(status_code=404, detail={"error": "Usuario no encontrado"})
-
-    if current_user.rol.nombre_rol != "administrador" and current_user.usuario_id != usuario.usuario_id:
-        raise HTTPException(status_code=403, detail={"error": "No tienes permisos para actualizar este usuario"})
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     update_data = usuario_data.model_dump(exclude_unset=True)
 
     if "password" in update_data:
-        update_data["password_hash"] = hash_password(update_data["password"])
-        del update_data["password"]
+        update_data["password_hash"] = hash_password(update_data.pop("password"))
 
     for key, value in update_data.items():
         setattr(usuario, key, value)
@@ -155,32 +156,32 @@ async def update_usuario(usuario_id: int, usuario_data: UsuarioUpdate, db: Async
     return usuario
 
 
-# ✅ Eliminar usuario (Solo Administradores)
 @router.delete("/usuarios/{usuario_id}")
-async def delete_usuario(usuario_id: int, db: AsyncSession = Depends(get_db), current_user: Usuario = Depends(get_current_user)):
-    if current_user.rol.nombre_rol != "administrador":
-        raise HTTPException(status_code=403, detail={"error": "No tienes permisos para eliminar usuarios"})
-
+async def delete_usuario(
+    usuario_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: Usuario = Depends(get_current_user)
+):
+    """Elimina un usuario por ID (requiere autenticación)."""
     usuario = await db.get(Usuario, usuario_id)
     if not usuario:
-        raise HTTPException(status_code=404, detail={"error": "Usuario no encontrado"})
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
 
     await db.delete(usuario)
     await db.commit()
     return {"message": "Usuario eliminado correctamente"}
 
 
-# ✅ Login y generación de token
 @router.post("/login")
 async def login(data: LoginSchema, db: AsyncSession = Depends(get_db)):
+    """Autenticación y generación de token JWT."""
     result = await db.execute(
         select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.email == data.email)
     )
     usuario = result.scalars().first()
 
     if not usuario or not verify_password(data.password, usuario.password_hash):
-        raise HTTPException(status_code=400, detail={"error": "Credenciales incorrectas"})
+        raise HTTPException(status_code=400, detail="Credenciales incorrectas")
 
-    rol_name = usuario.rol.nombre_rol
-
-    return {"access_token": generate_token(usuario.email, rol_name), "token_type": "bearer"}
+    token = generate_token(usuario.email, usuario.rol.nombre_rol)
+    return {"access_token": token, "token_type": "bearer"}
