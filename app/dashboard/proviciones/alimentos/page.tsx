@@ -131,11 +131,11 @@ export default function ListaAlimentos() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">Animales</BreadcrumbLink>
+                <BreadcrumbLink href="#">Proviciones</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Alimentación</BreadcrumbPage>
+                <BreadcrumbPage>Tipos de Alimentos</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
