@@ -126,7 +126,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: Handshake, // Reemplaza con tu icono
         isActive: false,
         items: [
-          { title: "Proveedores", url: "/dashboard/proviciones/proveedores" },
           { title: "Alimentos", url: "/dashboard/proviciones/alimentos" },
           { title: "Vacunas", url: "/dashboard/proviciones/vacunas" },
           { title: "Medicamentos", url: "/dashboard/proviciones/medicamentos" },
@@ -143,6 +142,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           { title: "Roles", url: "/dashboard/administracion/roles" },
           { title: "Especies", url: "/dashboard/administracion/especies" },
           { title: "Razas", url: "/dashboard/administracion/razas" },
+          {
+            title: "Proveedores",
+            url: "/dashboard/administracion/proveedores",
+          },
         ],
       },
     ],

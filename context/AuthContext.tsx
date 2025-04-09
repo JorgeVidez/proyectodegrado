@@ -6,11 +6,19 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from "react";
-import { useUsuariosApi } from "../hooks/useUsuariosApi";
+import axios, { AxiosInstance } from "axios";
 import { useRouter } from "next/navigation";
 
-type Rol = "Administrador" | "Operador" | "Veterinario" | string;
+const API_BASE_URL = "http://localhost:8000/api";
+const TOKEN_KEY = "authToken";
+
+interface RolUsuario {
+  rol_id: number;
+  nombre_rol: string;
+  descripcion: string | null;
+}
 
 type UsuarioOut = {
   usuario_id: number;
@@ -19,137 +27,241 @@ type UsuarioOut = {
   activo: boolean;
   fecha_creacion: string;
   fecha_actualizacion: string | null;
-  rol: {
-    rol_id: number;
-    nombre_rol: Rol;
-    descripcion?: string;
-  };
+  rol: RolUsuario;
+};
+
+type UsuarioCreate = {
+  nombre: string;
+  email: string;
+  password: string;
+  rol_id: number;
+  activo?: boolean; // 'activo' es opcional
 };
 
 type AuthContextType = {
   user: UsuarioOut | null;
-  token: string | null;
-  role: Rol | null;
+  role: string | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   logout: () => void;
   hasPermission: (path: string) => boolean;
-  fetchUser: () => Promise<void>;
+  // Operaciones CRUD
+  getUsuarios: () => Promise<UsuarioOut[] | null>;
+  getUsuarioPorId: (id: number) => Promise<UsuarioOut | null>;
+  crearUsuario: (data: any) => Promise<UsuarioOut | null>;
+  actualizarUsuario: (id: number, data: any) => Promise<UsuarioOut | null>;
+  eliminarUsuario: (id: number) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType>({} as AuthContextType);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<UsuarioOut | null>(null);
-  const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-
+  const initialLoad = useRef(true);
   const router = useRouter();
-  const usuariosApi = useUsuariosApi(); // Inicializamos sin token
 
-  // Función para actualizar el token en la instancia de axios
-  const updateApiToken = useCallback(
+  // Instancia de axios con interceptor
+  const api = useRef<AxiosInstance>(
+    axios.create({
+      baseURL: API_BASE_URL,
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+  ).current;
+
+  // Actualizar token en axios y localStorage
+  const updateToken = useCallback(
     (newToken: string | null) => {
-      usuariosApi.updateToken(newToken || null);
+      if (newToken) {
+        localStorage.setItem(TOKEN_KEY, newToken);
+        api.defaults.headers.common["Authorization"] = `Bearer ${newToken}`;
+      } else {
+        localStorage.removeItem(TOKEN_KEY);
+        delete api.defaults.headers.common["Authorization"];
+      }
     },
-    [usuariosApi]
+    [api]
   );
 
   const logout = useCallback(() => {
     setUser(null);
-    setToken(null);
-    updateApiToken(null);
-    localStorage.removeItem("token");
+    updateToken(null);
     router.push("/login");
-  }, [router, updateApiToken]);
+  }, [router, updateToken]);
 
-  // Función para obtener los datos del usuario actual
+  // Configurar interceptores
+  useEffect(() => {
+    const requestInterceptor = api.interceptors.request.use((config) => {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    });
+
+    const responseInterceptor = api.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          logout();
+          router.push("/login");
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      api.interceptors.request.eject(requestInterceptor);
+      api.interceptors.response.eject(responseInterceptor);
+    };
+  }, [api, logout, router]);
+
   const fetchUser = useCallback(async () => {
-    if (!token) return;
-
     try {
       setLoading(true);
-      const userData = await usuariosApi.getUsuarioActual();
-      if (userData === null) {
-        console.error("Usuario no encontrado o no autorizado");
-        logout(); // Limpia todo en caso de error
-        router.push("/login"); // Redirigir a login si no se encuentra el usuario
-      }
-      setUser(userData || null);
-    } catch (err) {
-      console.error("Error obteniendo usuario:", err);
-      logout(); // Limpia todo en caso de error
+      const response = await api.get<UsuarioOut>("/usuarios/me");
+      setUser(response.data);
+      return response.data;
+    } catch (error) {
+      logout();
+      return null;
     } finally {
       setLoading(false);
     }
-  }, [token]); // Solo depende de token
+  }, [api, logout]);
 
   const login = async (email: string, password: string) => {
     try {
       setLoading(true);
-      const res = await usuariosApi.login({ email, password });
+      const response = await api.post<{ access_token: string }>("/login", {
+        email,
+        password,
+      });
 
-      if (!res?.access_token) throw new Error("Token no recibido");
-
-      // Actualizar todo sincrónicamente
-      localStorage.setItem("token", res.access_token);
-      updateApiToken(res.access_token);
-      setToken(res.access_token); // Último en actualizarse
-
+      updateToken(response.data.access_token);
       await fetchUser();
-
       return true;
-    } catch (err) {
-      console.error("Error en login:", err);
-      logout();
+    } catch (error) {
+      console.error("Login failed:", error);
       return false;
     } finally {
       setLoading(false);
     }
   };
 
-  const role = user?.rol?.nombre_rol || null;
-
-  const permisosPorRol: Record<string, string[]> = {
-    Administrador: ["/admin", "/operador", "/veterinario", "/dashboard"],
-    Operador: ["/operador", "/dashboard"],
-    Veterinario: ["/veterinario", "/dashboard"],
+  // Operaciones CRUD
+  const getUsuarios = async () => {
+    try {
+      const response = await api.get<UsuarioOut[]>("/usuarios");
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      return null;
+    }
   };
+
+  const getUsuarioPorId = async (id: number) => {
+    try {
+      const response = await api.get<UsuarioOut>(`/usuarios/${id}`);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      return null;
+    }
+  };
+
+  const crearUsuario = async (data: UsuarioCreate) => {
+    try {
+      const response = await api.post<UsuarioOut>("/usuarios", data);
+      return response.data;
+    } catch (error: any) {
+      if (axios.isAxiosError(error)) {
+        console.error(
+          "Error creating user:",
+          error.response?.data || error.message
+        );
+        return null;
+      } else {
+        console.error("An unexpected error occurred:", error);
+        return null;
+      }
+    }
+  };
+
+  const actualizarUsuario = async (id: number, data: any) => {
+    try {
+      const response = await api.put<UsuarioOut>(`/usuarios/${id}`, data);
+      return response.data;
+    } catch (error) {
+      console.error("Error updating user:", error);
+      return null;
+    }
+  };
+
+  const eliminarUsuario = async (id: number) => {
+    try {
+      const response = await api.delete(`/usuarios/${id}`);
+      if (response.status === 204) {
+        console.log("User deleted successfully");
+      }
+      return response.data;
+    } catch (error) {
+      console.error("Error deleting user:", error);
+    }
+  };
+
+  // Inicialización
+  useEffect(() => {
+    const initializeAuth = async () => {
+      const token = localStorage.getItem(TOKEN_KEY);
+      if (token) {
+        updateToken(token);
+        await fetchUser();
+      }
+      setLoading(false);
+    };
+
+    if (initialLoad.current) {
+      initialLoad.current = false;
+      initializeAuth();
+    }
+  }, [fetchUser, updateToken]);
+
+  const role = user?.rol?.nombre_rol || null;
 
   const hasPermission = (path: string): boolean => {
     if (!role) return false;
+    const permisosPorRol: Record<string, string[]> = {
+      Administrador: [
+        "/admin",
+        "/operador",
+        "/veterinario",
+        "/dashboard",
+        "/admin/usuarios",
+      ],
+      Operador: ["/operador", "/dashboard"],
+      Veterinario: ["/veterinario", "/dashboard"],
+    };
     return permisosPorRol[role]?.includes(path) ?? false;
   };
-
-  // Efecto para cargar el token inicial
-  useEffect(() => {
-    const storedToken = localStorage.getItem("token");
-    if (storedToken) {
-      updateApiToken(storedToken);
-      setToken(storedToken); // Dispara el efecto secundario automáticamente
-    } else {
-      setLoading(false);
-    }
-  }, []); // Sin dependencias
-
-  // Efecto para cargar los datos del usuario cuando cambia el token
-  useEffect(() => {
-    if (token) {
-      fetchUser();
-    }
-  }, [token]); // Eliminar fetchUser de las dependencias
 
   return (
     <AuthContext.Provider
       value={{
         user,
-        token,
-        login,
-        logout,
         role,
         loading,
+        login,
+        logout,
         hasPermission,
-        fetchUser,
+        // Operaciones CRUD
+        getUsuarios,
+        getUsuarioPorId,
+        crearUsuario,
+        actualizarUsuario,
+        eliminarUsuario,
       }}
     >
       {children}
