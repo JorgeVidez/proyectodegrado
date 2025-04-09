@@ -138,22 +138,22 @@ export default function ListaEspecies() {
         {alertMessage && alertType && (
           <Alert variant={alertType === "success" ? "default" : "destructive"}>
             {alertType === "error" && <div className="h-4 w-4" />}
-            <AlertTitle>{alertType === "success" ? "Éxito" : "Error"}</AlertTitle>
+            <AlertTitle>
+              {alertType === "success" ? "Éxito" : "Error"}
+            </AlertTitle>
             <AlertDescription>{alertMessage}</AlertDescription>
           </Alert>
         )}
         <div>
-          <header className="flex items-center justify-between"><h1 className="text-2xl font-bold">Lista de Especies</h1>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>Crear Nueva Especie
-          </Button>
-
+          <header className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">Lista de Especies</h1>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              Crear Nueva Especie
+            </Button>
           </header>
-            
-          
-          
+
           <Separator className="my-4" />
-          
-        
+
           <Table>
             <TableHeader>
               <TableRow>
@@ -188,7 +188,7 @@ export default function ListaEspecies() {
                       className=""
                       onClick={() => handleDeleteEspecie(e.especie_id)}
                     >
-                      <Trash2>  </Trash2>
+                      <Trash2> </Trash2>
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -196,13 +196,14 @@ export default function ListaEspecies() {
             </TableBody>
           </Table>
         </div>
-        
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Crear Nueva Especie</DialogTitle>
-              <DialogDescription>Ingresa los detalles de la nueva especie.</DialogDescription>
+              <DialogDescription>
+                Ingresa los detalles de la nueva especie.
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
@@ -238,7 +239,9 @@ export default function ListaEspecies() {
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Editar Especie</DialogTitle>
-              <DialogDescription>Actualiza los detalles de la especie.</DialogDescription>
+              <DialogDescription>
+                Actualiza los detalles de la especie.
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">

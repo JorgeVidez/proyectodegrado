@@ -1,7 +1,6 @@
 "use client";
 
-import { useRazas } from "@/hooks/useRazas";
-import { useEspecies } from "@/hooks/useEspecies";
+import { useRazas } from "@/hooks/useRazas"; 
 import { useEffect, useState } from "react";
 import React from "react";
 import {
