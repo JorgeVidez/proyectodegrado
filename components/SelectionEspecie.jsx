@@ -12,6 +12,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
+ 
+
 export function SelectionEspecie({ value, onChange }) {
   const { especies, isLoading, error } = useEspecies();
   const [selectedValue, setSelectedValue] = useState(value || "all"); // Usamos "all" como valor inicial
