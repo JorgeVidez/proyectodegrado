@@ -92,6 +92,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           },
           { title: "Vacunaciones", url: "/dashboard/animales/vacunaciones" },
           { title: "Tratamientos", url: "/dashboard/animales/tratamientos" },
+          { title: "Alimentación", url: "/dashboard/animales/alimentacion" },
         ],
       },
       {
@@ -118,6 +119,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         isActive: false,
         items: [
           { title: "Registro", url: "/dashboard/ventas/registro" },
+          { title: "Detalles", url: "/dashboard/ventas/detalles" },
           { title: "Clientes", url: "/dashboard/ventas/clientes" },
         ],
       },
