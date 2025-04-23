@@ -23,6 +23,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Component } from "@/components/LineChartMultiple";
 
 export default function Prediccion() {
   const [fecha, setFecha] = useState<Date>(new Date("2025-02-01"));
@@ -37,10 +38,11 @@ export default function Prediccion() {
 
     try {
       const response = await axios.post(
-        `${process.env.NEXT_PUBLIC_API_BASE_URL}/predecir`,
-        { fecha: format(fecha, "yyyy-MM-dd") }
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/predict`,
+        { date: format(fecha, "yyyy-MM-dd") }
       );
-      setPrediccion(response.data.ganado_faenado);
+      console.log("Predicción:", response.data);
+      setPrediccion(response.data.prediction);
     } catch (err) {
       setError("Error al obtener la predicción. Inténtalo de nuevo.");
       console.error("Error al hacer la predicción:", err);
@@ -64,7 +66,9 @@ export default function Prediccion() {
           </Breadcrumb>
         </div>
       </header>
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0 items-center">
+      <div className=" p-4">
+        <Component />
+        <Separator className=" w-full m-4" />
         <Card className="w-full max-w-md">
           <CardHeader>
             <CardTitle>Selecciona una Fecha</CardTitle>

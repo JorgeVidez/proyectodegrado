@@ -37,8 +37,10 @@ import { Pencil, Trash2 } from "lucide-react";
 import { AnimalCreate, AnimalUpdate, AnimalOut, EstadoAnimal } from "@/types/animal"; // Importa los tipos de animales
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AnimalCombobox } from "@/components/AnimalCombobox";
+import { EspecieCombobox } from "@/components/EspecieCombobox";
 
-export default function ListaAnimalesPage() { // Renombrar el componente
+export default function ListaAnimalesPage() {
+  // Renombrar el componente
   const { animales, isLoading, error, create, update, remove } = useAnimales();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -47,22 +49,35 @@ export default function ListaAnimalesPage() { // Renombrar el componente
   const [newEspecieId, setNewEspecieId] = useState<number>(0);
   const [newRazaId, setNewRazaId] = useState<number>(0);
   const [newSexo, setNewSexo] = useState<string>("M");
-  const [newFechaNacimiento, setNewFechaNacimiento] = useState<string | undefined>(undefined);
+  const [newFechaNacimiento, setNewFechaNacimiento] = useState<
+    string | undefined
+  >(undefined);
   const [newMadreId, setNewMadreId] = useState<number | undefined>(undefined);
   const [newPadreId, setNewPadreId] = useState<number | undefined>(undefined);
-  const [newEstadoActual, setNewEstadoActual] = useState<EstadoAnimal>(EstadoAnimal.Activo);
-  const [newObservacionesGenerales, setNewObservacionesGenerales] = useState<string | undefined>(undefined);
+  const [newEstadoActual, setNewEstadoActual] = useState<EstadoAnimal>(
+    EstadoAnimal.Activo
+  );
+  const [newObservacionesGenerales, setNewObservacionesGenerales] = useState<
+    string | undefined
+  >(undefined);
   const [editAnimalId, setEditAnimalId] = useState<number | null>(null);
   const [editNumeroTrazabilidad, setEditNumeroTrazabilidad] = useState("");
-  const [editNombreIdentificatorio, setEditNombreIdentificatorio] = useState("");
+  const [editNombreIdentificatorio, setEditNombreIdentificatorio] =
+    useState("");
   const [editEspecieId, setEditEspecieId] = useState<number>(0);
   const [editRazaId, setEditRazaId] = useState<number>(0);
   const [editSexo, setEditSexo] = useState<string>("M");
-  const [editFechaNacimiento, setEditFechaNacimiento] = useState<string | undefined>(undefined);
+  const [editFechaNacimiento, setEditFechaNacimiento] = useState<
+    string | undefined
+  >(undefined);
   const [editMadreId, setEditMadreId] = useState<number | undefined>(undefined);
   const [editPadreId, setEditPadreId] = useState<number | undefined>(undefined);
-  const [editEstadoActual, setEditEstadoActual] = useState<EstadoAnimal>(EstadoAnimal.Activo);
-  const [editObservacionesGenerales, setEditObservacionesGenerales] = useState<string | undefined>(undefined);
+  const [editEstadoActual, setEditEstadoActual] = useState<EstadoAnimal>(
+    EstadoAnimal.Activo
+  );
+  const [editObservacionesGenerales, setEditObservacionesGenerales] = useState<
+    string | undefined
+  >(undefined);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [alertType, setAlertType] = useState<"success" | "error" | null>(null);
 
@@ -270,16 +285,19 @@ export default function ListaAnimalesPage() { // Renombrar el componente
         </div>
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className=" max-w-sm  sm:max-w-[600px] md:max-w-[750px] lg:max-w-[900px] ">
             <DialogHeader>
               <DialogTitle>Crear Nuevo Animal</DialogTitle>
               <DialogDescription>
                 Ingresa los detalles del nuevo animal.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="numeroTrazabilidad" className="text-right">
+                <Label
+                  htmlFor="numeroTrazabilidad"
+                  className="text-right overflow-hidden text-ellipsis"
+                >
                   Número Trazabilidad
                 </Label>
                 <Input
@@ -290,7 +308,10 @@ export default function ListaAnimalesPage() { // Renombrar el componente
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="nombreIdentificatorio" className="text-right">
+                <Label
+                  htmlFor="nombreIdentificatorio"
+                  className="text-right overflow-hidden text-ellipsis"
+                >
                   {" "}
                   Nombre Identificatorio
                 </Label>
@@ -357,7 +378,6 @@ export default function ListaAnimalesPage() { // Renombrar el componente
                   value={newMadreId}
                   onChange={(id) => setNewMadreId(id)}
                 />
-                 
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="padreId" className="text-right">
@@ -403,7 +423,10 @@ export default function ListaAnimalesPage() { // Renombrar el componente
                 </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="observacionesGenerales" className="text-right">
+                <Label
+                  htmlFor="observacionesGenerales"
+                  className="text-right overflow-hidden text-ellipsis"
+                >
                   Observaciones Generales
                 </Label>
                 <Input
@@ -422,16 +445,19 @@ export default function ListaAnimalesPage() { // Renombrar el componente
         </Dialog>
 
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="max-w-sm  sm:max-w-[600px] md:max-w-[750px] lg:max-w-[900px] ">
             <DialogHeader>
               <DialogTitle>Editar Animal</DialogTitle>
               <DialogDescription>
                 Actualiza los detalles del animal.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="editNumeroTrazabilidad" className="text-right">
+                <Label
+                  htmlFor="editNumeroTrazabilidad"
+                  className="text-right overflow-hidden text-ellipsis"
+                >
                   Número Trazabilidad
                 </Label>
                 <Input
@@ -444,7 +470,7 @@ export default function ListaAnimalesPage() { // Renombrar el componente
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label
                   htmlFor="editNombreIdentificatorio"
-                  className="text-right"
+                  className="text-right overflow-hidden text-ellipsis"
                 >
                   Nombre Identificatorio
                 </Label>
@@ -459,12 +485,10 @@ export default function ListaAnimalesPage() { // Renombrar el componente
                 <Label htmlFor="editEspecieId" className="text-right">
                   Especie ID
                 </Label>
-                <Input
-                  id="editEspecieId"
-                  type="number"
+                <EspecieCombobox
+                  label="Especie"
                   value={editEspecieId}
-                  onChange={(e) => setEditEspecieId(Number(e.target.value))}
-                  className="col-span-3"
+                  onChange={(especieId) => setEditEspecieId(especieId ?? 0)}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -557,7 +581,7 @@ export default function ListaAnimalesPage() { // Renombrar el componente
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label
                   htmlFor="editObservacionesGenerales"
-                  className="text-right"
+                  className="text-right overflow-hidden text-ellipsis"
                 >
                   Observaciones Generales
                 </Label>

@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  createVenta,
-  deleteVenta,
-  updateVenta,
-  useVentas,
-  Venta,
-  VentaBase,
-} from "@/hooks/useVentas";
+  createVentaDetalle,
+  deleteVentaDetalle,
+  updateVentaDetalle,
+  useVentasDetalle,
+  VentaDetalle,
+  VentaDetalleBase,
+} from "@/hooks/useVentasDetalle";
 import { useEffect, useState } from "react";
 import React from "react";
 import {
@@ -42,29 +42,24 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Pencil, Trash2 } from "lucide-react";
 
-export default function ListaVentas() {
-  const { ventas, isLoading, isError, refresh } = useVentas();
+export default function ListaVentasDetalle() {
+  const { ventasDetalle, isLoading, isError, refresh } = useVentasDetalle();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedVenta, setSelectedVenta] = useState<Venta | null>(null);
+  const [selectedVentaDetalle, setSelectedVentaDetalle] =
+    useState<VentaDetalle | null>(null);
 
-  const [newClienteId, setNewClienteId] = useState<number>(0);
-  const [newFechaVenta, setNewFechaVenta] = useState<string>("");
-  const [newDocumentoVentaRef, setNewDocumentoVentaRef] = useState<
-    string | undefined
-  >(undefined);
-  const [newPrecioVentaTotalGeneral, setNewPrecioVentaTotalGeneral] = useState<
-    number | undefined
-  >(undefined);
-  const [newCondicionPago, setNewCondicionPago] = useState<string | undefined>(
+  const [newVentaId, setNewVentaId] = useState<number>(0);
+  const [newAnimalId, setNewAnimalId] = useState<number>(0);
+  const [newPesoVentaKg, setNewPesoVentaKg] = useState<number | undefined>(
     undefined
   );
-  const [newLoteOrigenId, setNewLoteOrigenId] = useState<number | undefined>(
-    undefined
-  );
-  const [newUsuarioRegistraId, setNewUsuarioRegistraId] = useState<
+  const [newPrecioIndividual, setNewPrecioIndividual] = useState<
     number | undefined
   >(undefined);
+  const [newPrecioPorKg, setNewPrecioPorKg] = useState<number | undefined>(
+    undefined
+  );
   const [newObservaciones, setNewObservaciones] = useState<string | undefined>(
     undefined
   );
@@ -76,25 +71,23 @@ export default function ListaVentas() {
     if (isError) console.error(isError);
   }, [isError]);
 
-  const handleCreateVenta = async () => {
-    const newVenta: VentaBase = {
-      cliente_id: newClienteId,
-      fecha_venta: newFechaVenta,
-      documento_venta_ref: newDocumentoVentaRef,
-      precio_venta_total_general: newPrecioVentaTotalGeneral,
-      condicion_pago: newCondicionPago,
-      lote_origen_id: newLoteOrigenId,
-      usuario_registra_id: newUsuarioRegistraId,
+  const handleCreateVentaDetalle = async () => {
+    const newVentaDetalle: VentaDetalleBase = {
+      venta_id: newVentaId,
+      animal_id: newAnimalId,
+      peso_venta_kg: newPesoVentaKg,
+      precio_individual: newPrecioIndividual,
+      precio_por_kg: newPrecioPorKg,
       observaciones: newObservaciones,
     };
     try {
-      await createVenta(newVenta);
-      setAlertMessage("Venta creada con éxito.");
+      await createVentaDetalle(newVentaDetalle);
+      setAlertMessage("Detalle de venta creado con éxito.");
       setAlertType("success");
       setIsCreateDialogOpen(false);
       refresh();
     } catch (err) {
-      setAlertMessage("Error al crear la venta.");
+      setAlertMessage("Error al crear el detalle de venta.");
       setAlertType("error");
     }
     setTimeout(() => {
@@ -103,39 +96,38 @@ export default function ListaVentas() {
     }, 3000);
   };
 
-  const handleEditVenta = (venta: Venta) => {
-    setSelectedVenta(venta);
-    setNewClienteId(venta.cliente_id);
-    setNewFechaVenta(venta.fecha_venta);
-    setNewDocumentoVentaRef(venta.documento_venta_ref);
-    setNewPrecioVentaTotalGeneral(venta.precio_venta_total_general);
-    setNewCondicionPago(venta.condicion_pago);
-    setNewLoteOrigenId(venta.lote_origen_id);
-    setNewUsuarioRegistraId(venta.usuario_registra_id);
-    setNewObservaciones(venta.observaciones);
+  const handleEditVentaDetalle = (ventaDetalle: VentaDetalle) => {
+    setSelectedVentaDetalle(ventaDetalle);
+    setNewVentaId(ventaDetalle.venta_id);
+    setNewAnimalId(ventaDetalle.animal_id);
+    setNewPesoVentaKg(ventaDetalle.peso_venta_kg);
+    setNewPrecioIndividual(ventaDetalle.precio_individual);
+    setNewPrecioPorKg(ventaDetalle.precio_por_kg);
+    setNewObservaciones(ventaDetalle.observaciones);
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateVenta = async () => {
-    if (selectedVenta) {
-      const updatedVenta: Partial<VentaBase> = {
-        cliente_id: newClienteId,
-        fecha_venta: newFechaVenta,
-        documento_venta_ref: newDocumentoVentaRef,
-        precio_venta_total_general: newPrecioVentaTotalGeneral,
-        condicion_pago: newCondicionPago,
-        lote_origen_id: newLoteOrigenId,
-        usuario_registra_id: newUsuarioRegistraId,
+  const handleUpdateVentaDetalle = async () => {
+    if (selectedVentaDetalle) {
+      const updatedVentaDetalle: Partial<VentaDetalleBase> = {
+        venta_id: newVentaId,
+        animal_id: newAnimalId,
+        peso_venta_kg: newPesoVentaKg,
+        precio_individual: newPrecioIndividual,
+        precio_por_kg: newPrecioPorKg,
         observaciones: newObservaciones,
       };
       try {
-        await updateVenta(selectedVenta.venta_id, updatedVenta);
-        setAlertMessage("Venta actualizada con éxito.");
+        await updateVentaDetalle(
+          selectedVentaDetalle.venta_detalle_id,
+          updatedVentaDetalle
+        );
+        setAlertMessage("Detalle de venta actualizado con éxito.");
         setAlertType("success");
         setIsEditDialogOpen(false);
         refresh();
       } catch (err) {
-        setAlertMessage("Error al actualizar la venta.");
+        setAlertMessage("Error al actualizar el detalle de venta.");
         setAlertType("error");
       }
       setTimeout(() => {
@@ -145,14 +137,14 @@ export default function ListaVentas() {
     }
   };
 
-  const handleDeleteVenta = async (ventaId: number) => {
+  const handleDeleteVentaDetalle = async (ventaDetalleId: number) => {
     try {
-      await deleteVenta(ventaId);
-      setAlertMessage("Venta eliminada con éxito.");
+      await deleteVentaDetalle(ventaDetalleId);
+      setAlertMessage("Detalle de venta eliminado con éxito.");
       setAlertType("success");
       refresh();
     } catch (err) {
-      setAlertMessage("Error al eliminar la venta.");
+      setAlertMessage("Error al eliminar el detalle de venta.");
       setAlertType("error");
     }
     setTimeout(() => {
@@ -162,7 +154,7 @@ export default function ListaVentas() {
   };
 
   if (isLoading) return <div>Cargando...</div>;
-  if (isError) return <div>Error al cargar ventas</div>;
+  if (isError) return <div>Error al cargar detalles de venta</div>;
 
   return (
     <div>
@@ -185,55 +177,51 @@ export default function ListaVentas() {
           </Breadcrumb>
         </div>
       </header>
-
+      
       {/* ... (Breadcrumb, Header, Alert, etc. - similar a ListaInventarioAnimales) */}
       <div>
         <header className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Lista de Ventas</h1>
+          <h1 className="text-2xl font-bold">Lista de Detalles de Venta</h1>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
-            Crear Nueva Venta
+            Crear Nuevo Detalle de Venta
           </Button>
         </header>
         <Separator className="my-4" />
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="">Cliente ID</TableHead>
-              <TableHead>Fecha Venta</TableHead>
-              <TableHead>Documento Venta Ref</TableHead>
-              <TableHead>Precio Venta Total General</TableHead>
-              <TableHead>Condición Pago</TableHead>
-              <TableHead>Lote Origen ID</TableHead>
-              <TableHead>Usuario Registra ID</TableHead>
+              <TableHead className="">Venta ID</TableHead>
+              <TableHead>Animal ID</TableHead>
+              <TableHead>Peso Venta (kg)</TableHead>
+              <TableHead>Precio Individual</TableHead>
+              <TableHead>Precio por kg</TableHead>
               <TableHead>Observaciones</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {ventas?.map((v) => (
-              <TableRow key={v.venta_id}>
-                <TableCell className="font-medium">{v.cliente_id}</TableCell>
-                <TableCell className="">{v.fecha_venta}</TableCell>
-                <TableCell className="">{v.documento_venta_ref}</TableCell>
-                <TableCell className="">
-                  {v.precio_venta_total_general}
-                </TableCell>
-                <TableCell className="">{v.condicion_pago}</TableCell>
-                <TableCell className="">{v.lote_origen_id}</TableCell>
-                <TableCell className="">{v.usuario_registra_id}</TableCell>
-                <TableCell className="">{v.observaciones}</TableCell>
+            {ventasDetalle?.map((vd) => (
+              <TableRow key={vd.venta_detalle_id}>
+                <TableCell className="font-medium">{vd.venta_id}</TableCell>
+                <TableCell className="">{vd.animal_id}</TableCell>
+                <TableCell className="">{vd.peso_venta_kg}</TableCell>
+                <TableCell className="">{vd.precio_individual}</TableCell>
+                <TableCell className="">{vd.precio_por_kg}</TableCell>
+                <TableCell className="">{vd.observaciones}</TableCell>
                 <TableCell>
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => handleEditVenta(v)}
+                    onClick={() => handleEditVentaDetalle(vd)}
                   >
                     <Pencil></Pencil>
                   </Button>
                   <Button
                     variant="destructive"
                     size="icon"
-                    onClick={() => handleDeleteVenta(v.venta_id)}
+                    onClick={() =>
+                      handleDeleteVentaDetalle(vd.venta_detalle_id)
+                    }
                   >
                     <Trash2></Trash2>
                   </Button>
@@ -246,54 +234,43 @@ export default function ListaVentas() {
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Crear Nueva Venta</DialogTitle>
+            <DialogTitle>Crear Nuevo Detalle de Venta</DialogTitle>
             <DialogDescription>
-              Ingresa los detalles de la nueva venta.
+              Ingresa los detalles del nuevo detalle de venta.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="clienteId" className="text-right">
-                Cliente ID
+              <Label htmlFor="ventaId" className="text-right">
+                Venta ID
               </Label>
               <Input
-                id="clienteId"
-                value={newClienteId.toString()}
-                onChange={(e) => setNewClienteId(Number(e.target.value))}
+                id="ventaId"
+                value={newVentaId.toString()}
+                onChange={(e) => setNewVentaId(Number(e.target.value))}
                 className="col-span-3"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fechaVenta" className="text-right">
-                Fecha Venta
+              <Label htmlFor="animalId" className="text-right">
+                Animal ID
               </Label>
               <Input
-                id="fechaVenta"
-                value={newFechaVenta}
-                onChange={(e) => setNewFechaVenta(e.target.value)}
+                id="animalId"
+                value={newAnimalId.toString()}
+                onChange={(e) => setNewAnimalId(Number(e.target.value))}
                 className="col-span-3"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="documentoVentaRef" className="text-right">
-                Documento Venta Ref
+              <Label htmlFor="pesoVentaKg" className="text-right">
+                Peso Venta (kg)
               </Label>
               <Input
-                id="documentoVentaRef"
-                value={newDocumentoVentaRef || ""}
-                onChange={(e) => setNewDocumentoVentaRef(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="precioVentaTotalGeneral" className="text-right">
-                Precio Venta Total General
-              </Label>
-              <Input
-                id="precioVentaTotalGeneral"
-                value={newPrecioVentaTotalGeneral?.toString() || ""}
+                id="pesoVentaKg"
+                value={newPesoVentaKg?.toString() || ""}
                 onChange={(e) =>
-                  setNewPrecioVentaTotalGeneral(
+                  setNewPesoVentaKg(
                     e.target.value ? Number(e.target.value) : undefined
                   )
                 }
@@ -301,25 +278,14 @@ export default function ListaVentas() {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="condicionPago" className="text-right">
-                Condición Pago
+              <Label htmlFor="precioIndividual" className="text-right">
+                Precio Individual
               </Label>
               <Input
-                id="condicionPago"
-                value={newCondicionPago || ""}
-                onChange={(e) => setNewCondicionPago(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="loteOrigenId" className="text-right">
-                Lote Origen ID
-              </Label>
-              <Input
-                id="loteOrigenId"
-                value={newLoteOrigenId?.toString() || ""}
+                id="precioIndividual"
+                value={newPrecioIndividual?.toString() || ""}
                 onChange={(e) =>
-                  setNewLoteOrigenId(
+                  setNewPrecioIndividual(
                     e.target.value ? Number(e.target.value) : undefined
                   )
                 }
@@ -327,14 +293,14 @@ export default function ListaVentas() {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="usuarioRegistraId" className="text-right">
-                Usuario Registra ID
+              <Label htmlFor="precioPorKg" className="text-right">
+                Precio por kg
               </Label>
               <Input
-                id="usuarioRegistraId"
-                value={newUsuarioRegistraId?.toString() || ""}
+                id="precioPorKg"
+                value={newPrecioPorKg?.toString() || ""}
                 onChange={(e) =>
-                  setNewUsuarioRegistraId(
+                  setNewPrecioPorKg(
                     e.target.value ? Number(e.target.value) : undefined
                   )
                 }
@@ -354,62 +320,53 @@ export default function ListaVentas() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleCreateVenta}>Crear Venta</Button>
+            <Button onClick={handleCreateVentaDetalle}>
+              Crear Detalle de Venta
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Editar Venta</DialogTitle>
+            <DialogTitle>Editar Detalle de Venta</DialogTitle>
             <DialogDescription>
-              Edita los detalles de la venta.
+              Edita los detalles del detalle de venta.
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             {/* ... (Inputs para editar los campos, similar al diálogo de creación) */}
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="clienteId" className="text-right">
-                Cliente ID
+              <Label htmlFor="ventaId" className="text-right">
+                Venta ID
               </Label>
               <Input
-                id="clienteId"
-                value={newClienteId.toString()}
-                onChange={(e) => setNewClienteId(Number(e.target.value))}
+                id="ventaId"
+                value={newVentaId.toString()}
+                onChange={(e) => setNewVentaId(Number(e.target.value))}
                 className="col-span-3"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fechaVenta" className="text-right">
-                Fecha Venta
+              <Label htmlFor="animalId" className="text-right">
+                Animal ID
               </Label>
               <Input
-                id="fechaVenta"
-                value={newFechaVenta}
-                onChange={(e) => setNewFechaVenta(e.target.value)}
+                id="animalId"
+                value={newAnimalId.toString()}
+                onChange={(e) => setNewAnimalId(Number(e.target.value))}
                 className="col-span-3"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="documentoVentaRef" className="text-right">
-                Documento Venta Ref
+              <Label htmlFor="pesoVentaKg" className="text-right">
+                Peso Venta (kg)
               </Label>
               <Input
-                id="documentoVentaRef"
-                value={newDocumentoVentaRef || ""}
-                onChange={(e) => setNewDocumentoVentaRef(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="precioVentaTotalGeneral" className="text-right">
-                Precio Venta Total General
-              </Label>
-              <Input
-                id="precioVentaTotalGeneral"
-                value={newPrecioVentaTotalGeneral?.toString() || ""}
+                id="pesoVentaKg"
+                value={newPesoVentaKg?.toString() || ""}
                 onChange={(e) =>
-                  setNewPrecioVentaTotalGeneral(
+                  setNewPesoVentaKg(
                     e.target.value ? Number(e.target.value) : undefined
                   )
                 }
@@ -417,25 +374,14 @@ export default function ListaVentas() {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="condicionPago" className="text-right">
-                Condición Pago
+              <Label htmlFor="precioIndividual" className="text-right">
+                Precio Individual
               </Label>
               <Input
-                id="condicionPago"
-                value={newCondicionPago || ""}
-                onChange={(e) => setNewCondicionPago(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="loteOrigenId" className="text-right">
-                Lote Origen ID
-              </Label>
-              <Input
-                id="loteOrigenId"
-                value={newLoteOrigenId?.toString() || ""}
+                id="precioIndividual"
+                value={newPrecioIndividual?.toString() || ""}
                 onChange={(e) =>
-                  setNewLoteOrigenId(
+                  setNewPrecioIndividual(
                     e.target.value ? Number(e.target.value) : undefined
                   )
                 }
@@ -443,14 +389,14 @@ export default function ListaVentas() {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="usuarioRegistraId" className="text-right">
-                Usuario Registra ID
+              <Label htmlFor="precioPorKg" className="text-right">
+                Precio por kg
               </Label>
               <Input
-                id="usuarioRegistraId"
-                value={newUsuarioRegistraId?.toString() || ""}
+                id="precioPorKg"
+                value={newPrecioPorKg?.toString() || ""}
                 onChange={(e) =>
-                  setNewUsuarioRegistraId(
+                  setNewPrecioPorKg(
                     e.target.value ? Number(e.target.value) : undefined
                   )
                 }
@@ -470,10 +416,13 @@ export default function ListaVentas() {
             </div>
           </div>
           <DialogFooter>
-            <Button onClick={handleUpdateVenta}>Actualizar Venta</Button>
+            <Button onClick={handleUpdateVentaDetalle}>
+              Actualizar Detalle de Venta
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
   );
 }
+
