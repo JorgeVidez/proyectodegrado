@@ -7,36 +7,28 @@ import joblib
 
 router = APIRouter()
 
-# Variables para almacenar el modelo cargado y el tiempo de carga
-modelo = None
-tiempo_carga = None
 
-# Función para cargar el modelo (carga diferida)
-def cargar_modelo():
-    global modelo, tiempo_carga
-    if modelo is None:
-        try:
-            start_time = time.time()
-            modelo = joblib.load('models/modelo_ganado_faenado.pkl')
-            end_time = time.time()
-            tiempo_carga = end_time - start_time
-            print(f"Modelo cargado. Tiempo de carga: {tiempo_carga:.4f} segundos")
-        except FileNotFoundError:
-            raise RuntimeError("El archivo 'models/modelo_ganado_faenado.pkl' no se encontró .")
+with open("models/svr_model.pkl", "rb") as f:
+    model_data = pickle.load(f)
 
-class PrediccionEntrada(BaseModel):
-    fecha: str  # Formato: 'YYYY-MM-DD'
+model_svr = model_data["model"]
+scaler_X = model_data["scaler_X"]
+scaler_y = model_data["scaler_y"]
 
-class PrediccionSalida(BaseModel):
-    ganado_faenado: float
 
-@router.post('/predecir', response_model=PrediccionSalida)
-async def predecir(entrada: PrediccionEntrada):
-    """Realiza una predicción de ganado faenado para una fecha dada."""
+class PredictionRequest(BaseModel):
+    date: str
+
+class PredictionResponse(BaseModel):
+    prediction: float
+
+@router.post("/predict", response_model=PredictionResponse)
+async def predict(request: PredictionRequest):
     try:
-        cargar_modelo()  # Cargar el modelo si aún no se ha cargado
-        fecha_ordinal = pd.to_datetime(entrada.fecha).toordinal()
-        ganado_predicho = modelo.predict([[fecha_ordinal]])[0]
-        return {'ganado_faenado': ganado_predicho}
+        date_ordinal = pd.to_datetime(request.date).toordinal()
+        date_ordinal_scaled = scaler_X.transform([[date_ordinal]])
+        prediction_scaled = model_svr.predict(date_ordinal_scaled)
+        prediction = scaler_y.inverse_transform(prediction_scaled.reshape(-1, 1)).flatten()[0]
+        return {"prediction": prediction}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return {"prediction": None}

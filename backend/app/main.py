@@ -7,10 +7,11 @@ from fastapi.responses import JSONResponse
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import HTTPException
 from . import prediccion #Importamos el nuevo modulo.
+ 
 
 
 
-app = FastAPI(title="Sistema de Ganado API")
+app = FastAPI(title="Sistema de Ganado API") 
 
 # Habilitar CORS
 app.add_middleware(

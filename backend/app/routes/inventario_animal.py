@@ -46,3 +46,38 @@ async def get_inventario_animal(inventario_id: int, db: AsyncSession = Depends(g
     if not inventario:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "Inventario de animal no encontrado"})
     return inventario
+
+@router.put("/inventario_animal/{inventario_id}", response_model=InventarioAnimalOut)
+async def update_inventario_animal(inventario_id: int, data: InventarioAnimalUpdate, db: AsyncSession = Depends(get_db)):
+    inventario = await db.get(InventarioAnimal, inventario_id)
+    if not inventario:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "Inventario de animal no encontrado"})
+    
+    for field, value in data.dict(exclude_unset=True).items():
+        setattr(inventario, field, value)
+
+    try:
+        await db.commit()
+        await db.refresh(inventario)
+        return inventario
+    except IntegrityError as e:
+        await db.rollback()
+        if "FOREIGN KEY" in str(e.orig):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"error": "Error de clave foránea. Verifique las claves foráneas."})
+        elif "CHECK" in str(e.orig):
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"error": "Error de restricción de comprobación. Verifique los valores de entrada."})
+        else:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"error": "Error al actualizar el inventario. Verifique los datos."})
+
+
+@router.delete("/inventario_animal/{inventario_id}", response_model=InventarioAnimalOut)
+async def delete_inventario_animal(inventario_id: int, db: AsyncSession = Depends(get_db)):
+    inventario = await db.get(InventarioAnimal, inventario_id)
+    if not inventario:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "Inventario de animal no encontrado"})
+    
+    inventario.activo_en_finca = False
+
+    await db.commit()
+    await db.refresh(inventario)
+    return inventario
