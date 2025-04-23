@@ -38,12 +38,16 @@ import { AnimalCreate, AnimalUpdate, AnimalOut, EstadoAnimal } from "@/types/ani
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AnimalCombobox } from "@/components/AnimalCombobox";
 import { EspecieCombobox } from "@/components/EspecieCombobox";
+import { RazaCombobox } from "@/components/RazaCombobox";
+import { DatePicker } from "@/components/DatePicker";
 
 export default function ListaAnimalesPage() {
   // Renombrar el componente
   const { animales, isLoading, error, create, update, remove } = useAnimales();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDetailsDialogOpen, setIsViewDetailsDialogOpen] = useState(false);
+  const [animaldata, setAnimalData] = useState<AnimalOut | null>(null);
   const [newNumeroTrazabilidad, setNewNumeroTrazabilidad] = useState("");
   const [newNombreIdentificatorio, setNewNombreIdentificatorio] = useState("");
   const [newEspecieId, setNewEspecieId] = useState<number>(0);
@@ -58,7 +62,7 @@ export default function ListaAnimalesPage() {
     EstadoAnimal.Activo
   );
   const [newObservacionesGenerales, setNewObservacionesGenerales] = useState<
-    string | undefined
+    string | undefined | ""
   >(undefined);
   const [editAnimalId, setEditAnimalId] = useState<number | null>(null);
   const [editNumeroTrazabilidad, setEditNumeroTrazabilidad] = useState("");
@@ -76,7 +80,7 @@ export default function ListaAnimalesPage() {
     EstadoAnimal.Activo
   );
   const [editObservacionesGenerales, setEditObservacionesGenerales] = useState<
-    string | undefined
+    string | undefined | ""
   >(undefined);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [alertType, setAlertType] = useState<"success" | "error" | null>(null);
@@ -226,8 +230,8 @@ export default function ListaAnimalesPage() {
               <TableRow>
                 <TableHead className="">Número Trazabilidad</TableHead>
                 <TableHead>Nombre Identificatorio</TableHead>
-                <TableHead>Especie</TableHead>
-                <TableHead>Raza</TableHead>
+                <TableHead className="hidden md:table-cell">Especie</TableHead>
+                <TableHead className="hidden lg:table-cell">Raza</TableHead>
                 <TableHead>Sexo</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
@@ -243,10 +247,24 @@ export default function ListaAnimalesPage() {
                       ? a.nombre_identificatorio
                       : "N/A"}
                   </TableCell>
-                  <TableCell className="">{a.especie.nombre_comun}</TableCell>
-                  <TableCell className="">{a.raza.nombre_raza}</TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {a.especie.nombre_comun}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {a.raza.nombre_raza}
+                  </TableCell>
                   <TableCell className="">{a.sexo}</TableCell>
                   <TableCell className="text-right flex flex-wrap justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      className=""
+                      onClick={() => {
+                        setAnimalData(a);
+                        setIsViewDetailsDialogOpen(true);
+                      }}
+                    >
+                      Ver Detalles
+                    </Button>
                     <Button
                       className=""
                       onClick={() => {
@@ -285,7 +303,7 @@ export default function ListaAnimalesPage() {
         </div>
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className=" max-w-sm  sm:max-w-[600px] md:max-w-[750px] lg:max-w-[900px] ">
+          <DialogContent className=" max-w-sm  sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px] ">
             <DialogHeader>
               <DialogTitle>Crear Nuevo Animal</DialogTitle>
               <DialogDescription>
@@ -324,50 +342,52 @@ export default function ListaAnimalesPage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="especieId" className="text-right">
-                  Especie ID
+                  Especie
                 </Label>
-                <Input
-                  id="especieId"
-                  type="number"
+                <EspecieCombobox
+                  label="Especie"
                   value={newEspecieId}
-                  onChange={(e) => setNewEspecieId(Number(e.target.value))}
-                  className="col-span-3"
+                  onChange={(especieId) => setNewEspecieId(especieId ?? 0)}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="razaId" className="text-right">
-                  Raza ID
+                  Raza
                 </Label>
-                <Input
-                  id="razaId"
-                  type="number"
+                <RazaCombobox
+                  label="Raza"
                   value={newRazaId}
-                  onChange={(e) => setNewRazaId(Number(e.target.value))}
-                  className="col-span-3"
-                />
+                  onChange={(razaId) => setNewRazaId(razaId ?? 0)}
+                  especieId={newEspecieId}
+                ></RazaCombobox>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="sexo" className="text-right">
-                  Sexo (M/H)
+                  Sexo
                 </Label>
-                <Input
-                  id="sexo"
-                  value={newSexo}
-                  onChange={(e) => setNewSexo(e.target.value)}
-                  className="col-span-3"
-                />
+
+                <div className="col-span-3">
+                  <Select value={newSexo} onValueChange={setNewSexo}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleccionar Sexo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="M">Macho</SelectItem>
+                      <SelectItem value="H">Hembra</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="fechaNacimiento" className="text-right">
                   Fecha Nacimiento
                 </Label>
-                <Input
-                  id="fechaNacimiento"
-                  type="date"
-                  value={newFechaNacimiento}
-                  onChange={(e) => setNewFechaNacimiento(e.target.value)}
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <DatePicker
+                    value={newFechaNacimiento}
+                    onChange={setNewFechaNacimiento}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="madreId" className="text-right">
@@ -445,7 +465,7 @@ export default function ListaAnimalesPage() {
         </Dialog>
 
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-sm  sm:max-w-[600px] md:max-w-[750px] lg:max-w-[900px] ">
+          <DialogContent className="max-w-sm  sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px] ">
             <DialogHeader>
               <DialogTitle>Editar Animal</DialogTitle>
               <DialogDescription>
@@ -483,7 +503,7 @@ export default function ListaAnimalesPage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="editEspecieId" className="text-right">
-                  Especie ID
+                  Especie
                 </Label>
                 <EspecieCombobox
                   label="Especie"
@@ -493,42 +513,46 @@ export default function ListaAnimalesPage() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="editRazaId" className="text-right">
-                  Raza ID
+                  Raza
                 </Label>
-                <Input
-                  id="editRazaId"
-                  type="number"
+                <RazaCombobox
+                  label="Raza"
                   value={editRazaId}
-                  onChange={(e) => setEditRazaId(Number(e.target.value))}
-                  className="col-span-3"
-                />
+                  onChange={(razaId) => setEditRazaId(razaId ?? 0)}
+                  especieId={editEspecieId}
+                ></RazaCombobox>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="editSexo" className="text-right">
-                  Sexo (M/H)
+                  Sexo
                 </Label>
-                <Input
-                  id="editSexo"
-                  value={editSexo}
-                  onChange={(e) => setEditSexo(e.target.value)}
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <Select value={editSexo} onValueChange={setEditSexo}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue placeholder="Seleccionar Sexo" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="M">Macho</SelectItem>
+                      <SelectItem value="H">Hembra</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="editFechaNacimiento" className="text-right">
                   Fecha Nacimiento
                 </Label>
-                <Input
-                  id="editFechaNacimiento"
-                  type="date"
-                  value={editFechaNacimiento}
-                  onChange={(e) => setEditFechaNacimiento(e.target.value)}
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  {/* Cambiado a DatePicker */}
+                  <DatePicker
+                    value={editFechaNacimiento}
+                    onChange={setEditFechaNacimiento}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="editMadreId" className="text-right">
-                  Madre ID
+                  Madre
                 </Label>
                 <AnimalCombobox
                   label="Madre"
@@ -598,6 +622,71 @@ export default function ListaAnimalesPage() {
             <DialogFooter>
               <Button onClick={handleUpdateAnimal}>Actualizar Animal</Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={isViewDetailsDialogOpen}
+          onOpenChange={setIsViewDetailsDialogOpen}
+        >
+          <DialogContent className="w-full h-5/6 max-w-md sm:max-w-2xl md:max-w-3xl lg:max-w-4xl p-6">
+            <DialogHeader className="mb-4">
+              <DialogTitle className="text-2xl font-semibold  ">
+                Detalles del Animal
+              </DialogTitle>
+              <DialogDescription className="">
+                Aquí puedes ver los detalles del animal.
+              </DialogDescription>
+            </DialogHeader>
+
+            {animaldata && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 overflow-y-auto ">
+                {[
+                  { label: "ID Animal", value: animaldata.animal_id },
+                  {
+                    label: "Número Trazabilidad",
+                    value: animaldata.numero_trazabilidad,
+                  },
+                  {
+                    label: "Nombre",
+                    value: animaldata.nombre_identificatorio || "N/A",
+                  },
+                  { label: "Especie", value: animaldata.especie.nombre_comun },
+                  { label: "Raza", value: animaldata.raza.nombre_raza },
+                  {
+                    label: "Sexo",
+                    value: animaldata.sexo === "M" ? "Macho" : "Hembra",
+                  },
+                  {
+                    label: "Fecha Nacimiento",
+                    value: animaldata.fecha_nacimiento || "No registrada",
+                  },
+                  { label: "Estado", value: animaldata.estado_actual },
+                  {
+                    label: "Madre",
+                    value: animaldata.madre
+                      ? animaldata.madre.numero_trazabilidad
+                      : "No registrada",
+                  },
+                  {
+                    label: "Padre",
+                    value: animaldata.padre
+                      ? animaldata.padre.numero_trazabilidad
+                      : "No registrado",
+                  },
+                  {
+                    label: "Observaciones",
+                    value:
+                      animaldata.observaciones_generales || "Sin observaciones",
+                  },
+                ].map((item, index) => (
+                  <div key={index} className="flex flex-col space-y-1">
+                    <span className="text-sm font-medium  ">{item.label}:</span>
+                    <span className="text-base  ">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
