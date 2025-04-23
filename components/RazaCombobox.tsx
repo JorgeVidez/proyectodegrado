@@ -18,35 +18,42 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { useEspecies, Especie } from "@/hooks/useEspecies";
+import { useRazas } from "@/hooks/useRazas";
 
-interface EspecieComboboxProps {
+interface RazaComboboxProps {
   label: string;
   value: number | undefined;
-  onChange: (especieId: number | undefined) => void;
+  onChange: (razaId: number | undefined) => void;
+  especieId?: number;
 }
 
-export function EspecieCombobox({
+export function RazaCombobox({
   label,
   value,
   onChange,
-}: EspecieComboboxProps) {
-  const { especies, isLoading, error } = useEspecies();
+  especieId,
+}: RazaComboboxProps) {
+  const { razas, isLoading, error } = useRazas();
   const [open, setOpen] = React.useState(false);
 
-  if (isLoading) return <div>Cargando especies...</div>;
-  if (error) return <div>Error al cargar especies</div>;
+  const filteredRazas = React.useMemo(() => {
+    if (!razas) return [];
+    if (especieId === undefined) return razas;
+    return razas.filter((raza) => raza.especie_id === especieId);
+  }, [razas, especieId]);
 
-  const handleSelect = (nombreComun: string) => {
-    const selected = especies?.find(
-      (especie) =>
-        especie.nombre_comun.toLowerCase() === nombreComun.toLowerCase()
+  const handleSelect = (nombreRaza: string) => {
+    const selected = filteredRazas.find(
+      (raza) => raza.nombre_raza.toLowerCase() === nombreRaza.toLowerCase()
     );
-    const especieId = selected ? selected.especie_id : undefined;
-    onChange(especieId);
-    console.log("Especie seleccionada:", especieId);
+    const razaId = selected ? selected.raza_id : undefined;
+    onChange(razaId);
+    console.log("Raza seleccionada:", razaId);
     setOpen(false);
   };
+
+  if (isLoading) return <div>Cargando razas...</div>;
+  if (error) return <div>Error al cargar razas</div>;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -55,33 +62,32 @@ export function EspecieCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className=" w-full col-span-3  justify-between"
+          className="w-full col-span-3 justify-between"
         >
           {value
-            ? especies?.find((especie) => especie.especie_id === value)
-                ?.nombre_comun
+            ? razas?.find((raza) => raza.raza_id === value)?.nombre_raza
             : `Seleccionar ${label}...`}
           <ChevronsUpDown className="opacity-50" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-64 p-0 z-50 ">
+      <PopoverContent className="w-64 p-0 z-50">
         <Command>
           <CommandInput placeholder={`Buscar ${label}...`} />
           <CommandList>
-            <CommandEmpty>No se encontraron especies.</CommandEmpty>
+            <CommandEmpty>No se encontraron razas.</CommandEmpty>
             <CommandGroup>
-              {especies?.map((especie) => (
+              {filteredRazas.map((raza) => (
                 <CommandItem
-                  key={especie.especie_id.toString()}
-                  value={especie.nombre_comun}
+                  key={raza.raza_id.toString()}
+                  value={raza.nombre_raza}
                   onSelect={handleSelect}
                 >
-                  {especie.nombre_comun} -{" "}
-                  {especie.nombre_cientifico || "Sin nombre científico"}
+                  {raza.nombre_raza} -{" "}
+                  {raza.especie?.nombre_comun || "Sin especie"}
                   <Check
                     className={cn(
                       "ml-auto",
-                      value === especie.especie_id ? "opacity-100" : "opacity-0"
+                      value === raza.raza_id ? "opacity-100" : "opacity-0"
                     )}
                   />
                 </CommandItem>
