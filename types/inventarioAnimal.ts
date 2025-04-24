@@ -1,5 +1,10 @@
 // types/inventarioAnimal.ts
 
+import { UbicacionOut } from "@/hooks/useUbicaciones";
+import { AnimalOut } from "./animal";
+import { LoteOut } from "@/hooks/useLotes";
+import { ProveedorOut } from "./proveedor";
+
 export enum MotivoIngreso {
   Nacimiento = "Nacimiento",
   Compra = "Compra",
@@ -32,4 +37,8 @@ export interface InventarioAnimalUpdate extends InventarioAnimalBase {}
 export interface InventarioAnimalOut extends InventarioAnimalBase {
   inventario_id: number;
   activo_en_finca: boolean;
+  animal: AnimalOut;
+  ubicacion_actual?: UbicacionOut | null;
+  lote_actual?: LoteOut | null;
+  proveedor_compra?: ProveedorOut | null;
 }
