@@ -199,8 +199,10 @@ export default function ListaClientesPage() {
                 <TableHead className="">Nombre</TableHead>
                 <TableHead>Identificación Fiscal</TableHead>
                 <TableHead>Teléfono</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Dirección</TableHead>
+                <TableHead className="hidden sm:table-cell">Email</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Dirección
+                </TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -212,8 +214,12 @@ export default function ListaClientesPage() {
                   </TableCell>
                   <TableCell className="">{c.identificacion_fiscal}</TableCell>
                   <TableCell className="">{c.telefono}</TableCell>
-                  <TableCell className="">{c.email}</TableCell>
-                  <TableCell className="">{c.direccion}</TableCell>
+                  <TableCell className="hidden sm:table-cell">
+                    {c.email}
+                  </TableCell>
+                  <TableCell className=" hidden md:table-cell">
+                    {c.direccion}
+                  </TableCell>
                   <TableCell className="text-right flex flex-wrap justify-end gap-2">
                     <Button
                       className=""

@@ -189,59 +189,72 @@ export default function ListaControlesSanitarios() {
       </header>
 
       {/* ... (Breadcrumb, Header, Alert, etc. - similar a ListaInventarioAnimales) */}
-      <div>
-        <header className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Lista de Controles Sanitarios</h1>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            Crear Nuevo Control Sanitario
-          </Button>
-        </header>
-        <Separator className="my-4" />
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="">Animal ID</TableHead>
-              <TableHead>Fecha Control</TableHead>
-              <TableHead>Peso (kg)</TableHead>
-              <TableHead>Condición Corporal</TableHead>
-              <TableHead>Altura (cm)</TableHead>
-              <TableHead>Responsable ID</TableHead>
-              <TableHead>Ubicación ID</TableHead>
-              <TableHead>Observaciones</TableHead>
-              <TableHead>Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {controles?.map((c) => (
-              <TableRow key={c.control_id}>
-                <TableCell className="font-medium">{c.animal_id}</TableCell>
-                <TableCell className="">{c.fecha_control}</TableCell>
-                <TableCell className="">{c.peso_kg}</TableCell>
-                <TableCell className="">{c.condicion_corporal}</TableCell>
-                <TableCell className="">{c.altura_cm}</TableCell>
-                <TableCell className="">{c.responsable_id}</TableCell>
-                <TableCell className="">{c.ubicacion_id}</TableCell>
-                <TableCell className="">{c.observaciones}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleEditControl(c)}
-                  >
-                    <Pencil></Pencil>
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => handleDeleteControl(c.control_id)}
-                  >
-                    <Trash2></Trash2>
-                  </Button>
-                </TableCell>
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        {alertMessage && alertType && (
+          <Alert variant={alertType === "success" ? "default" : "destructive"}>
+            {alertType === "error" && <div className="h-4 w-4" />}
+            <AlertTitle>
+              {alertType === "success" ? "Éxito" : "Error"}
+            </AlertTitle>
+            <AlertDescription>{alertMessage}</AlertDescription>
+          </Alert>
+        )}
+        <div>
+          <header className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">
+              Lista de Controles Sanitarios
+            </h1>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              Crear Nuevo Control Sanitario
+            </Button>
+          </header>
+          <Separator className="my-4" />
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="">Animal ID</TableHead>
+                <TableHead>Fecha Control</TableHead>
+                <TableHead>Peso (kg)</TableHead>
+                <TableHead>Condición Corporal</TableHead>
+                <TableHead>Altura (cm)</TableHead>
+                <TableHead>Responsable ID</TableHead>
+                <TableHead>Ubicación ID</TableHead>
+                <TableHead>Observaciones</TableHead>
+                <TableHead>Acciones</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {controles?.map((c) => (
+                <TableRow key={c.control_id}>
+                  <TableCell className="font-medium">{c.animal_id}</TableCell>
+                  <TableCell className="">{c.fecha_control}</TableCell>
+                  <TableCell className="">{c.peso_kg}</TableCell>
+                  <TableCell className="">{c.condicion_corporal}</TableCell>
+                  <TableCell className="">{c.altura_cm}</TableCell>
+                  <TableCell className="">{c.responsable_id}</TableCell>
+                  <TableCell className="">{c.ubicacion_id}</TableCell>
+                  <TableCell className="">{c.observaciones}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleEditControl(c)}
+                    >
+                      <Pencil></Pencil>
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleDeleteControl(c.control_id)}
+                    >
+                      <Trash2></Trash2>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">

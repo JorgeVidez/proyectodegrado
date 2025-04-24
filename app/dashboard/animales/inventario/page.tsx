@@ -41,6 +41,21 @@ import {
   InventarioAnimalOut,
 } from "@/types/inventarioAnimal";
 import { Pencil, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { AnimalCombobox } from "@/components/AnimalCombobox";
+import { DatePicker } from "@/components/DatePicker";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ProveedorCombobox } from "@/components/ProveedorCombobox";
+import { UbicacionCombobox } from "@/components/UbicacionCombobox";
+import { LoteCombobox } from "@/components/LoteCombobox";
 
 export default function ListaInventarioAnimales() {
   const {
@@ -216,48 +231,82 @@ export default function ListaInventarioAnimales() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="">Animal ID</TableHead>
-                <TableHead>Fecha Ingreso</TableHead>
-                <TableHead>Motivo Ingreso</TableHead>
-                <TableHead>Proveedor Compra ID</TableHead>
-                <TableHead>Precio Compra</TableHead>
-                <TableHead>Ubicación Actual ID</TableHead>
-                <TableHead>Lote Actual ID</TableHead>
-                <TableHead>Fecha Egreso</TableHead>
-                <TableHead>Motivo Egreso</TableHead>
-                <TableHead>Activo en Finca</TableHead>
-                <TableHead>Acciones</TableHead>
+                <TableHead className="w-[100px]">Animal</TableHead>
+                <TableHead className="">Fecha Ingreso</TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Motivo Ingreso
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  Proveedor Compra
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  Precio Compra
+                </TableHead>
+                <TableHead className="hidden xl:table-cell">
+                  Ubicación Actual
+                </TableHead>
+                <TableHead className="hidden xl:table-cell">
+                  Lote Actual
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Fecha Egreso
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Motivo Egreso
+                </TableHead>
+                <TableHead className="">Activo en Finca</TableHead>
+                <TableHead className="w-28 text-end">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {inventarios?.map((i) => (
                 <TableRow key={i.inventario_id}>
-                  <TableCell className="font-medium">{i.animal_id}</TableCell>
-                  <TableCell className="">{i.fecha_ingreso}</TableCell>
-                  <TableCell className="">{i.motivo_ingreso}</TableCell>
-                  <TableCell className="">{i.proveedor_compra_id}</TableCell>
-                  <TableCell className="">{i.precio_compra}</TableCell>
-                  <TableCell className="">{i.ubicacion_actual_id}</TableCell>
-                  <TableCell className="">{i.lote_actual_id}</TableCell>
-                  <TableCell className="">{i.fecha_egreso}</TableCell>
-                  <TableCell className="">{i.motivo_egreso}</TableCell>
-                  <TableCell className="">
-                    {i.activo_en_finca ? "Sí" : "No"}
+                  <TableCell className="font-medium">
+                    {i.animal.nombre_identificatorio}
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="">{i.fecha_ingreso}</TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {i.motivo_ingreso}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {i.proveedor_compra?.nombre ?? "N/A"}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {i.precio_compra}
+                  </TableCell>
+                  <TableCell className="hidden xl:table-cell">
+                    {i.ubicacion_actual?.nombre ?? "N/A"}
+                  </TableCell>
+                  <TableCell className="hidden xl:table-cell">
+                    {i.lote_actual?.codigo_lote ?? "N/A"}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {i.fecha_egreso}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {i.motivo_egreso}
+                  </TableCell>
+                  <TableCell className="">
+                    {i.activo_en_finca ? (
+                      <Badge variant="outline">Activo</Badge>
+                    ) : (
+                      <Badge variant="destructive">Inactivo</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell className="flex flex-wrap justify-end gap-2">
                     <Button
                       variant="outline"
                       size="icon"
                       onClick={() => handleEditInventario(i)}
                     >
-                      <Pencil></Pencil>
+                      <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="destructive"
                       size="icon"
                       onClick={() => handleDeleteInventario(i.inventario_id)}
                     >
-                      <Trash2></Trash2>
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -277,58 +326,59 @@ export default function ListaInventarioAnimales() {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="animalId" className="text-right">
-                  Animal ID
+                  Animal
                 </Label>
-                <Input
-                  id="animalId"
-                  value={newAnimalId.toString()}
-                  onChange={(e) => setNewAnimalId(Number(e.target.value))}
-                  className="col-span-3"
-                />
+                <AnimalCombobox
+                  label="Animal"
+                  value={newAnimalId}
+                  onChange={(value) => setNewAnimalId(value ?? 0)}
+                ></AnimalCombobox>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="fechaIngreso" className="text-right">
                   Fecha Ingreso
                 </Label>
-                <Input
-                  id="fechaIngreso"
-                  value={newFechaIngreso}
-                  onChange={(e) => setNewFechaIngreso(e.target.value)}
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <DatePicker
+                    value={newFechaIngreso}
+                    onChange={(dateString) =>
+                      setNewFechaIngreso(dateString || "")
+                    }
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="motivoIngreso" className="text-right">
                   Motivo Ingreso
                 </Label>
-                <select
-                  id="motivoIngreso"
+                <Select
                   value={newMotivoIngreso}
-                  onChange={(e) =>
-                    setNewMotivoIngreso(e.target.value as MotivoIngreso)
+                  onValueChange={(value) =>
+                    setNewMotivoIngreso(value as MotivoIngreso)
                   }
-                  className="col-span-3"
                 >
-                  {Object.values(MotivoIngreso).map((motivo) => (
-                    <option key={motivo} value={motivo}>
-                      {motivo}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Selecciona un motivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {Object.values(MotivoIngreso).map((motivo) => (
+                        <SelectItem key={motivo} value={motivo}>
+                          {motivo}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="proveedorCompraId" className="text-right">
-                  Proveedor Compra ID
+                  Proveedor Compra
                 </Label>
-                <Input
-                  id="proveedorCompraId"
-                  value={newProveedorCompraId?.toString() || ""}
-                  onChange={(e) =>
-                    setNewProveedorCompraId(
-                      e.target.value ? Number(e.target.value) : null
-                    )
-                  }
-                  className="col-span-3"
+                <ProveedorCombobox
+                  label="Proveedor"
+                  value={newProveedorCompraId ?? null}
+                  onChange={(value) => setNewProveedorCompraId(value ?? null)}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -348,64 +398,62 @@ export default function ListaInventarioAnimales() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="ubicacionActualId" className="text-right">
-                  Ubicación Actual ID
+                  Ubicación Actual
                 </Label>
-                <Input
-                  id="ubicacionActualId"
-                  value={newUbicacionActualId?.toString() || ""}
-                  onChange={(e) =>
-                    setNewUbicacionActualId(
-                      e.target.value ? Number(e.target.value) : null
-                    )
-                  }
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <UbicacionCombobox
+                    label="Ubicación"
+                    value={newUbicacionActualId ?? null}
+                    onChange={(value) => setNewUbicacionActualId(value ?? null)}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="loteActualId" className="text-right">
-                  Lote Actual ID
+                  Lote Actual
                 </Label>
-                <Input
-                  id="loteActualId"
-                  value={newLoteActualId?.toString() || ""}
-                  onChange={(e) =>
-                    setNewLoteActualId(
-                      e.target.value ? Number(e.target.value) : null
-                    )
-                  }
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <LoteCombobox
+                    label="Lote"
+                    value={newLoteActualId}
+                    onChange={(value) => setNewLoteActualId(value ?? null)}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="fechaEgreso" className="text-right">
                   Fecha Egreso
                 </Label>
-                <Input
-                  id="fechaEgreso"
-                  value={newFechaEgreso || ""}
-                  onChange={(e) => setNewFechaEgreso(e.target.value || null)}
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <DatePicker
+                    value={newFechaEgreso || undefined}
+                    onChange={(date) => setNewFechaEgreso(date || null)}
+                  ></DatePicker>
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="motivoEgreso" className="text-right">
                   Motivo Egreso
                 </Label>
-                <select
-                  id="motivoEgreso"
-                  value={newMotivoEgreso || ""}
-                  onChange={(e) =>
-                    setNewMotivoEgreso(e.target.value as MotivoEgreso | null)
+                <Select
+                  value={newMotivoEgreso || undefined}
+                  onValueChange={(value) =>
+                    setNewMotivoEgreso(value as MotivoEgreso)
                   }
-                  className="col-span-3"
                 >
-                  <option value="">Seleccionar...</option>
-                  {Object.values(MotivoEgreso).map((motivo) => (
-                    <option key={motivo} value={motivo}>
-                      {motivo}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Selecciona un motivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      {Object.values(MotivoEgreso).map((motivo) => (
+                        <SelectItem key={motivo} value={motivo}>
+                          {motivo}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>
@@ -425,58 +473,62 @@ export default function ListaInventarioAnimales() {
             <div className="grid gap-4 py-4">
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="animalId" className="text-right">
-                  Animal ID
+                  Animal
                 </Label>
-                <Input
-                  id="animalId"
-                  value={newAnimalId.toString()}
-                  onChange={(e) => setNewAnimalId(Number(e.target.value))}
-                  className="col-span-3"
-                />
+                <AnimalCombobox
+                  label="Animal"
+                  value={newAnimalId}
+                  onChange={(value) => setNewAnimalId(value ?? 0)}
+                ></AnimalCombobox>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="fechaIngreso" className="text-right">
                   Fecha Ingreso
                 </Label>
-                <Input
-                  id="fechaIngreso"
-                  value={newFechaIngreso}
-                  onChange={(e) => setNewFechaIngreso(e.target.value)}
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <DatePicker
+                    value={newFechaIngreso}
+                    onChange={(dateString) =>
+                      setNewFechaIngreso(dateString || "")
+                    }
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="motivoIngreso" className="text-right">
                   Motivo Ingreso
                 </Label>
-                <select
-                  id="motivoIngreso"
-                  value={newMotivoIngreso}
-                  onChange={(e) =>
-                    setNewMotivoIngreso(e.target.value as MotivoIngreso)
+                <Select
+                  value={newMotivoIngreso || undefined}
+                  onValueChange={(value) =>
+                    setNewMotivoIngreso(value as MotivoIngreso)
                   }
-                  className="col-span-3"
                 >
-                  {Object.values(MotivoIngreso).map((motivo) => (
-                    <option key={motivo} value={motivo}>
-                      {motivo}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Selecciona un motivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="null">
+                        -- Sin seleccionar --
+                      </SelectItem>
+                      {Object.values(MotivoIngreso).map((motivo) => (
+                        <SelectItem key={motivo} value={motivo}>
+                          {motivo}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="proveedorCompraId" className="text-right">
-                  Proveedor Compra ID
+                  Proveedor Compra
                 </Label>
-                <Input
-                  id="proveedorCompraId"
-                  value={newProveedorCompraId?.toString() || ""}
-                  onChange={(e) =>
-                    setNewProveedorCompraId(
-                      e.target.value ? Number(e.target.value) : null
-                    )
-                  }
-                  className="col-span-3"
+                <ProveedorCombobox
+                  label="Proveedor"
+                  value={newProveedorCompraId ?? null}
+                  onChange={(value) => setNewProveedorCompraId(value ?? null)}
                 />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
@@ -496,64 +548,67 @@ export default function ListaInventarioAnimales() {
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="ubicacionActualId" className="text-right">
-                  Ubicación Actual ID
+                  Ubicación Actual
                 </Label>
-                <Input
-                  id="ubicacionActualId"
-                  value={newUbicacionActualId?.toString() || ""}
-                  onChange={(e) =>
-                    setNewUbicacionActualId(
-                      e.target.value ? Number(e.target.value) : null
-                    )
-                  }
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <UbicacionCombobox
+                    label="Ubicación"
+                    value={newUbicacionActualId ?? null}
+                    onChange={(value) => setNewUbicacionActualId(value ?? null)}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="loteActualId" className="text-right">
-                  Lote Actual ID
+                  Lote Actual
                 </Label>
-                <Input
-                  id="loteActualId"
-                  value={newLoteActualId?.toString() || ""}
-                  onChange={(e) =>
-                    setNewLoteActualId(
-                      e.target.value ? Number(e.target.value) : null
-                    )
-                  }
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <LoteCombobox
+                    label="Lote"
+                    value={newLoteActualId}
+                    onChange={(value) => setNewLoteActualId(value ?? null)}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="fechaEgreso" className="text-right">
                   Fecha Egreso
                 </Label>
-                <Input
-                  id="fechaEgreso"
-                  value={newFechaEgreso || ""}
-                  onChange={(e) => setNewFechaEgreso(e.target.value || null)}
-                  className="col-span-3"
-                />
+                <div className="col-span-3">
+                  <DatePicker
+                    value={newFechaEgreso || undefined}
+                    onChange={(date) => setNewFechaEgreso(date || null)}
+                  ></DatePicker>
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="motivoEgreso" className="text-right">
                   Motivo Egreso
                 </Label>
-                <select
-                  id="motivoEgreso"
-                  value={newMotivoEgreso || ""}
-                  onChange={(e) =>
-                    setNewMotivoEgreso(e.target.value as MotivoEgreso | null)
+                <Select
+                  value={newMotivoEgreso || undefined}
+                  onValueChange={(value) =>
+                    setNewMotivoEgreso(
+                      value === "null" ? null : (value as MotivoEgreso)
+                    )
                   }
-                  className="col-span-3"
                 >
-                  <option value="">Seleccionar...</option>
-                  {Object.values(MotivoEgreso).map((motivo) => (
-                    <option key={motivo} value={motivo}>
-                      {motivo}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Selecciona un motivo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectGroup>
+                      <SelectItem value="null">
+                        -- Sin seleccionar --
+                      </SelectItem>
+                      {Object.values(MotivoEgreso).map((motivo) => (
+                        <SelectItem key={motivo} value={motivo}>
+                          {motivo}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
             <DialogFooter>

@@ -206,69 +206,80 @@ export default function ListaVacunaciones() {
       </header>
 
       {/* ... (Breadcrumb, Header, Alert, etc. - similar a ListaInventarioAnimales) */}
-      <div>
-        <header className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Lista de Vacunaciones</h1>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            Crear Nueva Vacunación
-          </Button>
-        </header>
-        <Separator className="my-4" />
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="">Animal ID</TableHead>
-              <TableHead>Fecha Aplicación</TableHead>
-              <TableHead>Tipo Vacuna ID</TableHead>
-              <TableHead>Dosis Aplicada</TableHead>
-              <TableHead>Unidad Dosis</TableHead>
-              <TableHead>Lote Vacuna</TableHead>
-              <TableHead>Fecha Vencimiento Lote</TableHead>
-              <TableHead>Proveedor Vacuna ID</TableHead>
-              <TableHead>Responsable Aplicación ID</TableHead>
-              <TableHead>Próxima Vacunación Sugerida</TableHead>
-              <TableHead>Observaciones</TableHead>
-              <TableHead>Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {vacunaciones?.map((v) => (
-              <TableRow key={v.vacunacion_id}>
-                <TableCell className="font-medium">{v.animal_id}</TableCell>
-                <TableCell className="">{v.fecha_aplicacion}</TableCell>
-                <TableCell className="">{v.tipo_vacuna_id}</TableCell>
-                <TableCell className="">{v.dosis_aplicada}</TableCell>
-                <TableCell className="">{v.unidad_dosis}</TableCell>
-                <TableCell className="">{v.lote_vacuna}</TableCell>
-                <TableCell className="">{v.fecha_vencimiento_lote}</TableCell>
-                <TableCell className="">{v.proveedor_vacuna_id}</TableCell>
-                <TableCell className="">
-                  {v.responsable_aplicacion_id}
-                </TableCell>
-                <TableCell className="">
-                  {v.proxima_vacunacion_sugerida}
-                </TableCell>
-                <TableCell className="">{v.observaciones}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleEditVacunacion(v)}
-                  >
-                    <Pencil></Pencil>
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => handleDeleteVacunacion(v.vacunacion_id)}
-                  >
-                    <Trash2></Trash2>
-                  </Button>
-                </TableCell>
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        {alertMessage && alertType && (
+          <Alert variant={alertType === "success" ? "default" : "destructive"}>
+            {alertType === "error" && <div className="h-4 w-4" />}
+            <AlertTitle>
+              {alertType === "success" ? "Éxito" : "Error"}
+            </AlertTitle>
+            <AlertDescription>{alertMessage}</AlertDescription>
+          </Alert>
+        )}
+        <div>
+          <header className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">Lista de Vacunaciones</h1>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              Crear Nueva Vacunación
+            </Button>
+          </header>
+          <Separator className="my-4" />
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="">Animal ID</TableHead>
+                <TableHead>Fecha Aplicación</TableHead>
+                <TableHead>Tipo Vacuna ID</TableHead>
+                <TableHead>Dosis Aplicada</TableHead>
+                <TableHead>Unidad Dosis</TableHead>
+                <TableHead>Lote Vacuna</TableHead>
+                <TableHead>Fecha Vencimiento Lote</TableHead>
+                <TableHead>Proveedor Vacuna ID</TableHead>
+                <TableHead>Responsable Aplicación ID</TableHead>
+                <TableHead>Próxima Vacunación Sugerida</TableHead>
+                <TableHead>Observaciones</TableHead>
+                <TableHead>Acciones</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {vacunaciones?.map((v) => (
+                <TableRow key={v.vacunacion_id}>
+                  <TableCell className="font-medium">{v.animal_id}</TableCell>
+                  <TableCell className="">{v.fecha_aplicacion}</TableCell>
+                  <TableCell className="">{v.tipo_vacuna_id}</TableCell>
+                  <TableCell className="">{v.dosis_aplicada}</TableCell>
+                  <TableCell className="">{v.unidad_dosis}</TableCell>
+                  <TableCell className="">{v.lote_vacuna}</TableCell>
+                  <TableCell className="">{v.fecha_vencimiento_lote}</TableCell>
+                  <TableCell className="">{v.proveedor_vacuna_id}</TableCell>
+                  <TableCell className="">
+                    {v.responsable_aplicacion_id}
+                  </TableCell>
+                  <TableCell className="">
+                    {v.proxima_vacunacion_sugerida}
+                  </TableCell>
+                  <TableCell className="">{v.observaciones}</TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleEditVacunacion(v)}
+                    >
+                      <Pencil></Pencil>
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleDeleteVacunacion(v.vacunacion_id)}
+                    >
+                      <Trash2></Trash2>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
