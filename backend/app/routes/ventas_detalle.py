@@ -7,6 +7,8 @@ from app.database import get_db
 from app.models.ventas_detalle import VentasDetalle
 from app.schemas.ventas_detalle import VentasDetalleCreate, VentasDetalleOut, VentasDetalleUpdate
 from pydantic import ValidationError
+from sqlalchemy.orm import selectinload
+from app.models.animal import Animal
 
 router = APIRouter()
 
@@ -16,8 +18,17 @@ async def create_venta_detalle(data: VentasDetalleCreate, db: AsyncSession = Dep
         venta_detalle = VentasDetalle(**data.dict())
         db.add(venta_detalle)
         await db.commit()
-        await db.refresh(venta_detalle)
+
+        # volver a cargar con relaciones
+        result = await db.execute(
+            select(VentasDetalle)
+            .where(VentasDetalle.venta_detalle_id == venta_detalle.venta_detalle_id)
+            .options(selectinload(VentasDetalle.animal))
+        )
+        venta_detalle = result.scalars().first()
+
         return venta_detalle
+
     except ValidationError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.errors())
     except IntegrityError as e:
@@ -29,17 +40,29 @@ async def create_venta_detalle(data: VentasDetalleCreate, db: AsyncSession = Dep
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"error": "Error de integridad de datos. Verifique los valores ingresados."})
 
+
 @router.get("/ventas_detalles/", response_model=List[VentasDetalleOut])
 async def get_ventas_detalles(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(VentasDetalle))
+    result = await db.execute(
+        select(VentasDetalle).options(selectinload(VentasDetalle.animal))
+    )
     return result.scalars().all()
+
 
 @router.get("/ventas_detalles/{venta_detalle_id}", response_model=VentasDetalleOut)
 async def get_venta_detalle(venta_detalle_id: int, db: AsyncSession = Depends(get_db)):
-    venta_detalle = await db.get(VentasDetalle, venta_detalle_id)
+    result = await db.execute(
+        select(VentasDetalle)
+        .where(VentasDetalle.venta_detalle_id == venta_detalle_id)
+        .options(selectinload(VentasDetalle.animal))
+    )
+    venta_detalle = result.scalars().first()
+
     if not venta_detalle:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "Detalle de venta no encontrado"})
+
     return venta_detalle
+
 
 @router.put("/ventas_detalles/{venta_detalle_id}", response_model=VentasDetalleOut)
 async def update_venta_detalle(venta_detalle_id: int, venta_detalle_data: VentasDetalleUpdate, db: AsyncSession = Depends(get_db)):

@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 from typing import Optional
+from app.schemas.animal import AnimalOut
 
 class VentasDetalleBase(BaseModel):
     venta_id: int
@@ -17,6 +18,7 @@ class VentasDetalleUpdate(VentasDetalleBase):
 
 class VentasDetalleOut(VentasDetalleBase):
     venta_detalle_id: int
+    animal: Optional[AnimalOut] = None
 
     class Config:
         from_attributes = True

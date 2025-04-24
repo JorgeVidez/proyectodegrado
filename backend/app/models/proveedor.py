@@ -1,5 +1,6 @@
 from sqlalchemy import Column, BigInteger, String, DateTime, func
 from app.database import Base
+from sqlalchemy.orm import relationship
 
 class Proveedor(Base):
     __tablename__ = "proveedores"
@@ -14,3 +15,5 @@ class Proveedor(Base):
     tipo_proveedor = Column(String(100))  # Longitud para tipos de proveedor
     fecha_creacion = Column(DateTime(timezone=True), server_default=func.now())
     fecha_actualizacion = Column(DateTime(timezone=True), onupdate=func.now())
+    
+    inventarios = relationship("InventarioAnimal", back_populates="proveedor_compra")

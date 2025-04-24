@@ -1,5 +1,6 @@
 from sqlalchemy import Column, Integer, String, Numeric, Text, CheckConstraint
 from app.database import Base
+from sqlalchemy.orm import relationship
 
 class Ubicacion(Base):
     __tablename__ = "ubicaciones"
@@ -10,3 +11,5 @@ class Ubicacion(Base):
     area_hectareas = Column(Numeric(10, 2))
     capacidad_maxima_animales = Column(Integer)
     descripcion = Column(Text)
+    
+    inventarios = relationship("InventarioAnimal", back_populates="ubicacion_actual")

@@ -1,6 +1,10 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import date, datetime
+from app.schemas.ventas_detalle import VentasDetalleOut
+from app.schemas.cliente import ClienteOut
+from app.schemas.lote import LoteOut
+from app.schemas.usuario import UsuarioOut
 
 class VentasBase(BaseModel):
     cliente_id: int
@@ -21,6 +25,11 @@ class VentasUpdate(VentasBase):
 class VentasOut(VentasBase):
     venta_id: int
     fecha_registro: datetime
+    detalles: list[VentasDetalleOut] = []
+    cliente: Optional[ClienteOut] = None
+    lote_origen: Optional[LoteOut] = None
+    usuario_registra: Optional[UsuarioOut] = None
+    
 
     class Config:
         from_attributes = True

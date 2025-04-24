@@ -2,6 +2,10 @@ from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import date
 from enum import Enum
+from app.schemas.animal import AnimalOut
+from app.schemas.ubicacion import UbicacionOut
+from app.schemas.lote import LoteOut
+from app.schemas.proveedor import ProveedorOut
 
 class MotivoIngreso(str, Enum):
     Nacimiento = "Nacimiento"
@@ -34,6 +38,11 @@ class InventarioAnimalUpdate(InventarioAnimalBase):
 class InventarioAnimalOut(InventarioAnimalBase):
     inventario_id: int
     activo_en_finca: bool
+    animal: AnimalOut
+    ubicacion_actual: Optional[UbicacionOut] = None
+    lote_actual: Optional[LoteOut] = None
+    proveedor_compra: Optional[ProveedorOut] = None  # ✅ correcto nombre
+    
 
     class Config:
         from_attributes = True

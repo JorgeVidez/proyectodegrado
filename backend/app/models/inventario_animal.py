@@ -29,10 +29,11 @@ class InventarioAnimal(Base):
     motivo_egreso = Column(Enum(MotivoEgreso))
     activo_en_finca = Column(Boolean, default=True)
 
-    animal = relationship("Animal", backref="inventarios")
-    proveedor = relationship("Proveedor", backref="inventarios")
-    ubicacion = relationship("Ubicacion", backref="inventarios")
-    lote = relationship("Lote", backref="inventarios")
+    # Relaciones correctas
+    animal = relationship("Animal", back_populates="inventarios")
+    proveedor_compra = relationship("Proveedor", back_populates="inventarios")
+    ubicacion_actual = relationship("Ubicacion", back_populates="inventarios")
+    lote_actual = relationship("Lote", back_populates="inventarios")
 
     __table_args__ = (
         CheckConstraint("motivo_ingreso != 'Compra' OR (proveedor_compra_id IS NOT NULL AND precio_compra IS NOT NULL)"),

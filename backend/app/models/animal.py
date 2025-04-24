@@ -30,3 +30,4 @@ class Animal(Base):
     padre = relationship("Animal", remote_side=[animal_id], backref="hijos_padre", foreign_keys=[padre_id])
     especie = relationship("Especie", backref="animales")
     raza = relationship("Raza", backref="animales")
+    inventarios = relationship("InventarioAnimal", back_populates="animal")
