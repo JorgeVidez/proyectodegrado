@@ -4,8 +4,15 @@ from datetime import date
 from enum import Enum
 from app.schemas.animal import AnimalOut
 from app.schemas.ubicacion import UbicacionOut
-from app.schemas.lote import LoteOut
 from app.schemas.proveedor import ProveedorOut
+from app.schemas.lote import LoteBase
+
+class LoteOut(LoteBase):
+    lote_id: int
+    fecha_creacion: date
+
+    class Config:
+        from_attributes = True
 
 class MotivoIngreso(str, Enum):
     Nacimiento = "Nacimiento"
