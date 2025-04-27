@@ -1,15 +1,7 @@
 "use client";
-
-import {
-  createVentaDetalle,
-  deleteVentaDetalle,
-  updateVentaDetalle,
-  useVentasDetalle,
-  VentaDetalle,
-  VentaDetalleBase,
-} from "@/hooks/useVentasDetalle";
-import { useEffect, useState } from "react";
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useParams } from "next/navigation";
+import { getVentaById, VentasOut } from "@/hooks/useVentas"; // Adjust the path if needed
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,141 +12,36 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Pencil, Trash2 } from "lucide-react";
 
-export default function ListaVentasDetalle() {
-  const { ventasDetalle, isLoading, isError, refresh } = useVentasDetalle();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-  const [selectedVentaDetalle, setSelectedVentaDetalle] =
-    useState<VentaDetalle | null>(null);
-
-  const [newVentaId, setNewVentaId] = useState<number>(0);
-  const [newAnimalId, setNewAnimalId] = useState<number>(0);
-  const [newPesoVentaKg, setNewPesoVentaKg] = useState<number | undefined>(
-    undefined
-  );
-  const [newPrecioIndividual, setNewPrecioIndividual] = useState<
-    number | undefined
-  >(undefined);
-  const [newPrecioPorKg, setNewPrecioPorKg] = useState<number | undefined>(
-    undefined
-  );
-  const [newObservaciones, setNewObservaciones] = useState<string | undefined>(
-    undefined
-  );
-
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [alertType, setAlertType] = useState<"success" | "error" | null>(null);
+const VentaDetailsPage = () => {
+  const { id } = useParams<{ id: string }>(); // Get the venta ID from the route
+  const [venta, setVenta] = useState<VentasOut | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    if (isError) console.error(isError);
-  }, [isError]);
-
-  const handleCreateVentaDetalle = async () => {
-    const newVentaDetalle: VentaDetalleBase = {
-      venta_id: newVentaId,
-      animal_id: newAnimalId,
-      peso_venta_kg: newPesoVentaKg,
-      precio_individual: newPrecioIndividual,
-      precio_por_kg: newPrecioPorKg,
-      observaciones: newObservaciones,
-    };
-    try {
-      await createVentaDetalle(newVentaDetalle);
-      setAlertMessage("Detalle de venta creado con éxito.");
-      setAlertType("success");
-      setIsCreateDialogOpen(false);
-      refresh();
-    } catch (err) {
-      setAlertMessage("Error al crear el detalle de venta.");
-      setAlertType("error");
-    }
-    setTimeout(() => {
-      setAlertMessage(null);
-      setAlertType(null);
-    }, 3000);
-  };
-
-  const handleEditVentaDetalle = (ventaDetalle: VentaDetalle) => {
-    setSelectedVentaDetalle(ventaDetalle);
-    setNewVentaId(ventaDetalle.venta_id);
-    setNewAnimalId(ventaDetalle.animal_id);
-    setNewPesoVentaKg(ventaDetalle.peso_venta_kg);
-    setNewPrecioIndividual(ventaDetalle.precio_individual);
-    setNewPrecioPorKg(ventaDetalle.precio_por_kg);
-    setNewObservaciones(ventaDetalle.observaciones);
-    setIsEditDialogOpen(true);
-  };
-
-  const handleUpdateVentaDetalle = async () => {
-    if (selectedVentaDetalle) {
-      const updatedVentaDetalle: Partial<VentaDetalleBase> = {
-        venta_id: newVentaId,
-        animal_id: newAnimalId,
-        peso_venta_kg: newPesoVentaKg,
-        precio_individual: newPrecioIndividual,
-        precio_por_kg: newPrecioPorKg,
-        observaciones: newObservaciones,
-      };
-      try {
-        await updateVentaDetalle(
-          selectedVentaDetalle.venta_detalle_id,
-          updatedVentaDetalle
-        );
-        setAlertMessage("Detalle de venta actualizado con éxito.");
-        setAlertType("success");
-        setIsEditDialogOpen(false);
-        refresh();
-      } catch (err) {
-        setAlertMessage("Error al actualizar el detalle de venta.");
-        setAlertType("error");
+    const fetchVentaDetails = async () => {
+      if (!id) {
+        setIsError(true);
+        setIsLoading(false);
+        return;
       }
-      setTimeout(() => {
-        setAlertMessage(null);
-        setAlertType(null);
-      }, 3000);
-    }
-  };
+      try {
+        const ventaData = await getVentaById(parseInt(id, 10)); // Convert id to number
+        setVenta(ventaData);
+        setIsLoading(false);
+      } catch (error) {
+        setIsError(true);
+        setIsLoading(false);
+      }
+    };
 
-  const handleDeleteVentaDetalle = async (ventaDetalleId: number) => {
-    try {
-      await deleteVentaDetalle(ventaDetalleId);
-      setAlertMessage("Detalle de venta eliminado con éxito.");
-      setAlertType("success");
-      refresh();
-    } catch (err) {
-      setAlertMessage("Error al eliminar el detalle de venta.");
-      setAlertType("error");
-    }
-    setTimeout(() => {
-      setAlertMessage(null);
-      setAlertType(null);
-    }, 3000);
-  };
+    fetchVentaDetails();
+  }, [id]);
 
   if (isLoading) return <div>Cargando...</div>;
   if (isError) return <div>Error al cargar detalles de venta</div>;
+  if (!venta) return <div>Venta no encontrada</div>; // Handle the case where venta is null
 
   return (
     <div>
@@ -165,264 +52,578 @@ export default function ListaVentasDetalle() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">
-                  Building Your Application
-                </BreadcrumbLink>
+                <BreadcrumbLink href="#">Home</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                <BreadcrumbLink href="#">Ventas</BreadcrumbLink>
+              </BreadcrumbItem>
+              <BreadcrumbSeparator className="hidden md:block" />
+              <BreadcrumbItem>
+                <BreadcrumbPage>Detalles de Venta</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </div>
       </header>
-      
-      {/* ... (Breadcrumb, Header, Alert, etc. - similar a ListaInventarioAnimales) */}
-      <div>
-        <header className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Lista de Detalles de Venta</h1>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            Crear Nuevo Detalle de Venta
-          </Button>
-        </header>
-        <Separator className="my-4" />
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="">Venta ID</TableHead>
-              <TableHead>Animal ID</TableHead>
-              <TableHead>Peso Venta (kg)</TableHead>
-              <TableHead>Precio Individual</TableHead>
-              <TableHead>Precio por kg</TableHead>
-              <TableHead>Observaciones</TableHead>
-              <TableHead>Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {ventasDetalle?.map((vd) => (
-              <TableRow key={vd.venta_detalle_id}>
-                <TableCell className="font-medium">{vd.venta_id}</TableCell>
-                <TableCell className="">{vd.animal_id}</TableCell>
-                <TableCell className="">{vd.peso_venta_kg}</TableCell>
-                <TableCell className="">{vd.precio_individual}</TableCell>
-                <TableCell className="">{vd.precio_por_kg}</TableCell>
-                <TableCell className="">{vd.observaciones}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleEditVentaDetalle(vd)}
-                  >
-                    <Pencil></Pencil>
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() =>
-                      handleDeleteVentaDetalle(vd.venta_detalle_id)
-                    }
-                  >
-                    <Trash2></Trash2>
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-4">
+          Detalles de la Venta #{venta.venta_id}
+        </h1>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Información General</h2>
+            <p>
+              <strong>Cliente ID:</strong> {venta.cliente_id}
+            </p>
+            <p>
+              <strong>Fecha de Venta:</strong> {venta.fecha_venta}
+            </p>
+            <p>
+              <strong>Documento de Venta:</strong>{" "}
+              {venta.documento_venta_ref || "N/A"}
+            </p>
+            <p>
+              <strong>Precio Total:</strong>{" "}
+              {venta.precio_venta_total_general || "N/A"}
+            </p>
+            <p>
+              <strong>Condición de Pago:</strong>{" "}
+              {venta.condicion_pago || "N/A"}
+            </p>
+            <p>
+              <strong>Lote de Origen ID:</strong>{" "}
+              {venta.lote_origen_id || "N/A"}
+            </p>
+            <p>
+              <strong>Usuario Registra ID:</strong>{" "}
+              {venta.usuario_registra_id || "N/A"}
+            </p>
+            <p>
+              <strong>Observaciones:</strong> {venta.observaciones || "N/A"}
+            </p>
+            <p>
+              <strong>Fecha de Registro:</strong> {venta.fecha_registro}
+            </p>
+          </div>
+
+          <div>
+            <h2 className="text-lg font-semibold mb-2">Detalles del Cliente</h2>
+            {venta.cliente ? (
+              <>
+                <p>
+                  <strong>Nombre:</strong> {venta.cliente.nombre}
+                </p>
+                <p>
+                  <strong>Identificación Fiscal:</strong>{" "}
+                  {venta.cliente.identificacion_fiscal}
+                </p>
+                <p>
+                  <strong>Teléfono:</strong> {venta.cliente.telefono}
+                </p>
+                <p>
+                  <strong>Email:</strong> {venta.cliente.email}
+                </p>
+                <p>
+                  <strong>Dirección:</strong> {venta.cliente.direccion}
+                </p>
+              </>
+            ) : (
+              <p>No se proporcionó información del cliente.</p>
+            )}
+          </div>
+
+          <div>
+            <h2 className="text-lg font-semibold mb-2">
+              Detalles del Lote de Origen
+            </h2>
+            {venta.lote_origen ? (
+              <>
+                <p>
+                  <strong>Código de Lote:</strong>{" "}
+                  {venta.lote_origen.codigo_lote}
+                </p>
+                <p>
+                  <strong>Propósito:</strong> {venta.lote_origen.proposito}
+                </p>
+                <p>
+                  <strong>Descripción:</strong> {venta.lote_origen.descripcion}
+                </p>
+                <p>
+                  <strong>Activo:</strong>{" "}
+                  {venta.lote_origen.activo ? "Sí" : "No"}
+                </p>
+                <p>
+                  <strong>Fecha de Creación:</strong>{" "}
+                  {venta.lote_origen.fecha_creacion}
+                </p>
+              </>
+            ) : (
+              <p>No se proporcionó información del lote de origen.</p>
+            )}
+          </div>
+
+          <div>
+            <h2 className="text-lg font-semibold mb-2">
+              Detalles del Usuario que Registró
+            </h2>
+            {venta.usuario_registra ? (
+              <>
+                <p>
+                  <strong>Nombre:</strong> {venta.usuario_registra.nombre}
+                </p>
+                <p>
+                  <strong>Email:</strong> {venta.usuario_registra.email}
+                </p>
+                <p>
+                  <strong>Activo:</strong>{" "}
+                  {venta.usuario_registra.activo ? "Sí" : "No"}
+                </p>
+                <p>
+                  <strong>Rol:</strong>{" "}
+                  {venta.usuario_registra.rol?.nombre_rol || "N/A"}
+                </p>
+              </>
+            ) : (
+              <p>No se proporcionó información del usuario.</p>
+            )}
+          </div>
+        </div>
+
+        <div className="mt-8">
+          <h2 className="text-xl font-semibold mb-4">
+            Detalles de Animales Vendidos
+          </h2>
+          {venta.detalles && venta.detalles.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Animal ID
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Número de Trazabilidad
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Nombre
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Peso (kg)
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Precio Individual
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Precio por kg
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Observaciones
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Especie
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Raza
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Sexo
+                    </th>
+                    <th
+                      scope="col"
+                      className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                    >
+                      Fecha Nacimiento
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {venta.detalles.map(
+                    (detalle: {
+                      venta_detalle_id: React.Key | null | undefined;
+                      animal_id:
+                        | string
+                        | number
+                        | bigint
+                        | boolean
+                        | React.ReactElement<
+                            unknown,
+                            string | React.JSXElementConstructor<any>
+                          >
+                        | Iterable<React.ReactNode>
+                        | React.ReactPortal
+                        | Promise<
+                            | string
+                            | number
+                            | bigint
+                            | boolean
+                            | React.ReactPortal
+                            | React.ReactElement<
+                                unknown,
+                                string | React.JSXElementConstructor<any>
+                              >
+                            | Iterable<React.ReactNode>
+                            | null
+                            | undefined
+                          >
+                        | null
+                        | undefined;
+                      animal: {
+                        numero_trazabilidad:
+                          | string
+                          | number
+                          | bigint
+                          | boolean
+                          | React.ReactElement<
+                              unknown,
+                              string | React.JSXElementConstructor<any>
+                            >
+                          | Iterable<React.ReactNode>
+                          | React.ReactPortal
+                          | Promise<
+                              | string
+                              | number
+                              | bigint
+                              | boolean
+                              | React.ReactPortal
+                              | React.ReactElement<
+                                  unknown,
+                                  string | React.JSXElementConstructor<any>
+                                >
+                              | Iterable<React.ReactNode>
+                              | null
+                              | undefined
+                            >
+                          | null
+                          | undefined;
+                        nombre_identificatorio:
+                          | string
+                          | number
+                          | bigint
+                          | boolean
+                          | React.ReactElement<
+                              unknown,
+                              string | React.JSXElementConstructor<any>
+                            >
+                          | Iterable<React.ReactNode>
+                          | React.ReactPortal
+                          | Promise<
+                              | string
+                              | number
+                              | bigint
+                              | boolean
+                              | React.ReactPortal
+                              | React.ReactElement<
+                                  unknown,
+                                  string | React.JSXElementConstructor<any>
+                                >
+                              | Iterable<React.ReactNode>
+                              | null
+                              | undefined
+                            >
+                          | null
+                          | undefined;
+                        especie: {
+                          nombre_comun:
+                            | string
+                            | number
+                            | bigint
+                            | boolean
+                            | React.ReactElement<
+                                unknown,
+                                string | React.JSXElementConstructor<any>
+                              >
+                            | Iterable<React.ReactNode>
+                            | React.ReactPortal
+                            | Promise<
+                                | string
+                                | number
+                                | bigint
+                                | boolean
+                                | React.ReactPortal
+                                | React.ReactElement<
+                                    unknown,
+                                    string | React.JSXElementConstructor<any>
+                                  >
+                                | Iterable<React.ReactNode>
+                                | null
+                                | undefined
+                              >
+                            | null
+                            | undefined;
+                        };
+                        raza: {
+                          nombre_raza:
+                            | string
+                            | number
+                            | bigint
+                            | boolean
+                            | React.ReactElement<
+                                unknown,
+                                string | React.JSXElementConstructor<any>
+                              >
+                            | Iterable<React.ReactNode>
+                            | React.ReactPortal
+                            | Promise<
+                                | string
+                                | number
+                                | bigint
+                                | boolean
+                                | React.ReactPortal
+                                | React.ReactElement<
+                                    unknown,
+                                    string | React.JSXElementConstructor<any>
+                                  >
+                                | Iterable<React.ReactNode>
+                                | null
+                                | undefined
+                              >
+                            | null
+                            | undefined;
+                        };
+                        sexo:
+                          | string
+                          | number
+                          | bigint
+                          | boolean
+                          | React.ReactElement<
+                              unknown,
+                              string | React.JSXElementConstructor<any>
+                            >
+                          | Iterable<React.ReactNode>
+                          | React.ReactPortal
+                          | Promise<
+                              | string
+                              | number
+                              | bigint
+                              | boolean
+                              | React.ReactPortal
+                              | React.ReactElement<
+                                  unknown,
+                                  string | React.JSXElementConstructor<any>
+                                >
+                              | Iterable<React.ReactNode>
+                              | null
+                              | undefined
+                            >
+                          | null
+                          | undefined;
+                        fecha_nacimiento:
+                          | string
+                          | number
+                          | bigint
+                          | boolean
+                          | React.ReactElement<
+                              unknown,
+                              string | React.JSXElementConstructor<any>
+                            >
+                          | Iterable<React.ReactNode>
+                          | React.ReactPortal
+                          | Promise<
+                              | string
+                              | number
+                              | bigint
+                              | boolean
+                              | React.ReactPortal
+                              | React.ReactElement<
+                                  unknown,
+                                  string | React.JSXElementConstructor<any>
+                                >
+                              | Iterable<React.ReactNode>
+                              | null
+                              | undefined
+                            >
+                          | null
+                          | undefined;
+                      };
+                      peso_venta_kg:
+                        | string
+                        | number
+                        | bigint
+                        | boolean
+                        | React.ReactElement<
+                            unknown,
+                            string | React.JSXElementConstructor<any>
+                          >
+                        | Iterable<React.ReactNode>
+                        | React.ReactPortal
+                        | Promise<
+                            | string
+                            | number
+                            | bigint
+                            | boolean
+                            | React.ReactPortal
+                            | React.ReactElement<
+                                unknown,
+                                string | React.JSXElementConstructor<any>
+                              >
+                            | Iterable<React.ReactNode>
+                            | null
+                            | undefined
+                          >
+                        | null
+                        | undefined;
+                      precio_individual:
+                        | string
+                        | number
+                        | bigint
+                        | boolean
+                        | React.ReactElement<
+                            unknown,
+                            string | React.JSXElementConstructor<any>
+                          >
+                        | Iterable<React.ReactNode>
+                        | React.ReactPortal
+                        | Promise<
+                            | string
+                            | number
+                            | bigint
+                            | boolean
+                            | React.ReactPortal
+                            | React.ReactElement<
+                                unknown,
+                                string | React.JSXElementConstructor<any>
+                              >
+                            | Iterable<React.ReactNode>
+                            | null
+                            | undefined
+                          >
+                        | null
+                        | undefined;
+                      precio_por_kg:
+                        | string
+                        | number
+                        | bigint
+                        | boolean
+                        | React.ReactElement<
+                            unknown,
+                            string | React.JSXElementConstructor<any>
+                          >
+                        | Iterable<React.ReactNode>
+                        | React.ReactPortal
+                        | Promise<
+                            | string
+                            | number
+                            | bigint
+                            | boolean
+                            | React.ReactPortal
+                            | React.ReactElement<
+                                unknown,
+                                string | React.JSXElementConstructor<any>
+                              >
+                            | Iterable<React.ReactNode>
+                            | null
+                            | undefined
+                          >
+                        | null
+                        | undefined;
+                      observaciones:
+                        | string
+                        | number
+                        | bigint
+                        | boolean
+                        | React.ReactElement<
+                            unknown,
+                            string | React.JSXElementConstructor<any>
+                          >
+                        | Iterable<React.ReactNode>
+                        | React.ReactPortal
+                        | Promise<
+                            | string
+                            | number
+                            | bigint
+                            | boolean
+                            | React.ReactPortal
+                            | React.ReactElement<
+                                unknown,
+                                string | React.JSXElementConstructor<any>
+                              >
+                            | Iterable<React.ReactNode>
+                            | null
+                            | undefined
+                          >
+                        | null
+                        | undefined;
+                    }) => (
+                      <tr key={detalle.venta_detalle_id}>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {detalle.animal_id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {detalle.animal.numero_trazabilidad}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {detalle.animal.nombre_identificatorio}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {detalle.peso_venta_kg}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {detalle.precio_individual}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {detalle.precio_por_kg}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {detalle.observaciones}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {detalle.animal.especie.nombre_comun}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {detalle.animal.raza.nombre_raza}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {detalle.animal.sexo}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                          {detalle.animal.fecha_nacimiento}
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p>No hay animales vendidos en esta venta.</p>
+          )}
+        </div>
       </div>
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Crear Nuevo Detalle de Venta</DialogTitle>
-            <DialogDescription>
-              Ingresa los detalles del nuevo detalle de venta.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="ventaId" className="text-right">
-                Venta ID
-              </Label>
-              <Input
-                id="ventaId"
-                value={newVentaId.toString()}
-                onChange={(e) => setNewVentaId(Number(e.target.value))}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="animalId" className="text-right">
-                Animal ID
-              </Label>
-              <Input
-                id="animalId"
-                value={newAnimalId.toString()}
-                onChange={(e) => setNewAnimalId(Number(e.target.value))}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="pesoVentaKg" className="text-right">
-                Peso Venta (kg)
-              </Label>
-              <Input
-                id="pesoVentaKg"
-                value={newPesoVentaKg?.toString() || ""}
-                onChange={(e) =>
-                  setNewPesoVentaKg(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="precioIndividual" className="text-right">
-                Precio Individual
-              </Label>
-              <Input
-                id="precioIndividual"
-                value={newPrecioIndividual?.toString() || ""}
-                onChange={(e) =>
-                  setNewPrecioIndividual(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="precioPorKg" className="text-right">
-                Precio por kg
-              </Label>
-              <Input
-                id="precioPorKg"
-                value={newPrecioPorKg?.toString() || ""}
-                onChange={(e) =>
-                  setNewPrecioPorKg(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="observaciones" className="text-right">
-                Observaciones
-              </Label>
-              <Input
-                id="observaciones"
-                value={newObservaciones || ""}
-                onChange={(e) => setNewObservaciones(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleCreateVentaDetalle}>
-              Crear Detalle de Venta
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Editar Detalle de Venta</DialogTitle>
-            <DialogDescription>
-              Edita los detalles del detalle de venta.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {/* ... (Inputs para editar los campos, similar al diálogo de creación) */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="ventaId" className="text-right">
-                Venta ID
-              </Label>
-              <Input
-                id="ventaId"
-                value={newVentaId.toString()}
-                onChange={(e) => setNewVentaId(Number(e.target.value))}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="animalId" className="text-right">
-                Animal ID
-              </Label>
-              <Input
-                id="animalId"
-                value={newAnimalId.toString()}
-                onChange={(e) => setNewAnimalId(Number(e.target.value))}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="pesoVentaKg" className="text-right">
-                Peso Venta (kg)
-              </Label>
-              <Input
-                id="pesoVentaKg"
-                value={newPesoVentaKg?.toString() || ""}
-                onChange={(e) =>
-                  setNewPesoVentaKg(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="precioIndividual" className="text-right">
-                Precio Individual
-              </Label>
-              <Input
-                id="precioIndividual"
-                value={newPrecioIndividual?.toString() || ""}
-                onChange={(e) =>
-                  setNewPrecioIndividual(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="precioPorKg" className="text-right">
-                Precio por kg
-              </Label>
-              <Input
-                id="precioPorKg"
-                value={newPrecioPorKg?.toString() || ""}
-                onChange={(e) =>
-                  setNewPrecioPorKg(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="observaciones" className="text-right">
-                Observaciones
-              </Label>
-              <Input
-                id="observaciones"
-                value={newObservaciones || ""}
-                onChange={(e) => setNewObservaciones(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleUpdateVentaDetalle}>
-              Actualizar Detalle de Venta
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
-}
+};
 
+export default VentaDetailsPage;

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,8 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import { Loader2, Eye, EyeOff } from "lucide-react";
+import { Loader2, Eye, EyeOff, AlertCircle } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const loginSchema = z.object({
   email: z.string().email("Correo inválido"),
@@ -25,6 +26,8 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const searchParams = useSearchParams();
+  const expired = searchParams.get("expired");
 
   const {
     register,
@@ -41,18 +44,26 @@ export default function LoginPage() {
     const success = await login(data.email, data.password);
 
     if (success) {
-      switch (role) {
-        case "Administrador":
-          router.push("/dashboard");
-          break;
-        case "Operador":
-          router.push("/operador");
-          break;
-        case "Veterinario":
-          router.push("/veterinario");
-          break;
-        default:
-          router.push("/dashboard");
+      // Redireccionar a la página anterior si existe
+      const redirectPath = sessionStorage.getItem("redirectAfterLogin");
+      if (redirectPath) {
+        sessionStorage.removeItem("redirectAfterLogin");
+        router.push(redirectPath);
+      } else {
+        // Si no existe una redirección previa, usar la lógica basada en roles
+        switch (role) {
+          case "Administrador":
+            router.push("/dashboard");
+            break;
+          case "Operador":
+            router.push("/operador");
+            break;
+          case "Veterinario":
+            router.push("/veterinario");
+            break;
+          default:
+            router.push("/dashboard");
+        }
       }
     } else {
       setError("Credenciales inválidas o error del servidor");
@@ -68,6 +79,16 @@ export default function LoginPage() {
           <CardTitle className="text-center text-2xl">Iniciar Sesión</CardTitle>
         </CardHeader>
         <CardContent>
+          {expired === "true" && (
+            <Alert variant="destructive" className="mb-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription>
+                Tu sesión ha expirado. Por favor inicia sesión nuevamente.
+              </AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <div>
               <Label>Email</Label>

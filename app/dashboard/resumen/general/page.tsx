@@ -79,6 +79,7 @@ import {
 } from "lucide-react";
 import React from "react";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import * as XLSX from "xlsx"; // Importa la librería xlsx
 
 const COLORS = [
   "#8884d8",
@@ -90,7 +91,7 @@ const COLORS = [
   "#ff7300",
   "#d62728",
 ];
-const DEFAULT_DATE_RANGE = {
+const DEFAULT_DATE_RANGE: DateRange = {
   from: new Date(new Date().setMonth(new Date().getMonth() - 1)),
   to: addDays(new Date(), 20),
 };
@@ -100,6 +101,7 @@ const DashboardPage = () => {
   const [dateRange, setDateRange] = React.useState<DateRange | undefined>(
     DEFAULT_DATE_RANGE
   );
+
   const [especieFilter, setEspecieFilter] = useState("todas");
   const [ubicacionFilter, setUbicacionFilter] = useState("todas");
   const [activeTab, setActiveTab] = useState("general");
@@ -479,9 +481,70 @@ const DashboardPage = () => {
     setExpandedSection(expandedSection === section ? null : section);
   };
 
-  // Función para exportar datos (simulada)
+  // Función para exportar datos a Excel
   const handleExportData = () => {
-    alert("Exportando datos del dashboard. Función a implementar.");
+    const workbook = XLSX.utils.book_new();
+
+    // Función para agregar una hoja de cálculo con datos
+    const addWorksheet = (
+      data: any[],
+      sheetName: string,
+      headers?: string[]
+    ) => {
+      if (data && data.length > 0) {
+        const wsData = headers
+          ? [headers, ...data.map(Object.values)]
+          : data.map(Object.values);
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        XLSX.utils.book_append_sheet(workbook, ws, sheetName);
+      } else if (headers) {
+        const wsData = [headers];
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        XLSX.utils.book_append_sheet(workbook, ws, sheetName);
+      } else {
+        const ws = XLSX.utils.aoa_to_sheet([
+          [`No hay datos disponibles para ${sheetName}`],
+        ]);
+        XLSX.utils.book_append_sheet(workbook, ws, sheetName);
+      }
+    };
+
+    // Exportar Inventario Animal (filtrado)
+    const inventarioHeaders =
+      inventarios.length > 0 ? Object.keys(inventarios[0]) : [];
+    addWorksheet(filteredData.activos, "Inventario Animal", inventarioHeaders);
+
+    // Exportar Animales (todos, sin filtrar adicional aquí)
+    const animalesHeaders =
+      animales && animales.length > 0 ? Object.keys(animales[0]) : [];
+    addWorksheet(animales || [], "Animales", animalesHeaders);
+
+    // Exportar Controles Sanitarios (todos, sin filtrar adicional aquí)
+    const controlesHeaders =
+      controles && controles.length > 0 ? Object.keys(controles[0]) : [];
+    addWorksheet(controles || [], "Controles Sanitarios", controlesHeaders);
+
+    // Exportar Vacunaciones (todos, sin filtrar adicional aquí)
+    const vacunacionesHeaders =
+      vacunaciones && vacunaciones?.length > 0
+        ? Object.keys(vacunaciones[0])
+        : [];
+    addWorksheet(vacunaciones || [], "Vacunaciones", vacunacionesHeaders);
+
+    // Exportar Alimentaciones (todos, sin filtrar adicional aquí)
+    const alimentacionesHeaders =
+      alimentaciones && alimentaciones?.length > 0
+        ? Object.keys(alimentaciones[0])
+        : [];
+    addWorksheet(alimentaciones || [], "Alimentaciones", alimentacionesHeaders);
+
+    // Exportar Ventas (todos, sin filtrar adicional aquí)
+    const ventasHeaders =
+      ventas && ventas?.length > 0 ? Object.keys(ventas[0]) : [];
+    addWorksheet(ventas || [], "Ventas", ventasHeaders);
+
+    // Generar y descargar el archivo Excel
+    XLSX.writeFile(workbook, "dashboard_data.xlsx");
   };
 
   // Función para imprimir dashboard
@@ -530,12 +593,12 @@ const DashboardPage = () => {
             <Typography variant="h6">Filtros</Typography>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full md:w-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 w-full md:w-auto">
             <div>
               <Typography variant="subtitle2" className="mb-1">
                 Rango de fechas
               </Typography>
-              <DateRangePicker value={dateRange} onSelect={setDateRange} />
+              <DateRangePicker value={dateRange} onDateChange={setDateRange} />
             </div>
 
             <div>
