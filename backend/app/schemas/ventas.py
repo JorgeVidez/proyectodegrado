@@ -3,8 +3,15 @@ from typing import Optional
 from datetime import date, datetime
 from app.schemas.ventas_detalle import VentasDetalleOut
 from app.schemas.cliente import ClienteOut
-from app.schemas.lote import LoteOut
 from app.schemas.usuario import UsuarioOut
+from app.schemas.lote import LoteBase
+
+class LoteOut(LoteBase):
+    lote_id: int
+    fecha_creacion: date
+
+    class Config:
+        from_attributes = True
 
 class VentasBase(BaseModel):
     cliente_id: int

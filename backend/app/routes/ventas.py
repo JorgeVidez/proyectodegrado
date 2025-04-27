@@ -11,6 +11,8 @@ from sqlalchemy.orm import selectinload
 from app.models.ventas_detalle import VentasDetalle  # para futuras mejoras
 from app.models.animal import Animal
 from app.models.usuario import Usuario  
+from app.models.lote import Lote
+from app.models.cliente import Cliente
 
 router = APIRouter()
 
