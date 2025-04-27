@@ -22,9 +22,10 @@ interface UseRolesResult {
   fetchRoles: () => Promise<void>;
 }
 
-const useRoles = (
-  baseUrl: string = "http://localhost:8000/api"
-): UseRolesResult => {
+const BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api"; // Reemplaza con la URL de tu API
+
+const useRoles = (baseUrl: string = BASE_URL): UseRolesResult => {
   const [roles, setRoles] = useState<RolUsuario[] | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<Error | null>(null);

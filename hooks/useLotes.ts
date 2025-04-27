@@ -17,15 +17,75 @@ export interface LoteUpdate {
   activo?: boolean;
 }
 
+export interface EspecieOut {
+  especie_id: number;
+  nombre_comun: string;
+}
+
+export interface RazaOut {
+  raza_id: number;
+  nombre_raza: string;
+}
+
+export interface UbicacionOut {
+  ubicacion_id: number;
+  nombre_ubicacion: string;
+  descripcion?: string;
+  fecha_creacion: string;
+}
+
+export interface AnimalOut {
+  animal_id: number;
+  numero_trazabilidad: string;
+  nombre_identificatorio: string;
+  especie: EspecieOut;
+  raza: RazaOut;
+  sexo: string;
+  fecha_nacimiento: string;
+  madre?: number;
+  padre?: number;
+  estado_actual: string;
+  fecha_registro: string;
+  observaciones_generales: string;
+}
+
+export interface ProveedorOut {
+  proveedor_id: number;
+  nombre_proveedor: string;
+  identificacion_fiscal: string;
+  direccion: string;
+  telefono: string;
+  email?: string;
+  fecha_creacion: string;
+  fecha_actualizacion?: string;
+}
+
+export interface InventarioAnimalOut {
+  inventario_id: number;
+  animal_id: number;
+  fecha_ingreso: string;
+  motivo_ingreso: "Nacimiento" | "Compra" | "TrasladoInterno";
+  proveedor_compra?: ProveedorOut | null;
+  precio_compra?: number | null;
+  ubicacion_actual: UbicacionOut;
+  lote_actual_id: number;
+  fecha_egreso?: string | null;
+  motivo_egreso?: "Venta" | "Muerte" | "Descartado" | "TrasladoExterno" | null;
+  activo_en_finca: boolean;
+  animal: AnimalOut;
+}
+
 export interface LoteOut extends LoteBase {
   lote_id: number;
   fecha_creacion: string; // Fecha en formato string (ISO 8601)
+  inventarios: InventarioAnimalOut[];
 }
 
 import { useState, useEffect } from "react";
 import axios, { AxiosError } from "axios";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 const URL_LOTES = API_URL + "/lotes";
 
 export const useLotes = () => {

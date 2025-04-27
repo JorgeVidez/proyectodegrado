@@ -29,12 +29,15 @@ interface UseTipoAlimentos {
 }
 
 export const useTipoAlimentos = (): UseTipoAlimentos => {
-  const [tiposAlimento, setTiposAlimento] = useState<TipoAlimento[] | null>(null);
+  const [tiposAlimento, setTiposAlimento] = useState<TipoAlimento[] | null>(
+    null
+  );
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const API_URL = 'http://localhost:8000/api/tipos_alimento'
-
+  const BASE_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api"; // Reemplaza con la URL de tu API
+  const API_URL = `${BASE_URL}/tipos_alimento`; // Reemplaza con la URL de tu API
 
   const fetchTiposAlimento = async () => {
     setIsLoading(true);
@@ -42,7 +45,7 @@ export const useTipoAlimentos = (): UseTipoAlimentos => {
     try {
       const response = await fetch(`${API_URL}/`); // Asegúrate de que la ruta sea correcta
       if (!response.ok) {
-        throw new Error('Error al cargar los tipos de alimento');
+        throw new Error("Error al cargar los tipos de alimento");
       }
       const data: TipoAlimento[] = await response.json();
       setTiposAlimento(data);
@@ -57,20 +60,24 @@ export const useTipoAlimentos = (): UseTipoAlimentos => {
     fetchTiposAlimento();
   }, []);
 
-  const create = async (data: TipoAlimentoCreate): Promise<TipoAlimento | null> => {
+  const create = async (
+    data: TipoAlimentoCreate
+  ): Promise<TipoAlimento | null> => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await fetch(`${API_URL}/`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail?.error || 'Error al crear el tipo de alimento');
+        throw new Error(
+          errorData.detail?.error || "Error al crear el tipo de alimento"
+        );
       }
       const createdTipoAlimento: TipoAlimento = await response.json();
       fetchTiposAlimento(); // Recargar la lista después de crear
@@ -83,20 +90,25 @@ export const useTipoAlimentos = (): UseTipoAlimentos => {
     }
   };
 
-  const update = async (id: number, data: TipoAlimentoUpdate): Promise<TipoAlimento | null> => {
+  const update = async (
+    id: number,
+    data: TipoAlimentoUpdate
+  ): Promise<TipoAlimento | null> => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await fetch(`${API_URL}/${id}`, {
-        method: 'PUT',
+        method: "PUT",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(data),
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail?.error || 'Error al actualizar el tipo de alimento');
+        throw new Error(
+          errorData.detail?.error || "Error al actualizar el tipo de alimento"
+        );
       }
       const updatedTipoAlimento: TipoAlimento = await response.json();
       fetchTiposAlimento(); // Recargar la lista después de actualizar
@@ -114,11 +126,13 @@ export const useTipoAlimentos = (): UseTipoAlimentos => {
     setError(null);
     try {
       const response = await fetch(`${API_URL}/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
       });
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.detail?.error || 'Error al eliminar el tipo de alimento');
+        throw new Error(
+          errorData.detail?.error || "Error al eliminar el tipo de alimento"
+        );
       }
       fetchTiposAlimento(); // Recargar la lista después de eliminar
       return true;

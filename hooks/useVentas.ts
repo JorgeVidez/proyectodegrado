@@ -109,7 +109,6 @@ export const useVentas = () => {
     `${API_URL}/ventas/`,
     fetcher
   );
-  console.log("data", data);
 
   return {
     ventas: data,

@@ -46,7 +46,8 @@ export const useMedicamentos = (): UseMedicamentos => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
 
-  const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+  const API_URL =
+    process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
      
   const URL_MEDICAMENTOS = API_URL + "/medicamentos";

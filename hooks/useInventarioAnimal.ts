@@ -45,6 +45,7 @@ export const useInventarioAnimal = () => {
         `${API_URL_INVENTARIO}/${inventarioId}`
       );
       setInventario(response.data);
+      console.log("Inventario:", response.data);
     } catch (err: any) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.detail?.error || err.message);

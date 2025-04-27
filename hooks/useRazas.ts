@@ -32,7 +32,11 @@ interface UseRazasResult {
   remove: (raza_id: number) => Promise<boolean>;
 }
 
-const API_URL = 'http://localhost:8000/api/razas'; // Reemplaza con la URL de tu API
+// URL de la API (ajusta según tu configuración)
+const URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api"; // Reemplaza con la URL de tu API
+
+const API_URL = URL + "/razas"; // Reemplaza con la URL de tu API
+
 
 export const useRazas = (): UseRazasResult => {
   const [razas, setRazas] = useState<Raza[] | undefined>(undefined);
