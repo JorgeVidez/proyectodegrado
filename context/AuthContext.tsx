@@ -11,7 +11,8 @@ import {
 import axios, { AxiosInstance } from "axios";
 import { useRouter } from "next/navigation";
 
-const API_BASE_URL = "http://localhost:8000/api";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
 const TOKEN_KEY = "authToken";
 
 interface RolUsuario {
@@ -105,8 +106,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       (response) => response,
       (error) => {
         if (error.response?.status === 401) {
+          // Guardar la URL actual para redireccionar de vuelta después del login
+          if (typeof window !== "undefined") {
+            const currentPath = window.location.pathname;
+            if (currentPath !== "/login") {
+              sessionStorage.setItem("redirectAfterLogin", currentPath);
+            }
+          }
+
+          // Mostrar mensaje al usuario (opcional)
+          // Puedes usar un sistema de notificaciones o un estado global
+
           logout();
-          router.push("/login");
+          router.push("/login?expired=true"); // Agregamos un parámetro para indicar sesión expirada
         }
         return Promise.reject(error);
       }
