@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 const URL_TIPOS_VACUNA = API_URL + "/tipos_vacuna";
 
 
