@@ -40,6 +40,7 @@ import { AnimalCombobox } from "@/components/AnimalCombobox";
 import { EspecieCombobox } from "@/components/EspecieCombobox";
 import { RazaCombobox } from "@/components/RazaCombobox";
 import { DatePicker } from "@/components/DatePicker";
+import { hexToRgb } from "@mui/material";
 
 export default function ListaAnimalesPage() {
   // Renombrar el componente
@@ -310,7 +311,10 @@ export default function ListaAnimalesPage() {
                 Ingresa los detalles del nuevo animal.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4">
+            <div
+              className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4 max-h-96 overflow-y-auto"
+              style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
+            >
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label
                   htmlFor="numeroTrazabilidad"
@@ -472,7 +476,10 @@ export default function ListaAnimalesPage() {
                 Actualiza los detalles del animal.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 py-4">
+            <div
+              className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 py-4 max-h-96 overflow-y-auto"
+              style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
+            >
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label
                   htmlFor="editNumeroTrazabilidad"

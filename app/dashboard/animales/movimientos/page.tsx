@@ -41,12 +41,28 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
+import { AnimalCombobox } from "@/components/AnimalCombobox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { UbicacionCombobox } from "@/components/UbicacionCombobox";
+import { LoteCombobox } from "@/components/LoteCombobox";
+import { ProveedorCombobox } from "@/components/ProveedorCombobox";
+import { ClienteCombobox } from "@/components/ClienteCombobox";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ListaMovimientosAnimales() {
   const { movimientos, isLoading, isError, refresh } = useMovimientosAnimal();
+  const { user } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+
   const [selectedMovimiento, setSelectedMovimiento] =
     useState<MovimientoAnimal | null>(null);
 
@@ -78,6 +94,14 @@ export default function ListaMovimientosAnimales() {
   const [newUsuarioId, setNewUsuarioId] = useState<number | undefined>(
     undefined
   );
+
+  // Set the user ID when the user object changes
+  React.useEffect(() => {
+    if (user?.usuario_id) {
+      setNewUsuarioId(user.usuario_id);
+    }
+  }, [user]);
+
   const [newObservaciones, setNewObservaciones] = useState<string | undefined>(
     undefined
   );
@@ -186,11 +210,21 @@ export default function ListaMovimientosAnimales() {
     }, 3000);
   };
 
+  const handleOpenDetailsDialog = (movimiento: MovimientoAnimal) => {
+    setSelectedMovimiento(movimiento);
+    setIsDetailsDialogOpen(true);
+  };
+
+  const handleCloseDetailsDialog = () => {
+    setSelectedMovimiento(null);
+    setIsDetailsDialogOpen(false);
+  };
+
   if (isLoading) return <div>Cargando...</div>;
   if (isError) return <div>Error al cargar movimientos</div>;
 
   return (
-    <div>
+    <div className="flex h-screen flex-col">
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
         <div className="flex items-center gap-2 px-4">
           <SidebarTrigger className="-ml-1" />
@@ -211,225 +245,269 @@ export default function ListaMovimientosAnimales() {
         </div>
       </header>
       {/* ... (Breadcrumb, Header, Alert, etc. - similar a ListaInventarioAnimales) */}
-      <div>
-        <header className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Lista de Movimientos</h1>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
-            Crear Nuevo Movimiento
-          </Button>
-        </header>
-        <Separator className="my-4" />
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="">Animal ID</TableHead>
-              <TableHead>Tipo Movimiento</TableHead>
-              <TableHead>Origen Ubicación ID</TableHead>
-              <TableHead>Destino Ubicación ID</TableHead>
-              <TableHead>Origen Lote ID</TableHead>
-              <TableHead>Destino Lote ID</TableHead>
-              <TableHead>Proveedor ID</TableHead>
-              <TableHead>Cliente ID</TableHead>
-              <TableHead>Documento Referencia</TableHead>
-              <TableHead>Usuario ID</TableHead>
-              <TableHead>Observaciones</TableHead>
-              <TableHead>Acciones</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {movimientos?.map((m) => (
-              <TableRow key={m.movimiento_id}>
-                <TableCell className="font-medium">{m.animal_id}</TableCell>
-                <TableCell className="">{m.tipo_movimiento}</TableCell>
-                <TableCell className="">{m.origen_ubicacion_id}</TableCell>
-                <TableCell className="">{m.destino_ubicacion_id}</TableCell>
-                <TableCell className="">{m.origen_lote_id}</TableCell>
-                <TableCell className="">{m.destino_lote_id}</TableCell>
-                <TableCell className="">{m.proveedor_id}</TableCell>
-                <TableCell className="">{m.cliente_id}</TableCell>
-                <TableCell className="">{m.documento_referencia}</TableCell>
-                <TableCell className="">{m.usuario_id}</TableCell>
-                <TableCell className="">{m.observaciones}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleEditMovimiento(m)}
-                  >
-                    <Pencil></Pencil>
-                  </Button>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => handleDeleteMovimiento(m.movimiento_id)}
-                  >
-                    <Trash2></Trash2>
-                  </Button>
-                </TableCell>
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+        {alertMessage && alertType && (
+          <Alert variant={alertType === "success" ? "default" : "destructive"}>
+            {alertType === "error" && <div className="h-4 w-4" />}
+            <AlertTitle>
+              {alertType === "success" ? "Éxito" : "Error"}
+            </AlertTitle>
+            <AlertDescription>{alertMessage}</AlertDescription>
+          </Alert>
+        )}
+        <div>
+          <header className="flex items-center justify-between">
+            <h1 className="text-2xl font-bold">Lista de Movimientos</h1>
+            <Button onClick={() => setIsCreateDialogOpen(true)}>
+              Crear Nuevo Movimiento
+            </Button>
+          </header>
+          <Separator className="my-4" />
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="">Animal ID</TableHead>
+                <TableHead>Tipo Movimiento</TableHead>
+
+                <TableHead className="hidden lg:table-cell">
+                  Proveedor ID
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  Cliente ID
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Documento Referencia
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Usuario ID
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Observaciones
+                </TableHead>
+                <TableHead>Acciones</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {movimientos?.map((m) => (
+                <TableRow key={m.movimiento_id}>
+                  <TableCell className="font-medium">{m.animal_id}</TableCell>
+                  <TableCell className="">{m.tipo_movimiento}</TableCell>
+
+                  <TableCell className="hidden lg:table-cell">
+                    {m.proveedor_id}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {m.cliente_id}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {m.documento_referencia}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {m.usuario_id}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {m.observaciones}
+                  </TableCell>
+                  <TableCell>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleOpenDetailsDialog(m)}
+                      className="mr-2"
+                    >
+                      <Eye />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleEditMovimiento(m)}
+                    >
+                      <Pencil></Pencil>
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => handleDeleteMovimiento(m.movimiento_id)}
+                    >
+                      <Trash2></Trash2>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </div>
 
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="max-w-sm  sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
           <DialogHeader>
             <DialogTitle>Crear Nuevo Movimiento</DialogTitle>
             <DialogDescription>
               Ingresa los detalles del nuevo movimiento.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div
+            className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4 max-h-96 overflow-y-auto"
+            style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
+          >
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="animalId" className="text-right">
-                Animal ID
+              <Label htmlFor="animalId" className="text-right ">
+                Animal
               </Label>
-              <Input
-                id="animalId"
-                value={newAnimalId.toString()}
-                onChange={(e) => setNewAnimalId(Number(e.target.value))}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <AnimalCombobox
+                  value={newAnimalId}
+                  onChange={(value) => setNewAnimalId(Number(value))}
+                  label="Animal"
+                ></AnimalCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="tipoMovimiento" className="text-right">
+              <Label htmlFor="tipoMovimiento" className="text-right ">
                 Tipo Movimiento
               </Label>
-              <select
-                id="tipoMovimiento"
-                value={newTipoMovimiento}
-                onChange={(e) =>
-                  setNewTipoMovimiento(e.target.value as TipoMovimiento)
-                }
-                className="col-span-3"
-              >
-                {Object.values(TipoMovimiento).map((tipo) => (
-                  <option key={tipo} value={tipo}>
-                    {tipo}
-                  </option>
-                ))}
-              </select>
+              <div className="col-span-3">
+                <Select
+                  value={newTipoMovimiento}
+                  onValueChange={(e) =>
+                    setNewTipoMovimiento(e as TipoMovimiento)
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar Sexo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(TipoMovimiento).map((tipo) => (
+                      <SelectItem key={tipo} value={tipo}>
+                        {tipo.replace(/([A-Z])/g, " $1").trim()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             {/* ... (Inputs para otros campos: origen_ubicacion_id, destino_ubicacion_id, etc.) */}
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="origenUbicacionId" className="text-right">
-                Origen Ubicación ID
+              <Label htmlFor="origenUbicacionId" className="text-right ">
+                Origen Ubicación
               </Label>
-              <Input
-                id="origenUbicacionId"
-                value={newOrigenUbicacionId?.toString() || ""}
-                onChange={(e) =>
-                  setNewOrigenUbicacionId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <UbicacionCombobox
+                  value={newOrigenUbicacionId ?? null}
+                  onChange={(value) => setNewOrigenUbicacionId(Number(value))}
+                  label="Ubicación de Origen"
+                ></UbicacionCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="destinoUbicacionId" className="text-right">
-                Destino Ubicación ID
+              <Label htmlFor="destinoUbicacionId" className="text-right ">
+                Destino Ubicación
               </Label>
-              <Input
-                id="destinoUbicacionId"
-                value={newDestinoUbicacionId?.toString() || ""}
-                onChange={(e) =>
-                  setNewDestinoUbicacionId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <UbicacionCombobox
+                  value={newDestinoUbicacionId ?? null}
+                  onChange={(value) => setNewDestinoUbicacionId(Number(value))}
+                  label="Ubicación de Destino"
+                ></UbicacionCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="origenLoteId" className="text-right">
-                Origen Lote ID
+              <Label htmlFor="origenLoteId" className="text-right ">
+                Origen Lote
               </Label>
-              <Input
-                id="origenLoteId"
-                value={newOrigenLoteId?.toString() || ""}
-                onChange={(e) =>
-                  setNewOrigenLoteId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <LoteCombobox
+                  label="Lote de Origen"
+                  value={newOrigenLoteId ?? null}
+                  onChange={(value) => setNewOrigenLoteId(Number(value))}
+                ></LoteCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="destinoLoteId" className="text-right">
-                Destino Lote ID
+              <Label htmlFor="destinoLoteId" className="text-right ">
+                Destino Lote
               </Label>
-              <Input
-                id="destinoLoteId"
-                value={newDestinoLoteId?.toString() || ""}
-                onChange={(e) =>
-                  setNewDestinoLoteId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <LoteCombobox
+                  label="Lote de Destino"
+                  value={newDestinoLoteId ?? null}
+                  onChange={(value) => setNewDestinoLoteId(Number(value))}
+                ></LoteCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="proveedorId" className="text-right">
-                Proveedor ID
+              <Label htmlFor="proveedorId" className="text-right ">
+                Proveedor
               </Label>
-              <Input
-                id="proveedorId"
-                value={newProveedorId?.toString() || ""}
-                onChange={(e) =>
-                  setNewProveedorId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <ProveedorCombobox
+                  value={newProveedorId ?? null}
+                  onChange={(value) => setNewProveedorId(Number(value))}
+                  label="Proveedor"
+                ></ProveedorCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="clienteId" className="text-right">
-                Cliente ID
+                Cliente
               </Label>
-              <Input
-                id="clienteId"
-                value={newClienteId?.toString() || ""}
-                onChange={(e) =>
-                  setNewClienteId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <ClienteCombobox
+                  value={newClienteId ?? undefined}
+                  onChange={(value) => setNewClienteId(Number(value))}
+                  label="Cliente"
+                ></ClienteCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="documentoReferencia" className="text-right">
+              <Label htmlFor="documentoReferencia" className="text-right ">
                 Documento Referencia
               </Label>
-              <Input
-                id="documentoReferencia"
-                value={newDocumentoReferencia || ""}
-                onChange={(e) => setNewDocumentoReferencia(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Select
+                  value={newDocumentoReferencia || ""}
+                  onValueChange={(e) => setNewDocumentoReferencia(e)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar Documento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ninguno">Ninguno</SelectItem>
+                    <SelectItem value="Factura">Factura</SelectItem>
+                    <SelectItem value="Recibo">Recibo</SelectItem>
+                    <SelectItem value="Otros">Otros</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="usuarioId" className="text-right">
-                Usuario ID
+              <Label htmlFor="documentoReferencia" className="text-right ">
+                Usuario
               </Label>
-              <Input
-                id="usuarioId"
-                value={newUsuarioId?.toString() || ""}
-                onChange={(e) =>
-                  setNewUsuarioId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  id="usuarioId"
+                  value={user?.nombre || ""}
+                  className="w-full"
+                  disabled
+                />
+                {user && user.usuario_id && (
+                  <input
+                    type="hidden"
+                    value={user.usuario_id}
+                    onChange={() => {}}
+                  />
+                )}
+              </div>
             </div>
+
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="observaciones" className="text-right">
+              <Label
+                htmlFor="observaciones"
+                className="text-right overflow-hidden"
+              >
                 Observaciones
               </Label>
               <Input
@@ -447,163 +525,172 @@ export default function ListaMovimientosAnimales() {
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="max-w-sm  sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
           <DialogHeader>
             <DialogTitle>Editar Movimiento</DialogTitle>
             <DialogDescription>
               Edita los detalles del movimiento.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div
+            className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4 max-h-96 overflow-y-auto"
+            style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
+          >
             {/* ... (Inputs para editar los campos, similar al diálogo de creación) */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="animalId" className="text-right">
-                Animal ID
+                Animal
               </Label>
-              <Input
-                id="animalId"
-                value={newAnimalId.toString()}
-                onChange={(e) => setNewAnimalId(Number(e.target.value))}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <AnimalCombobox
+                  value={newAnimalId}
+                  onChange={(value) => setNewAnimalId(Number(value))}
+                  label="Animal"
+                ></AnimalCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="tipoMovimiento" className="text-right">
                 Tipo Movimiento
               </Label>
-              <select
-                id="tipoMovimiento"
-                value={newTipoMovimiento}
-                onChange={(e) =>
-                  setNewTipoMovimiento(e.target.value as TipoMovimiento)
-                }
-                className="col-span-3"
-              >
-                {Object.values(TipoMovimiento).map((tipo) => (
-                  <option key={tipo} value={tipo}>
-                    {tipo}
-                  </option>
-                ))}
-              </select>
+              <div className="col-span-3">
+                <Select
+                  value={newTipoMovimiento}
+                  onValueChange={(e) =>
+                    setNewTipoMovimiento(e as TipoMovimiento)
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar Sexo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.values(TipoMovimiento).map((tipo) => (
+                      <SelectItem key={tipo} value={tipo}>
+                        {tipo.replace(/([A-Z])/g, " $1").trim()}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="origenUbicacionId" className="text-right">
                 Origen Ubicación ID
               </Label>
-              <Input
-                id="origenUbicacionId"
-                value={newOrigenUbicacionId?.toString() || ""}
-                onChange={(e) =>
-                  setNewOrigenUbicacionId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <UbicacionCombobox
+                  value={newOrigenUbicacionId ?? null}
+                  onChange={(value) => setNewOrigenUbicacionId(Number(value))}
+                  label="Ubicación de Origen"
+                ></UbicacionCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="destinoUbicacionId" className="text-right">
                 Destino Ubicación ID
               </Label>
-              <Input
-                id="destinoUbicacionId"
-                value={newDestinoUbicacionId?.toString() || ""}
-                onChange={(e) =>
-                  setNewDestinoUbicacionId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <UbicacionCombobox
+                  value={newDestinoUbicacionId ?? null}
+                  onChange={(value) => setNewDestinoUbicacionId(Number(value))}
+                  label="Ubicación de Destino"
+                ></UbicacionCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="origenLoteId" className="text-right">
                 Origen Lote ID
               </Label>
-              <Input
-                id="origenLoteId"
-                value={newOrigenLoteId?.toString() || ""}
-                onChange={(e) =>
-                  setNewOrigenLoteId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <LoteCombobox
+                  label="Lote de Origen"
+                  value={newOrigenLoteId ?? null}
+                  onChange={(value) => setNewOrigenLoteId(Number(value))}
+                ></LoteCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="destinoLoteId" className="text-right">
                 Destino Lote ID
               </Label>
-              <Input
-                id="destinoLoteId"
-                value={newDestinoLoteId?.toString() || ""}
-                onChange={(e) =>
-                  setNewDestinoLoteId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <LoteCombobox
+                  label="Lote de Destino"
+                  value={newDestinoLoteId ?? null}
+                  onChange={(value) => setNewDestinoLoteId(Number(value))}
+                ></LoteCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="proveedorId" className="text-right">
                 Proveedor ID
               </Label>
-              <Input
-                id="proveedorId"
-                value={newProveedorId?.toString() || ""}
-                onChange={(e) =>
-                  setNewProveedorId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <ProveedorCombobox
+                  value={newProveedorId ?? null}
+                  onChange={(value) => setNewProveedorId(Number(value))}
+                  label="Proveedor"
+                ></ProveedorCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="clienteId" className="text-right">
                 Cliente ID
               </Label>
-              <Input
-                id="clienteId"
-                value={newClienteId?.toString() || ""}
-                onChange={(e) =>
-                  setNewClienteId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <ClienteCombobox
+                  value={newClienteId ?? undefined}
+                  onChange={(value) => setNewClienteId(Number(value))}
+                  label="Cliente"
+                ></ClienteCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="documentoReferencia" className="text-right">
                 Documento Referencia
               </Label>
-              <Input
-                id="documentoReferencia"
-                value={newDocumentoReferencia || ""}
-                onChange={(e) => setNewDocumentoReferencia(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Select
+                  value={newDocumentoReferencia || ""}
+                  onValueChange={(e) => setNewDocumentoReferencia(e)}
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Seleccionar Documento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Ninguno">Ninguno</SelectItem>
+                    <SelectItem value="Factura">Factura</SelectItem>
+                    <SelectItem value="Recibo">Recibo</SelectItem>
+                    <SelectItem value="Otros">Otros</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="usuarioId" className="text-right">
                 Usuario ID
               </Label>
-              <Input
-                id="usuarioId"
-                value={newUsuarioId?.toString() || ""}
-                onChange={(e) =>
-                  setNewUsuarioId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  id="usuarioId"
+                  value={user?.nombre || ""}
+                  className="w-full"
+                  disabled
+                />
+                {user && user.usuario_id && (
+                  <input
+                    type="hidden"
+                    value={user.usuario_id}
+                    onChange={() => {}}
+                  />
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="observaciones" className="text-right">
+              <Label
+                htmlFor="observaciones"
+                className="text-right overflow-hidden"
+              >
                 Observaciones
               </Label>
               <Input
@@ -618,6 +705,91 @@ export default function ListaMovimientosAnimales() {
             <Button onClick={handleUpdateMovimiento}>
               Actualizar Movimiento
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Detalles del Movimiento</DialogTitle>
+            <DialogDescription>
+              Información detallada del movimiento seleccionado.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {selectedMovimiento && (
+              <>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="font-semibold">ID Movimiento:</Label>
+                    <p>{selectedMovimiento.movimiento_id}</p>
+                  </div>
+                  <div>
+                    <Label className="font-semibold">Animal ID:</Label>
+                    <p>{selectedMovimiento.animal_id}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="font-semibold">Tipo Movimiento:</Label>
+                    <p>{selectedMovimiento.tipo_movimiento}</p>
+                  </div>
+                  <div>
+                    <Label className="font-semibold">
+                      Origen Ubicación ID:
+                    </Label>
+                    <p>{selectedMovimiento.origen_ubicacion_id ?? "N/A"}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="font-semibold">
+                      Destino Ubicación ID:
+                    </Label>
+                    <p>{selectedMovimiento.destino_ubicacion_id ?? "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="font-semibold">Origen Lote ID:</Label>
+                    <p>{selectedMovimiento.origen_lote_id ?? "N/A"}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="font-semibold">Destino Lote ID:</Label>
+                    <p>{selectedMovimiento.destino_lote_id ?? "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="font-semibold">Proveedor ID:</Label>
+                    <p>{selectedMovimiento.proveedor_id ?? "N/A"}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="font-semibold">Cliente ID:</Label>
+                    <p>{selectedMovimiento.cliente_id ?? "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="font-semibold">
+                      Documento Referencia:
+                    </Label>
+                    <p>{selectedMovimiento.documento_referencia ?? "N/A"}</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="font-semibold">Usuario ID:</Label>
+                    <p>{selectedMovimiento.usuario_id ?? "N/A"}</p>
+                  </div>
+                  <div>
+                    <Label className="font-semibold">Observaciones:</Label>
+                    <p>{selectedMovimiento.observaciones ?? "N/A"}</p>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={handleCloseDetailsDialog}>Cerrar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

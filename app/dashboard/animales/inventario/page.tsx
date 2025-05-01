@@ -316,14 +316,17 @@ export default function ListaInventarioAnimales() {
         </div>
 
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="sm:max-w-[425px]">
+          <DialogContent className="sm:max-w-[425px] ">
             <DialogHeader>
               <DialogTitle>Crear Nuevo Inventario</DialogTitle>
               <DialogDescription>
                 Ingresa los detalles del nuevo inventario.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div
+              className="grid gap-4 py-4 max-h-96 overflow-y-auto"
+              style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
+            >
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="animalId" className="text-right">
                   Animal
@@ -470,7 +473,10 @@ export default function ListaInventarioAnimales() {
                 Edita los detalles del inventario.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div
+              className="grid gap-4 py-4 max-h-96 overflow-y-auto"
+              style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
+            >
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="animalId" className="text-right">
                   Animal

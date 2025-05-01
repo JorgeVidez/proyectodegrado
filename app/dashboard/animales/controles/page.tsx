@@ -41,9 +41,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Pencil, Trash2 } from "lucide-react";
+import { AnimalCombobox } from "@/components/AnimalCombobox";
+import { DatePicker } from "@/components/DatePicker";
+import { useAuth } from "@/context/AuthContext";
+import { UbicacionCombobox } from "@/components/UbicacionCombobox";
 
 export default function ListaControlesSanitarios() {
   const { controles, isLoading, isError, refresh } = useControlesSanitarios();
+  const { user } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedControl, setSelectedControl] =
@@ -74,6 +79,12 @@ export default function ListaControlesSanitarios() {
   useEffect(() => {
     if (isError) console.error(isError);
   }, [isError]);
+
+  useEffect(() => {
+    if (user?.usuario_id) {
+      setNewResponsableId(user.usuario_id);
+    }
+  }, [user]);
 
   const handleCreateControl = async () => {
     const newControl: ControlSanitarioBase = {
@@ -214,12 +225,24 @@ export default function ListaControlesSanitarios() {
               <TableRow>
                 <TableHead className="">Animal ID</TableHead>
                 <TableHead>Fecha Control</TableHead>
-                <TableHead>Peso (kg)</TableHead>
-                <TableHead>Condición Corporal</TableHead>
-                <TableHead>Altura (cm)</TableHead>
-                <TableHead>Responsable ID</TableHead>
-                <TableHead>Ubicación ID</TableHead>
-                <TableHead>Observaciones</TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  Peso (kg)
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  Condición Corporal
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  Altura (cm)
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Responsable ID
+                </TableHead>
+                <TableHead className="hidden md:table-cell">
+                  Ubicación ID
+                </TableHead>
+                <TableHead className="hidden lg:table-cell">
+                  Observaciones
+                </TableHead>
                 <TableHead>Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -228,12 +251,24 @@ export default function ListaControlesSanitarios() {
                 <TableRow key={c.control_id}>
                   <TableCell className="font-medium">{c.animal_id}</TableCell>
                   <TableCell className="">{c.fecha_control}</TableCell>
-                  <TableCell className="">{c.peso_kg}</TableCell>
-                  <TableCell className="">{c.condicion_corporal}</TableCell>
-                  <TableCell className="">{c.altura_cm}</TableCell>
-                  <TableCell className="">{c.responsable_id}</TableCell>
-                  <TableCell className="">{c.ubicacion_id}</TableCell>
-                  <TableCell className="">{c.observaciones}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {c.peso_kg}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {c.condicion_corporal}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {c.altura_cm}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {c.responsable_id}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {c.ubicacion_id}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {c.observaciones}
+                  </TableCell>
                   <TableCell>
                     <Button
                       variant="outline"
@@ -269,23 +304,28 @@ export default function ListaControlesSanitarios() {
               <Label htmlFor="animalId" className="text-right">
                 Animal ID
               </Label>
-              <Input
-                id="animalId"
-                value={newAnimalId.toString()}
-                onChange={(e) => setNewAnimalId(Number(e.target.value))}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <AnimalCombobox
+                  label="Animal"
+                  value={newAnimalId}
+                  onChange={(value) => setNewAnimalId(value ?? 0)}
+                ></AnimalCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="fechaControl" className="text-right">
                 Fecha Control
               </Label>
-              <Input
-                id="fechaControl"
-                value={newFechaControl || ""}
-                onChange={(e) => setNewFechaControl(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <DatePicker
+                  value={newFechaControl}
+                  onChange={(date) =>
+                    setNewFechaControl(
+                      date ? date.toString().split("T")[0] : undefined
+                    )
+                  }
+                ></DatePicker>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="pesoKg" className="text-right">
@@ -304,7 +344,7 @@ export default function ListaControlesSanitarios() {
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="condicionCorporal" className="text-right">
-                Condición Corporal
+                Condición Corporal %
               </Label>
               <Input
                 id="condicionCorporal"
@@ -336,34 +376,39 @@ export default function ListaControlesSanitarios() {
               <Label htmlFor="responsableId" className="text-right">
                 Responsable ID
               </Label>
-              <Input
-                id="responsableId"
-                value={newResponsableId?.toString() || ""}
-                onChange={(e) =>
-                  setNewResponsableId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Input
+                  id="responsableId"
+                  value={user?.nombre || ""}
+                  className="w-full"
+                  disabled
+                />
+                {user && user.usuario_id && (
+                  <input
+                    type="hidden"
+                    value={user.usuario_id}
+                    onChange={() => {}}
+                  />
+                )}
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="ubicacionId" className="text-right">
                 Ubicación ID
               </Label>
-              <Input
-                id="ubicacionId"
-                value={newUbicacionId?.toString() || ""}
-                onChange={(e) =>
-                  setNewUbicacionId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <UbicacionCombobox
+                  label="Ubicación"
+                  value={newUbicacionId || null}
+                  onChange={(value) => setNewUbicacionId(value ?? 0)}
+                ></UbicacionCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="observaciones" className="text-right">
+              <Label
+                htmlFor="observaciones"
+                className="text-right overflow-hidden"
+              >
                 Observaciones
               </Label>
               <Input
@@ -489,7 +534,10 @@ export default function ListaControlesSanitarios() {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="observaciones" className="text-right">
+              <Label
+                htmlFor="observaciones"
+                className="text-right overflow-hidden"
+              >
                 Observaciones
               </Label>
               <Input
