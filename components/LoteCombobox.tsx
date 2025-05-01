@@ -66,7 +66,7 @@ export function LoteCombobox({ label, value, onChange }: LoteComboboxProps) {
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full justify-between"
+          className="w-full justify-between overflow-hidden"
         >
           {selectedLote?.codigo_lote || `Seleccionar ${label}...`}
           <ChevronsUpDown className="opacity-50" />

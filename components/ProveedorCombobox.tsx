@@ -76,7 +76,7 @@ export function ProveedorCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full col-span-3 justify-between"
+          className="w-full  justify-between overflow-hidden"
         >
           {selectedProveedor?.nombre || `Seleccionar ${label}...`}
           <ChevronsUpDown className="opacity-50" />

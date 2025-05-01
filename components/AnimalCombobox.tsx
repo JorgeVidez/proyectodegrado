@@ -81,7 +81,7 @@ export function AnimalCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full col-span-3 justify-between"
+          className="w-full justify-between overflow-hidden"
         >
           {selectedAnimal?.numero_trazabilidad ||
             selectedAnimal?.nombre_identificatorio ||

@@ -77,7 +77,7 @@ export function ClienteCombobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className="w-full col-span-3 justify-between"
+          className="w-full justify-between overflow-hidden"
         >
           {selectedCliente?.nombre ||
             selectedCliente?.identificacion_fiscal ||
@@ -112,9 +112,7 @@ export function ClienteCombobox({
                   <Check
                     className={cn(
                       "ml-auto",
-                      value === cliente.cliente_id
-                        ? "opacity-100"
-                        : "opacity-0"
+                      value === cliente.cliente_id ? "opacity-100" : "opacity-0"
                     )}
                   />
                 </CommandItem>
