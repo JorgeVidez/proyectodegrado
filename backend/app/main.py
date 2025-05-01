@@ -6,7 +6,7 @@ from app.database import engine, Base, initialize_data
 from fastapi.responses import JSONResponse
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import HTTPException
-from . import prediccion #Importamos el nuevo modulo.
+from . import prediccion
 
 
 
