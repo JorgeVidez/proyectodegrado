@@ -1,0 +1,1 @@
+{"features": ["Edad(years)", "Fecha_ordinal", "Tipo_encoded"], "target": "PrecioVivo", "mse": 0.6285713840746192, "r2": -0.16943513316208247}

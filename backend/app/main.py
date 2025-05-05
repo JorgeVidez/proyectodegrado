@@ -6,7 +6,7 @@ from app.database import engine, Base, initialize_data
 from fastapi.responses import JSONResponse
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import HTTPException
-from . import prediccion
+from .Predictions import GanadoFaeneado, PesoGanado, svr_precio_kg_router, svr_peso_edad_router
 
 
 
@@ -57,7 +57,11 @@ app.include_router(alimentaciones.router, prefix="/api", tags=["Alimentaciones"]
 app.include_router(ventas.router, prefix="/api", tags=["Ventas"]) #Incluimos el router de ventas.
 app.include_router(ventas_detalle.router, prefix="/api", tags=["Ventas Detalle"]) #Incluimos el router de ventas_detalle. 
  
-app.include_router(prediccion.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
+app.include_router(GanadoFaeneado.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
+app.include_router(PesoGanado.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
+app.include_router(svr_precio_kg_router.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
+app.include_router(svr_peso_edad_router.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
+
 
 # Ejecutar Uvicorn solo si el script se ejecuta directamente
 #usar uvicorn main:app --reload para correr el servidor

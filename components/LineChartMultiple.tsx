@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/chart";
 
 import datosJSON from "../public/svr_results.json"; // Importa el archivo JSON
+import { Value } from "@radix-ui/react-select";
 
 const chartConfig = {
   datosReales: {
@@ -28,12 +29,22 @@ const chartConfig = {
   },
   prediccionesSVR: {
     label: "Predicciones SVR",
-    color: "green",
+    color: "red",
   },
 } satisfies ChartConfig;
 
-export function Component() {
-  const [chartData, setChartData] = useState<{ fecha: string; datosReales: number; prediccionesSVR: number; }[]>([]);
+// Función para convertir un número ordinal de fecha a un objeto Date de JavaScript
+const ordinalToDate = (ordinal: number): Date => {
+  const epoch = new Date(1900, 0, 1).getTime(); // Inicio de la época para ordinal en pandas (Python)
+  const daysSinceEpoch = ordinal - 1; // Los ordinales en pandas empiezan desde 1
+  const milliseconds = epoch + daysSinceEpoch * 24 * 60 * 60 * 1000;
+  return new Date(milliseconds);
+};
+
+export function LinearChartMultiple() {
+  const [chartData, setChartData] = useState<
+    { fecha: string; datosReales: number; prediccionesSVR: number }[]
+  >([]);
 
   useEffect(() => {
     const cargarDatos = () => {
@@ -41,8 +52,8 @@ export function Component() {
         const datos = datosJSON;
 
         const fechas = datos.test_data.X_test.map((ordinal) => {
-          const fecha = new Date((ordinal - 693594) * 86400000);
-          return fecha.toLocaleDateString();
+          const fechaObj = ordinalToDate(ordinal);
+          return fechaObj.toLocaleDateString();
         });
 
         const data = fechas.map((fecha, index) => ({
@@ -63,8 +74,8 @@ export function Component() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Predicciones SVR vs. Datos Reales</CardTitle>
-        <CardDescription>Predicciones del Modelo</CardDescription>
+        <CardTitle>Predicciones vs. Datos Reales</CardTitle>
+        <CardDescription>Ganado faeneado vs. Fecha</CardDescription>
       </CardHeader>
       <CardContent>
         <ChartContainer config={chartConfig}>
@@ -103,10 +114,10 @@ export function Component() {
             <Line
               dataKey="prediccionesSVR"
               type="natural"
-              stroke="green"
+              stroke="red"
               strokeWidth={2}
               dot={{
-                fill: "green",
+                fill: "red",
               }}
               activeDot={{
                 r: 6,
@@ -117,11 +128,9 @@ export function Component() {
       </CardContent>
       <CardFooter className="flex-col items-start gap-2 text-sm">
         <div className="flex gap-2 font-medium leading-none">
-          Predicciones del modelo <TrendingUp className="h-4 w-4" />
+          Predicciones de Ganado Faeneado <TrendingUp className="h-4 w-4" />
         </div>
-        <div className="leading-none text-muted-foreground">
-          Comparación de predicciones vs. datos reales
-        </div>
+        <div className="leading-none text-muted-foreground">2005 - 2024</div>
       </CardFooter>
     </Card>
   );

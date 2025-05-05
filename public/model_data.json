@@ -1,0 +1,336 @@
+{
+  "data": [
+    {
+      "Edad": 4.5,
+      "Edad_years": 4.5,
+      "Fecha_ordinal": 738490,
+      "Tipo_encoded": 1,
+      "Tipo": "T.Buey",
+      "PrecioVivo_real": 9.8,
+      "PrecioVivo_pred": 11.421953099377188,
+      "Diferencia": 1.621953099377187
+    },
+    {
+      "Edad": 4.0,
+      "Edad_years": 4.0,
+      "Fecha_ordinal": 738764,
+      "Tipo_encoded": 5,
+      "Tipo": "Vaquilla",
+      "PrecioVivo_real": 10.9,
+      "PrecioVivo_pred": 10.48679462989576,
+      "Diferencia": 0.4132053701042402
+    },
+    {
+      "Edad": 3.0,
+      "Edad_years": 3.0,
+      "Fecha_ordinal": 738794,
+      "Tipo_encoded": 3,
+      "Tipo": "Toro",
+      "PrecioVivo_real": 11.2,
+      "PrecioVivo_pred": 10.983649429795904,
+      "Diferencia": 0.21635057020409576
+    },
+    {
+      "Edad": 3.0,
+      "Edad_years": 3.0,
+      "Fecha_ordinal": 738611,
+      "Tipo_encoded": 3,
+      "Tipo": "Toro",
+      "PrecioVivo_real": 11.0,
+      "PrecioVivo_pred": 10.907448611109556,
+      "Diferencia": 0.09255138889044368
+    },
+    {
+      "Edad": 5.0,
+      "Edad_years": 5.0,
+      "Fecha_ordinal": 738672,
+      "Tipo_encoded": 3,
+      "Tipo": "Toro",
+      "PrecioVivo_real": 11.2,
+      "PrecioVivo_pred": 10.309276008529542,
+      "Diferencia": 0.8907239914704572
+    },
+    {
+      "Edad": 4.5,
+      "Edad_years": 4.5,
+      "Fecha_ordinal": 738641,
+      "Tipo_encoded": 4,
+      "Tipo": "Vaca",
+      "PrecioVivo_real": 10.4,
+      "PrecioVivo_pred": 10.32137998971102,
+      "Diferencia": 0.07862001028898113
+    },
+    {
+      "Edad": 4.0,
+      "Edad_years": 4.0,
+      "Fecha_ordinal": 738794,
+      "Tipo_encoded": 3,
+      "Tipo": "Toro",
+      "PrecioVivo_real": 12.1,
+      "PrecioVivo_pred": 10.70750940989702,
+      "Diferencia": 1.3924905901029803
+    },
+    {
+      "Edad": 3.0,
+      "Edad_years": 3.0,
+      "Fecha_ordinal": 738490,
+      "Tipo_encoded": 0,
+      "Tipo": "Novillo",
+      "PrecioVivo_real": 10.9,
+      "PrecioVivo_pred": 10.894842892911575,
+      "Diferencia": 0.005157107088425761
+    },
+    {
+      "Edad": 4.0,
+      "Edad_years": 4.0,
+      "Fecha_ordinal": 738764,
+      "Tipo_encoded": 3,
+      "Tipo": "Toro",
+      "PrecioVivo_real": 12.1,
+      "PrecioVivo_pred": 10.933177166908361,
+      "Diferencia": 1.1668228330916381
+    },
+    {
+      "Edad": 3.0,
+      "Edad_years": 3.0,
+      "Fecha_ordinal": 738702,
+      "Tipo_encoded": 0,
+      "Tipo": "Novillo",
+      "PrecioVivo_real": 10.9,
+      "PrecioVivo_pred": 10.99956668848376,
+      "Diferencia": 0.09956668848376005
+    },
+    {
+      "Edad": 4.0,
+      "Edad_years": 4.0,
+      "Fecha_ordinal": 738702,
+      "Tipo_encoded": 4,
+      "Tipo": "Vaca",
+      "PrecioVivo_real": 10.9,
+      "PrecioVivo_pred": 10.90752797209145,
+      "Diferencia": 0.007527972091450508
+    },
+    {
+      "Edad": 4.0,
+      "Edad_years": 4.0,
+      "Fecha_ordinal": 738672,
+      "Tipo_encoded": 3,
+      "Tipo": "Toro",
+      "PrecioVivo_real": 12.0,
+      "PrecioVivo_pred": 11.59902712548027,
+      "Diferencia": 0.40097287451973074
+    },
+    {
+      "Edad": 4.0,
+      "Edad_years": 4.0,
+      "Fecha_ordinal": 738580,
+      "Tipo_encoded": 4,
+      "Tipo": "Vaca",
+      "PrecioVivo_real": 9.6,
+      "PrecioVivo_pred": 11.16182130830267,
+      "Diferencia": 1.5618213083026706
+    },
+    {
+      "Edad": 3.0,
+      "Edad_years": 3.0,
+      "Fecha_ordinal": 738641,
+      "Tipo_encoded": 2,
+      "Tipo": "Torillo",
+      "PrecioVivo_real": 11.3,
+      "PrecioVivo_pred": 11.331842492349594,
+      "Diferencia": 0.03184249234959324
+    },
+    {
+      "Edad": 4.5,
+      "Edad_years": 4.5,
+      "Fecha_ordinal": 738490,
+      "Tipo_encoded": 4,
+      "Tipo": "Vaca",
+      "PrecioVivo_real": 9.5,
+      "PrecioVivo_pred": 10.416916236806978,
+      "Diferencia": 0.9169162368069781
+    },
+    {
+      "Edad": 4.5,
+      "Edad_years": 4.5,
+      "Fecha_ordinal": 738672,
+      "Tipo_encoded": 4,
+      "Tipo": "Vaca",
+      "PrecioVivo_real": 10.4,
+      "PrecioVivo_pred": 10.23563711136084,
+      "Diferencia": 0.16436288863916104
+    },
+    {
+      "Edad": 5.0,
+      "Edad_years": 5.0,
+      "Fecha_ordinal": 738825,
+      "Tipo_encoded": 3,
+      "Tipo": "Toro",
+      "PrecioVivo_real": 11.2,
+      "PrecioVivo_pred": 9.504737831403126,
+      "Diferencia": 1.695262168596873
+    },
+    {
+      "Edad": 4.5,
+      "Edad_years": 4.5,
+      "Fecha_ordinal": 738641,
+      "Tipo_encoded": 1,
+      "Tipo": "T.Buey",
+      "PrecioVivo_real": 10.0,
+      "PrecioVivo_pred": 10.927372156550126,
+      "Diferencia": 0.9273721565501258
+    },
+    {
+      "Edad": 4.0,
+      "Edad_years": 4.0,
+      "Fecha_ordinal": 738733,
+      "Tipo_encoded": 0,
+      "Tipo": "Novillo",
+      "PrecioVivo_real": 11.1,
+      "PrecioVivo_pred": 11.002098998142504,
+      "Diferencia": 0.09790100185749573
+    },
+    {
+      "Edad": 3.0,
+      "Edad_years": 3.0,
+      "Fecha_ordinal": 738672,
+      "Tipo_encoded": 3,
+      "Tipo": "Toro",
+      "PrecioVivo_real": 11.0,
+      "PrecioVivo_pred": 10.949690266855562,
+      "Diferencia": 0.050309733144437985
+    },
+    {
+      "Edad": 4.5,
+      "Edad_years": 4.5,
+      "Fecha_ordinal": 738552,
+      "Tipo_encoded": 1,
+      "Tipo": "T.Buey",
+      "PrecioVivo_real": 10.0,
+      "PrecioVivo_pred": 11.333228942088848,
+      "Diferencia": 1.333228942088848
+    },
+    {
+      "Edad": 4.0,
+      "Edad_years": 4.0,
+      "Fecha_ordinal": 738672,
+      "Tipo_encoded": 4,
+      "Tipo": "Vaca",
+      "PrecioVivo_real": 10.9,
+      "PrecioVivo_pred": 11.030239429602045,
+      "Diferencia": 0.13023942960204415
+    },
+    {
+      "Edad": 4.0,
+      "Edad_years": 4.0,
+      "Fecha_ordinal": 738490,
+      "Tipo_encoded": 4,
+      "Tipo": "Vaca",
+      "PrecioVivo_real": 10.1,
+      "PrecioVivo_pred": 11.019684616432716,
+      "Diferencia": 0.9196846164327166
+    },
+    {
+      "Edad": 3.0,
+      "Edad_years": 3.0,
+      "Fecha_ordinal": 738764,
+      "Tipo_encoded": 4,
+      "Tipo": "Vaca",
+      "PrecioVivo_real": 9.8,
+      "PrecioVivo_pred": 10.619725283917132,
+      "Diferencia": 0.8197252839171316
+    },
+    {
+      "Edad": 4.5,
+      "Edad_years": 4.5,
+      "Fecha_ordinal": 738702,
+      "Tipo_encoded": 4,
+      "Tipo": "Vaca",
+      "PrecioVivo_real": 10.4,
+      "PrecioVivo_pred": 10.120786597597101,
+      "Diferencia": 0.27921340240289894
+    },
+    {
+      "Edad": 4.5,
+      "Edad_years": 4.5,
+      "Fecha_ordinal": 738733,
+      "Tipo_encoded": 1,
+      "Tipo": "T.Buey",
+      "PrecioVivo_real": 10.0,
+      "PrecioVivo_pred": 10.450454764278001,
+      "Diferencia": 0.45045476427800146
+    },
+    {
+      "Edad": 4.0,
+      "Edad_years": 4.0,
+      "Fecha_ordinal": 738733,
+      "Tipo_encoded": 5,
+      "Tipo": "Vaquilla",
+      "PrecioVivo_real": 10.8,
+      "PrecioVivo_pred": 10.580018762596374,
+      "Diferencia": 0.2199812374036263
+    },
+    {
+      "Edad": 3.0,
+      "Edad_years": 3.0,
+      "Fecha_ordinal": 738702,
+      "Tipo_encoded": 5,
+      "Tipo": "Vaquilla",
+      "PrecioVivo_real": 10.4,
+      "PrecioVivo_pred": 10.44022078141953,
+      "Diferencia": 0.04022078141952967
+    },
+    {
+      "Edad": 3.0,
+      "Edad_years": 3.0,
+      "Fecha_ordinal": 738580,
+      "Tipo_encoded": 5,
+      "Tipo": "Vaquilla",
+      "PrecioVivo_real": 10.8,
+      "PrecioVivo_pred": 10.284773725454407,
+      "Diferencia": 0.5152262745455936
+    },
+    {
+      "Edad": 4.5,
+      "Edad_years": 4.5,
+      "Fecha_ordinal": 738521,
+      "Tipo_encoded": 1,
+      "Tipo": "T.Buey",
+      "PrecioVivo_real": 10.0,
+      "PrecioVivo_pred": 11.404253867655108,
+      "Diferencia": 1.4042538676551075
+    },
+    {
+      "Edad": 5.0,
+      "Edad_years": 5.0,
+      "Fecha_ordinal": 738764,
+      "Tipo_encoded": 4,
+      "Tipo": "Vaca",
+      "PrecioVivo_real": 9.0,
+      "PrecioVivo_pred": 9.21369873214455,
+      "Diferencia": 0.21369873214455026
+    },
+    {
+      "Edad": 4.0,
+      "Edad_years": 4.0,
+      "Fecha_ordinal": 738580,
+      "Tipo_encoded": 0,
+      "Tipo": "Novillo",
+      "PrecioVivo_real": 11.1,
+      "PrecioVivo_pred": 11.020468438916623,
+      "Diferencia": 0.07953156108337645
+    }
+  ],
+  "metadata": {
+    "mse": 0.6285713840746192,
+    "r2": -0.16943513316208247,
+    "model_type": "SVR",
+    "features": [
+      "Edad(years)",
+      "Fecha_ordinal",
+      "Tipo_encoded"
+    ],
+    "target": "PrecioVivo",
+    "creation_date": "2025-05-04 20:09:32"
+  }
+}

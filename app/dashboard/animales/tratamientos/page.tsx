@@ -40,13 +40,29 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Eye } from "lucide-react";
+import { AnimalCombobox } from "@/components/AnimalCombobox";
+import { DatePicker } from "@/components/DatePicker";
+import { MedicamentoCombobox } from "@/components/MedicamentoCombobox";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { ProveedorCombobox } from "@/components/ProveedorCombobox";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ListaTratamientosSanitarios() {
   const { tratamientos, isLoading, isError, refresh } =
     useTratamientosSanitarios();
+  const { user } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
+
   const [selectedTratamiento, setSelectedTratamiento] =
     useState<TratamientoSanitario | null>(null);
 
@@ -105,6 +121,12 @@ export default function ListaTratamientosSanitarios() {
   useEffect(() => {
     if (isError) console.error(isError);
   }, [isError]);
+
+  useEffect(() => {
+    if (user?.usuario_id) {
+      setNewResponsableVeterinarioId(user.usuario_id);
+    }
+  }, [user]);
 
   const handleCreateTratamiento = async () => {
     const newTratamiento: TratamientoSanitarioBase = {
@@ -224,6 +246,16 @@ export default function ListaTratamientosSanitarios() {
     }, 3000);
   };
 
+  const handleVerDetalles = (tratamiento: TratamientoSanitario) => {
+    setSelectedTratamiento(tratamiento);
+    setIsDetailsDialogOpen(true);
+  };
+
+  const handleCloseDetallesDialog = () => {
+    setIsDetailsDialogOpen(false);
+    setSelectedTratamiento(null);
+  };
+
   if (isLoading) return <div>Cargando...</div>;
   if (isError) return <div>Error al cargar tratamientos sanitarios</div>;
 
@@ -250,13 +282,13 @@ export default function ListaTratamientosSanitarios() {
       </header>
 
       {/* ... (Breadcrumb, Header, Alert, etc. - similar a ListaInventarioAnimales) */}
-      <div>
+      <div className="p-4 flex flex-col">
         <header className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">
             Lista de Tratamientos Sanitarios
           </h1>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
-            Crear Nuevo Tratamiento Sanitario
+            Crear Nuevo Tratamiento
           </Button>
         </header>
         <Separator className="my-4" />
@@ -264,22 +296,23 @@ export default function ListaTratamientosSanitarios() {
           <TableHeader>
             <TableRow>
               <TableHead className="">Animal ID</TableHead>
-              <TableHead>Fecha Diagnóstico</TableHead>
-              <TableHead>Síntomas Observados</TableHead>
-              <TableHead>Diagnóstico</TableHead>
-              <TableHead>Fecha Inicio Tratamiento</TableHead>
-              <TableHead>Medicamento ID</TableHead>
-              <TableHead>Dosis Aplicada</TableHead>
-              <TableHead>Unidad Dosis</TableHead>
-              <TableHead>Vía Administración</TableHead>
-              <TableHead>Duración Tratamiento (días)</TableHead>
-              <TableHead>Fecha Fin Tratamiento</TableHead>
-              <TableHead>Proveedor Medicamento ID</TableHead>
-              <TableHead>Responsable Veterinario ID</TableHead>
-              <TableHead>Periodo Retiro (días)</TableHead>
-              <TableHead>Fecha Fin Retiro</TableHead>
-              <TableHead>Próxima Revisión</TableHead>
-              <TableHead>Resultado Tratamiento</TableHead>
+              <TableHead className="hidden md:table-cell">
+                Síntomas Observados
+              </TableHead>
+              <TableHead className="hidden md:table-cell">
+                Diagnóstico
+              </TableHead>
+
+              <TableHead className="hidden lg:table-cell">
+                Fecha Fin Tratamiento
+              </TableHead>
+
+              <TableHead className="hidden lg:table-cell">
+                Próxima Revisión
+              </TableHead>
+              <TableHead className="hidden md:table-cell">
+                Resultado Tratamiento
+              </TableHead>
               <TableHead>Observaciones</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
@@ -288,28 +321,23 @@ export default function ListaTratamientosSanitarios() {
             {tratamientos?.map((t) => (
               <TableRow key={t.tratamiento_id}>
                 <TableCell className="font-medium">{t.animal_id}</TableCell>
-                <TableCell className="">{t.fecha_diagnostico}</TableCell>
-                <TableCell className="">{t.sintomas_observados}</TableCell>
-                <TableCell className="">{t.diagnostico}</TableCell>
-                <TableCell className="">{t.fecha_inicio_tratamiento}</TableCell>
-                <TableCell className="">{t.medicamento_id}</TableCell>
-                <TableCell className="">{t.dosis_aplicada}</TableCell>
-                <TableCell className="">{t.unidad_dosis}</TableCell>
-                <TableCell className="">{t.via_administracion}</TableCell>
-                <TableCell className="">
-                  {t.duracion_tratamiento_dias}
+                <TableCell className="hidden md:table-cell">
+                  {t.sintomas_observados}
                 </TableCell>
-                <TableCell className="">{t.fecha_fin_tratamiento}</TableCell>
-                <TableCell className="">{t.proveedor_medicamento_id}</TableCell>
-                <TableCell className="">
-                  {t.responsable_veterinario_id}
+                <TableCell className="hidden md:table-cell">
+                  {t.diagnostico}
                 </TableCell>
-                <TableCell className="">
-                  {t.periodo_retiro_aplicable_dias}
+
+                <TableCell className="hidden lg:table-cell">
+                  {t.fecha_fin_tratamiento}
                 </TableCell>
-                <TableCell className="">{t.fecha_fin_retiro}</TableCell>
-                <TableCell className="">{t.proxima_revision}</TableCell>
-                <TableCell className="">{t.resultado_tratamiento}</TableCell>
+
+                <TableCell className="hidden lg:table-cell">
+                  {t.proxima_revision}
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {t.resultado_tratamiento}
+                </TableCell>
                 <TableCell className="">{t.observaciones}</TableCell>
                 <TableCell>
                   <Button
@@ -326,6 +354,13 @@ export default function ListaTratamientosSanitarios() {
                   >
                     <Trash2></Trash2>
                   </Button>
+                  <Button
+                    variant="ghost" // Puedes usar otro variant si lo prefieres
+                    size="icon"
+                    onClick={() => handleVerDetalles(t)}
+                  >
+                    <Eye></Eye>
+                  </Button>
                 </TableCell>
               </TableRow>
             ))}
@@ -333,36 +368,40 @@ export default function ListaTratamientosSanitarios() {
         </Table>
       </div>
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
           <DialogHeader>
             <DialogTitle>Crear Nuevo Tratamiento Sanitario</DialogTitle>
             <DialogDescription>
               Ingresa los detalles del nuevo tratamiento sanitario.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div
+            className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4 max-h-96 overflow-y-auto"
+            style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
+          >
             {/* ... (Inputs para todos los campos, similar a los dialogos anteriores) */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="animalId" className="text-right">
                 Animal ID
               </Label>
-              <Input
-                id="animalId"
-                value={newAnimalId.toString()}
-                onChange={(e) => setNewAnimalId(Number(e.target.value))}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <AnimalCombobox
+                  value={newAnimalId}
+                  onChange={(animalId) => setNewAnimalId(animalId ?? 0)}
+                  label={"Animal"}
+                ></AnimalCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="fechaDiagnostico" className="text-right">
                 Fecha Diagnóstico
               </Label>
-              <Input
-                id="fechaDiagnostico"
-                value={newFechaDiagnostico}
-                onChange={(e) => setNewFechaDiagnostico(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <DatePicker
+                  value={newFechaDiagnostico}
+                  onChange={(date) => setNewFechaDiagnostico(date || "")}
+                ></DatePicker>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="sintomasObservados" className="text-right">
@@ -390,27 +429,27 @@ export default function ListaTratamientosSanitarios() {
               <Label htmlFor="fechaInicioTratamiento" className="text-right">
                 Fecha Inicio Tratamiento
               </Label>
-              <Input
-                id="fechaInicioTratamiento"
-                value={newFechaInicioTratamiento || ""}
-                onChange={(e) => setNewFechaInicioTratamiento(e.target.value)}
-                className="col-span-3"
-              />
+
+              <div className="col-span-3">
+                <DatePicker
+                  value={newFechaInicioTratamiento}
+                  onChange={(date) => setNewFechaInicioTratamiento(date || "")}
+                ></DatePicker>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="medicamentoId" className="text-right">
                 Medicamento ID
               </Label>
-              <Input
-                id="medicamentoId"
-                value={newMedicamentoId?.toString() || ""}
-                onChange={(e) =>
-                  setNewMedicamentoId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <MedicamentoCombobox
+                  value={newMedicamentoId}
+                  onChange={(medicamentoId) =>
+                    setNewMedicamentoId(medicamentoId ?? undefined)
+                  }
+                  label={"Medicamento"}
+                ></MedicamentoCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="dosisAplicada" className="text-right">
@@ -418,6 +457,8 @@ export default function ListaTratamientosSanitarios() {
               </Label>
               <Input
                 id="dosisAplicada"
+                type="number"
+                min={0}
                 value={newDosisAplicada?.toString() || ""}
                 onChange={(e) =>
                   setNewDosisAplicada(
@@ -431,23 +472,47 @@ export default function ListaTratamientosSanitarios() {
               <Label htmlFor="unidadDosis" className="text-right">
                 Unidad Dosis
               </Label>
-              <Input
-                id="unidadDosis"
-                value={newUnidadDosis || ""}
-                onChange={(e) => setNewUnidadDosis(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Select
+                  value={newUnidadDosis || ""}
+                  onValueChange={(value) => setNewUnidadDosis(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar unidad de dosis" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ml">ml</SelectItem>
+                    <SelectItem value="mg">mg</SelectItem>
+                    <SelectItem value="g">g</SelectItem>
+                    <SelectItem value="UI">UI</SelectItem>
+                    <SelectItem value="dosis">dosis</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="viaAdministracion" className="text-right">
                 Vía Administración
               </Label>
-              <Input
-                id="viaAdministracion"
-                value={newViaAdministracion || ""}
-                onChange={(e) => setNewViaAdministracion(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Select
+                  value={newViaAdministracion || ""}
+                  onValueChange={(value) => setNewViaAdministracion(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar vía de administración" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="oral">Oral</SelectItem>
+                    <SelectItem value="intravenosa">Intravenosa</SelectItem>
+                    <SelectItem value="intramuscular">Intramuscular</SelectItem>
+                    <SelectItem value="subcutanea">Subcutánea</SelectItem>
+                    <SelectItem value="topica">Tópica</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="duracionTratamientoDias" className="text-right">
@@ -455,6 +520,8 @@ export default function ListaTratamientosSanitarios() {
               </Label>
               <Input
                 id="duracionTratamientoDias"
+                type="number"
+                min={0}
                 value={newDuracionTratamientoDias?.toString() || ""}
                 onChange={(e) =>
                   setNewDuracionTratamientoDias(
@@ -468,27 +535,26 @@ export default function ListaTratamientosSanitarios() {
               <Label htmlFor="fechaFinTratamiento" className="text-right">
                 Fecha Fin Tratamiento
               </Label>
-              <Input
-                id="fechaFinTratamiento"
-                value={newFechaFinTratamiento || ""}
-                onChange={(e) => setNewFechaFinTratamiento(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <DatePicker
+                  value={newFechaFinTratamiento}
+                  onChange={(date) => setNewFechaFinTratamiento(date || "")}
+                ></DatePicker>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="proveedorMedicamentoId" className="text-right">
                 Proveedor Medicamento ID
               </Label>
-              <Input
-                id="proveedorMedicamentoId"
-                value={newProveedorMedicamentoId?.toString() || ""}
-                onChange={(e) =>
-                  setNewProveedorMedicamentoId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <ProveedorCombobox
+                  value={newProveedorMedicamentoId || null}
+                  onChange={(proveedorId) =>
+                    setNewProveedorMedicamentoId(proveedorId ?? undefined)
+                  }
+                  label={"Proveedor Medicamento"}
+                ></ProveedorCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="responsableVeterinarioId" className="text-right">
@@ -496,12 +562,8 @@ export default function ListaTratamientosSanitarios() {
               </Label>
               <Input
                 id="responsableVeterinarioId"
-                value={newResponsableVeterinarioId?.toString() || ""}
-                onChange={(e) =>
-                  setNewResponsableVeterinarioId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
+                disabled
+                value={user?.nombre?.toString() || ""}
                 className="col-span-3"
               />
             </div>
@@ -514,6 +576,8 @@ export default function ListaTratamientosSanitarios() {
               </Label>
               <Input
                 id="periodoRetiroAplicableDias"
+                type="number"
+                min={0}
                 value={newPeriodoRetiroAplicableDias?.toString() || ""}
                 onChange={(e) =>
                   setNewPeriodoRetiroAplicableDias(
@@ -527,23 +591,23 @@ export default function ListaTratamientosSanitarios() {
               <Label htmlFor="fechaFinRetiro" className="text-right">
                 Fecha Fin Retiro
               </Label>
-              <Input
-                id="fechaFinRetiro"
-                value={newFechaFinRetiro || ""}
-                onChange={(e) => setNewFechaFinRetiro(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <DatePicker
+                  value={newFechaFinRetiro}
+                  onChange={(date) => setNewFechaFinRetiro(date || "")}
+                ></DatePicker>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="proximaRevision" className="text-right">
                 Próxima Revisión
               </Label>
-              <Input
-                id="proximaRevision"
-                value={newProximaRevision || ""}
-                onChange={(e) => setNewProximaRevision(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <DatePicker
+                  value={newProximaRevision}
+                  onChange={(date) => setNewProximaRevision(date || "")}
+                ></DatePicker>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="resultadoTratamiento" className="text-right">
@@ -576,36 +640,40 @@ export default function ListaTratamientosSanitarios() {
         </DialogContent>
       </Dialog>
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
           <DialogHeader>
             <DialogTitle>Editar Tratamiento Sanitario</DialogTitle>
             <DialogDescription>
               Edita los detalles del tratamiento sanitario.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div
+            className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4 max-h-96 overflow-y-auto"
+            style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
+          >
             {/* ... (Inputs para editar los campos, similar al diálogo de creación) */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="animalId" className="text-right">
                 Animal ID
               </Label>
-              <Input
-                id="animalId"
-                value={newAnimalId.toString()}
-                onChange={(e) => setNewAnimalId(Number(e.target.value))}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <AnimalCombobox
+                  value={newAnimalId}
+                  onChange={(animalId) => setNewAnimalId(animalId ?? 0)}
+                  label={"Animal"}
+                ></AnimalCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="fechaDiagnostico" className="text-right">
                 Fecha Diagnóstico
               </Label>
-              <Input
-                id="fechaDiagnostico"
-                value={newFechaDiagnostico}
-                onChange={(e) => setNewFechaDiagnostico(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <DatePicker
+                  value={newFechaDiagnostico}
+                  onChange={(date) => setNewFechaDiagnostico(date || "")}
+                ></DatePicker>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="sintomasObservados" className="text-right">
@@ -633,27 +701,26 @@ export default function ListaTratamientosSanitarios() {
               <Label htmlFor="fechaInicioTratamiento" className="text-right">
                 Fecha Inicio Tratamiento
               </Label>
-              <Input
-                id="fechaInicioTratamiento"
-                value={newFechaInicioTratamiento || ""}
-                onChange={(e) => setNewFechaInicioTratamiento(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <DatePicker
+                  value={newFechaInicioTratamiento}
+                  onChange={(date) => setNewFechaInicioTratamiento(date || "")}
+                ></DatePicker>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="medicamentoId" className="text-right">
                 Medicamento ID
               </Label>
-              <Input
-                id="medicamentoId"
-                value={newMedicamentoId?.toString() || ""}
-                onChange={(e) =>
-                  setNewMedicamentoId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <MedicamentoCombobox
+                  value={newMedicamentoId}
+                  onChange={(medicamentoId) =>
+                    setNewMedicamentoId(medicamentoId ?? undefined)
+                  }
+                  label={"Medicamento"}
+                ></MedicamentoCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="dosisAplicada" className="text-right">
@@ -661,6 +728,8 @@ export default function ListaTratamientosSanitarios() {
               </Label>
               <Input
                 id="dosisAplicada"
+                type="number"
+                min={0}
                 value={newDosisAplicada?.toString() || ""}
                 onChange={(e) =>
                   setNewDosisAplicada(
@@ -674,23 +743,47 @@ export default function ListaTratamientosSanitarios() {
               <Label htmlFor="unidadDosis" className="text-right">
                 Unidad Dosis
               </Label>
-              <Input
-                id="unidadDosis"
-                value={newUnidadDosis || ""}
-                onChange={(e) => setNewUnidadDosis(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Select
+                  value={newUnidadDosis || ""}
+                  onValueChange={(value) => setNewUnidadDosis(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar unidad de dosis" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="ml">ml</SelectItem>
+                    <SelectItem value="mg">mg</SelectItem>
+                    <SelectItem value="g">g</SelectItem>
+                    <SelectItem value="UI">UI</SelectItem>
+                    <SelectItem value="dosis">dosis</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="viaAdministracion" className="text-right">
                 Vía Administración
               </Label>
-              <Input
-                id="viaAdministracion"
-                value={newViaAdministracion || ""}
-                onChange={(e) => setNewViaAdministracion(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <Select
+                  value={newViaAdministracion || ""}
+                  onValueChange={(value) => setNewViaAdministracion(value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Seleccionar vía de administración" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="oral">Oral</SelectItem>
+                    <SelectItem value="intravenosa">Intravenosa</SelectItem>
+                    <SelectItem value="intramuscular">Intramuscular</SelectItem>
+                    <SelectItem value="subcutanea">Subcutánea</SelectItem>
+                    <SelectItem value="topica">Tópica</SelectItem>
+                    <SelectItem value="otro">Otro</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="duracionTratamientoDias" className="text-right">
@@ -698,6 +791,8 @@ export default function ListaTratamientosSanitarios() {
               </Label>
               <Input
                 id="duracionTratamientoDias"
+                type="number"
+                min={0}
                 value={newDuracionTratamientoDias?.toString() || ""}
                 onChange={(e) =>
                   setNewDuracionTratamientoDias(
@@ -711,27 +806,26 @@ export default function ListaTratamientosSanitarios() {
               <Label htmlFor="fechaFinTratamiento" className="text-right">
                 Fecha Fin Tratamiento
               </Label>
-              <Input
-                id="fechaFinTratamiento"
-                value={newFechaFinTratamiento || ""}
-                onChange={(e) => setNewFechaFinTratamiento(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <DatePicker
+                  value={newFechaFinTratamiento}
+                  onChange={(date) => setNewFechaFinTratamiento(date || "")}
+                ></DatePicker>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="proveedorMedicamentoId" className="text-right">
                 Proveedor Medicamento ID
               </Label>
-              <Input
-                id="proveedorMedicamentoId"
-                value={newProveedorMedicamentoId?.toString() || ""}
-                onChange={(e) =>
-                  setNewProveedorMedicamentoId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <ProveedorCombobox
+                  value={newProveedorMedicamentoId || null}
+                  onChange={(proveedorId) =>
+                    setNewProveedorMedicamentoId(proveedorId ?? undefined)
+                  }
+                  label={"Proveedor Medicamento"}
+                ></ProveedorCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="responsableVeterinarioId" className="text-right">
@@ -739,6 +833,7 @@ export default function ListaTratamientosSanitarios() {
               </Label>
               <Input
                 id="responsableVeterinarioId"
+                disabled
                 value={newResponsableVeterinarioId?.toString() || ""}
                 onChange={(e) =>
                   setNewResponsableVeterinarioId(
@@ -757,6 +852,8 @@ export default function ListaTratamientosSanitarios() {
               </Label>
               <Input
                 id="periodoRetiroAplicableDias"
+                type="number"
+                min={0}
                 value={newPeriodoRetiroAplicableDias?.toString() || ""}
                 onChange={(e) =>
                   setNewPeriodoRetiroAplicableDias(
@@ -770,23 +867,23 @@ export default function ListaTratamientosSanitarios() {
               <Label htmlFor="fechaFinRetiro" className="text-right">
                 Fecha Fin Retiro
               </Label>
-              <Input
-                id="fechaFinRetiro"
-                value={newFechaFinRetiro || ""}
-                onChange={(e) => setNewFechaFinRetiro(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <DatePicker
+                  value={newFechaFinRetiro}
+                  onChange={(date) => setNewFechaFinRetiro(date || "")}
+                ></DatePicker>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="proximaRevision" className="text-right">
                 Próxima Revisión
               </Label>
-              <Input
-                id="proximaRevision"
-                value={newProximaRevision || ""}
-                onChange={(e) => setNewProximaRevision(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <DatePicker
+                  value={newProximaRevision}
+                  onChange={(date) => setNewProximaRevision(date || "")}
+                ></DatePicker>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="resultadoTratamiento" className="text-right">
@@ -818,6 +915,126 @@ export default function ListaTratamientosSanitarios() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {selectedTratamiento && (
+        <Dialog
+          open={isDetailsDialogOpen}
+          onOpenChange={handleCloseDetallesDialog}
+        >
+          <DialogContent className="sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
+            <DialogHeader>
+              <DialogTitle>Detalles del Tratamiento Sanitario</DialogTitle>
+              <DialogDescription>
+                Información detallada del tratamiento con ID:{" "}
+                {selectedTratamiento.tratamiento_id}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-4">
+              <div>
+                <Label className="text-sm text-gray-600">Animal ID</Label>
+                <p className="font-semibold">{selectedTratamiento.animal_id}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">
+                  Fecha Diagnóstico
+                </Label>
+                <p>{selectedTratamiento.fecha_diagnostico}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">
+                  Síntomas Observados
+                </Label>
+                <p>{selectedTratamiento.sintomas_observados || "N/A"}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">Diagnóstico</Label>
+                <p>{selectedTratamiento.diagnostico || "N/A"}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">
+                  Fecha Inicio Tratamiento
+                </Label>
+                <p>{selectedTratamiento.fecha_inicio_tratamiento || "N/A"}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">Medicamento ID</Label>
+                <p>{selectedTratamiento.medicamento_id || "N/A"}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">Dosis Aplicada</Label>
+                <p>{selectedTratamiento.dosis_aplicada || "N/A"}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">Unidad Dosis</Label>
+                <p>{selectedTratamiento.unidad_dosis || "N/A"}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">
+                  Vía Administración
+                </Label>
+                <p>{selectedTratamiento.via_administracion || "N/A"}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">
+                  Duración Tratamiento (días)
+                </Label>
+                <p>{selectedTratamiento.duracion_tratamiento_dias || "N/A"}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">
+                  Fecha Fin Tratamiento
+                </Label>
+                <p>{selectedTratamiento.fecha_fin_tratamiento || "N/A"}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">
+                  Proveedor Medicamento ID
+                </Label>
+                <p>{selectedTratamiento.proveedor_medicamento_id || "N/A"}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">
+                  Responsable Veterinario ID
+                </Label>
+                <p>{selectedTratamiento.responsable_veterinario_id || "N/A"}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">
+                  Periodo Retiro (días)
+                </Label>
+                <p>
+                  {selectedTratamiento.periodo_retiro_aplicable_dias || "N/A"}
+                </p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">
+                  Fecha Fin Retiro
+                </Label>
+                <p>{selectedTratamiento.fecha_fin_retiro || "N/A"}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">
+                  Próxima Revisión
+                </Label>
+                <p>{selectedTratamiento.proxima_revision || "N/A"}</p>
+              </div>
+              <div>
+                <Label className="text-sm text-gray-600">
+                  Resultado Tratamiento
+                </Label>
+                <p>{selectedTratamiento.resultado_tratamiento || "N/A"}</p>
+              </div>
+              <div className="col-span-full">
+                <Label className="text-sm text-gray-600">Observaciones</Label>
+                <p>{selectedTratamiento.observaciones || "N/A"}</p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button onClick={handleCloseDetallesDialog}>Cerrar</Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 }

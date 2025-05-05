@@ -41,9 +41,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Pencil, Trash2 } from "lucide-react";
+import { AnimalCombobox } from "@/components/AnimalCombobox";
+import { LoteCombobox } from "@/components/LoteCombobox";
+import { UbicacionCombobox } from "@/components/UbicacionCombobox";
+import { DatePicker } from "@/components/DatePicker";
+import { TipoAlimentoCombobox } from "@/components/TipoAlimentoCombobox";
+import { ProveedorCombobox } from "@/components/ProveedorCombobox";
+import { useAuth } from "@/context/AuthContext";
 
 export default function ListaAlimentaciones() {
   const { alimentaciones, isLoading, isError, refresh } = useAlimentaciones();
+  const { user } = useAuth();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedAlimentacion, setSelectedAlimentacion] =
@@ -77,6 +85,12 @@ export default function ListaAlimentaciones() {
   useEffect(() => {
     if (isError) console.error(isError);
   }, [isError]);
+
+  useEffect(() => {
+    if (user?.usuario_id) {
+      setNewResponsableId(user.usuario_id);
+    }
+  }, [user]);
 
   const handleCreateAlimentacion = async () => {
     const newAlimentacion: AlimentacionBase = {
@@ -196,13 +210,13 @@ export default function ListaAlimentaciones() {
           </Breadcrumb>
         </div>
       </header>
-      
+
       {/* ... (Breadcrumb, Header, Alert, etc. - similar a ListaInventarioAnimales) */}
-      <div>
+      <div className="p-4">
         <header className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Lista de Alimentaciones</h1>
           <Button onClick={() => setIsCreateDialogOpen(true)}>
-            Crear Nueva Alimentación
+            Ingresar Alimentación
           </Button>
         </header>
         <Separator className="my-4" />
@@ -210,15 +224,27 @@ export default function ListaAlimentaciones() {
           <TableHeader>
             <TableRow>
               <TableHead className="">Animal ID</TableHead>
-              <TableHead>Lote ID</TableHead>
-              <TableHead>Ubicación ID</TableHead>
+              <TableHead className="hidden md:table-cell">Lote ID</TableHead>
+              <TableHead className="hidden md:table-cell">
+                Ubicación ID
+              </TableHead>
               <TableHead>Fecha Suministro</TableHead>
-              <TableHead>Tipo Alimento ID</TableHead>
-              <TableHead>Cantidad Suministrada</TableHead>
-              <TableHead>Proveedor Alimento ID</TableHead>
-              <TableHead>Costo Total Alimento</TableHead>
-              <TableHead>Responsable ID</TableHead>
-              <TableHead>Observaciones</TableHead>
+              <TableHead className="hidden md:table-cell">
+                Tipo Alimento ID
+              </TableHead>
+              <TableHead className="hidden md:table-cell">
+                Cantidad Dada
+              </TableHead>
+              <TableHead className="hidden lg:table-cell">
+                Proveedor Alimento ID
+              </TableHead>
+              <TableHead className="hidden lg:table-cell">
+                Costo Total Alimento
+              </TableHead>
+              <TableHead className="hidden lg:table-cell">
+                Responsable ID
+              </TableHead>
+              <TableHead className="hidden lg:table-cell">Obs.</TableHead>
               <TableHead>Acciones</TableHead>
             </TableRow>
           </TableHeader>
@@ -226,15 +252,31 @@ export default function ListaAlimentaciones() {
             {alimentaciones?.map((a) => (
               <TableRow key={a.alimentacion_id}>
                 <TableCell className="font-medium">{a.animal_id}</TableCell>
-                <TableCell className="">{a.lote_id}</TableCell>
-                <TableCell className="">{a.ubicacion_id}</TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {a.lote_id}
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {a.ubicacion_id}
+                </TableCell>
                 <TableCell className="">{a.fecha_suministro}</TableCell>
-                <TableCell className="">{a.tipo_alimento_id}</TableCell>
-                <TableCell className="">{a.cantidad_suministrada}</TableCell>
-                <TableCell className="">{a.proveedor_alimento_id}</TableCell>
-                <TableCell className="">{a.costo_total_alimento}</TableCell>
-                <TableCell className="">{a.responsable_id}</TableCell>
-                <TableCell className="">{a.observaciones}</TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {a.tipo_alimento_id}
+                </TableCell>
+                <TableCell className="hidden md:table-cell">
+                  {a.cantidad_suministrada}
+                </TableCell>
+                <TableCell className="hidden lg:table-cell">
+                  {a.proveedor_alimento_id}
+                </TableCell>
+                <TableCell className="hidden lg:table-cell">
+                  {a.costo_total_alimento}
+                </TableCell>
+                <TableCell className="hidden lg:table-cell">
+                  {a.responsable_id}
+                </TableCell>
+                <TableCell className="hidden lg:table-cell">
+                  {a.observaciones}
+                </TableCell>
                 <TableCell>
                   <Button
                     variant="outline"
@@ -257,81 +299,76 @@ export default function ListaAlimentaciones() {
         </Table>
       </div>
       <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
           <DialogHeader>
             <DialogTitle>Crear Nueva Alimentación</DialogTitle>
             <DialogDescription>
               Ingresa los detalles de la nueva alimentación.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div
+            className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4 max-h-96 overflow-y-auto"
+            style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
+          >
             {/* ... (Inputs para todos los campos, similar a los dialogos anteriores) */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="animalId" className="text-right">
                 Animal ID
               </Label>
-              <Input
-                id="animalId"
-                value={newAnimalId?.toString() || ""}
-                onChange={(e) =>
-                  setNewAnimalId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <AnimalCombobox
+                  label="Animal"
+                  value={newAnimalId}
+                  onChange={(value) => setNewAnimalId(value)}
+                ></AnimalCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="loteId" className="text-right">
                 Lote ID
               </Label>
-              <Input
-                id="loteId"
-                value={newLoteId?.toString() || ""}
-                onChange={(e) =>
-                  setNewLoteId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <LoteCombobox
+                  label="Lote"
+                  value={newLoteId ?? null}
+                  onChange={(value) => setNewLoteId(value)}
+                ></LoteCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="ubicacionId" className="text-right">
                 Ubicación ID
               </Label>
-              <Input
-                id="ubicacionId"
-                value={newUbicacionId?.toString() || ""}
-                onChange={(e) =>
-                  setNewUbicacionId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <UbicacionCombobox
+                  label="Ubicación"
+                  value={newUbicacionId ?? null}
+                  onChange={(value) => setNewUbicacionId(value)}
+                ></UbicacionCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="fechaSuministro" className="text-right">
                 Fecha Suministro
               </Label>
-              <Input
-                id="fechaSuministro"
-                value={newFechaSuministro}
-                onChange={(e) => setNewFechaSuministro(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <DatePicker
+                  value={newFechaSuministro}
+                  onChange={(date) => setNewFechaSuministro(date || "")}
+                ></DatePicker>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="tipoAlimentoId" className="text-right">
                 Tipo Alimento ID
               </Label>
-              <Input
-                id="tipoAlimentoId"
-                value={newTipoAlimentoId.toString()}
-                onChange={(e) => setNewTipoAlimentoId(Number(e.target.value))}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <TipoAlimentoCombobox
+                  label="Tipo Alimento"
+                  value={newTipoAlimentoId}
+                  onChange={(value) => setNewTipoAlimentoId(value ?? 0)}
+                ></TipoAlimentoCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="cantidadSuministrada" className="text-right">
@@ -339,6 +376,8 @@ export default function ListaAlimentaciones() {
               </Label>
               <Input
                 id="cantidadSuministrada"
+                type="number"
+                min={0}
                 value={newCantidadSuministrada.toString()}
                 onChange={(e) =>
                   setNewCantidadSuministrada(Number(e.target.value))
@@ -350,16 +389,13 @@ export default function ListaAlimentaciones() {
               <Label htmlFor="proveedorAlimentoId" className="text-right">
                 Proveedor Alimento ID
               </Label>
-              <Input
-                id="proveedorAlimentoId"
-                value={newProveedorAlimentoId?.toString() || ""}
-                onChange={(e) =>
-                  setNewProveedorAlimentoId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <ProveedorCombobox
+                  label="Proveedor Alimento"
+                  value={newProveedorAlimentoId ?? null}
+                  onChange={(value) => setNewProveedorAlimentoId(value)}
+                ></ProveedorCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="costoTotalAlimento" className="text-right">
@@ -367,6 +403,8 @@ export default function ListaAlimentaciones() {
               </Label>
               <Input
                 id="costoTotalAlimento"
+                type="number"
+                min={0}
                 value={newCostoTotalAlimento?.toString() || ""}
                 onChange={(e) =>
                   setNewCostoTotalAlimento(
@@ -382,17 +420,16 @@ export default function ListaAlimentaciones() {
               </Label>
               <Input
                 id="responsableId"
-                value={newResponsableId?.toString() || ""}
-                onChange={(e) =>
-                  setNewResponsableId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
+                disabled
+                value={user?.nombre?.toString() || ""}
                 className="col-span-3"
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="observaciones" className="text-right">
+              <Label
+                htmlFor="observaciones"
+                className="text-right overflow-hidden"
+              >
                 Observaciones
               </Label>
               <Input
@@ -411,81 +448,76 @@ export default function ListaAlimentaciones() {
         </DialogContent>
       </Dialog>
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
           <DialogHeader>
             <DialogTitle>Editar Alimentación</DialogTitle>
             <DialogDescription>
               Edita los detalles de la alimentación.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div
+            className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4 max-h-96 overflow-y-auto"
+            style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
+          >
             {/* ... (Inputs para editar los campos, similar al diálogo de creación) */}
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="animalId" className="text-right">
                 Animal ID
               </Label>
-              <Input
-                id="animalId"
-                value={newAnimalId?.toString() || ""}
-                onChange={(e) =>
-                  setNewAnimalId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <AnimalCombobox
+                  label="Animal"
+                  value={newAnimalId}
+                  onChange={(value) => setNewAnimalId(value)}
+                ></AnimalCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="loteId" className="text-right">
                 Lote ID
               </Label>
-              <Input
-                id="loteId"
-                value={newLoteId?.toString() || ""}
-                onChange={(e) =>
-                  setNewLoteId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <LoteCombobox
+                  label="Lote"
+                  value={newLoteId ?? null}
+                  onChange={(value) => setNewLoteId(value)}
+                ></LoteCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="ubicacionId" className="text-right">
                 Ubicación ID
               </Label>
-              <Input
-                id="ubicacionId"
-                value={newUbicacionId?.toString() || ""}
-                onChange={(e) =>
-                  setNewUbicacionId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <UbicacionCombobox
+                  label="Ubicación"
+                  value={newUbicacionId ?? null}
+                  onChange={(value) => setNewUbicacionId(value)}
+                ></UbicacionCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="fechaSuministro" className="text-right">
                 Fecha Suministro
               </Label>
-              <Input
-                id="fechaSuministro"
-                value={newFechaSuministro}
-                onChange={(e) => setNewFechaSuministro(e.target.value)}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <DatePicker
+                  value={newFechaSuministro}
+                  onChange={(date) => setNewFechaSuministro(date || "")}
+                ></DatePicker>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="tipoAlimentoId" className="text-right">
                 Tipo Alimento ID
               </Label>
-              <Input
-                id="tipoAlimentoId"
-                value={newTipoAlimentoId.toString()}
-                onChange={(e) => setNewTipoAlimentoId(Number(e.target.value))}
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <TipoAlimentoCombobox
+                  label="Tipo Alimento"
+                  value={newTipoAlimentoId}
+                  onChange={(value) => setNewTipoAlimentoId(value ?? 0)}
+                ></TipoAlimentoCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="cantidadSuministrada" className="text-right">
@@ -493,6 +525,8 @@ export default function ListaAlimentaciones() {
               </Label>
               <Input
                 id="cantidadSuministrada"
+                type="number"
+                min={0}
                 value={newCantidadSuministrada.toString()}
                 onChange={(e) =>
                   setNewCantidadSuministrada(Number(e.target.value))
@@ -504,16 +538,13 @@ export default function ListaAlimentaciones() {
               <Label htmlFor="proveedorAlimentoId" className="text-right">
                 Proveedor Alimento ID
               </Label>
-              <Input
-                id="proveedorAlimentoId"
-                value={newProveedorAlimentoId?.toString() || ""}
-                onChange={(e) =>
-                  setNewProveedorAlimentoId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
+              <div className="col-span-3">
+                <ProveedorCombobox
+                  label="Proveedor Alimento"
+                  value={newProveedorAlimentoId ?? null}
+                  onChange={(value) => setNewProveedorAlimentoId(value)}
+                ></ProveedorCombobox>
+              </div>
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
               <Label htmlFor="costoTotalAlimento" className="text-right">
@@ -521,6 +552,8 @@ export default function ListaAlimentaciones() {
               </Label>
               <Input
                 id="costoTotalAlimento"
+                type="number"
+                min={0}
                 value={newCostoTotalAlimento?.toString() || ""}
                 onChange={(e) =>
                   setNewCostoTotalAlimento(
@@ -536,6 +569,7 @@ export default function ListaAlimentaciones() {
               </Label>
               <Input
                 id="responsableId"
+                disabled
                 value={newResponsableId?.toString() || ""}
                 onChange={(e) =>
                   setNewResponsableId(
@@ -546,7 +580,10 @@ export default function ListaAlimentaciones() {
               />
             </div>
             <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="observaciones" className="text-right">
+              <Label
+                htmlFor="observaciones"
+                className="text-right overflow-hidden"
+              >
                 Observaciones
               </Label>
               <Input
