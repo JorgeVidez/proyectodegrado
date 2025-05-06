@@ -6,7 +6,7 @@ from sqlalchemy.future import select
 
 
 # URL de conexión (usando aiomysql para compatibilidad con async)
-DATABASE_URL = "mysql+aiomysql://root:@localhost:3306/estancia_nazario"
+DATABASE_URL = "mysql+aiomysql://root:@localhost:3306/estancianazario"
 
 # Crear motor asíncrono
 engine = create_async_engine(DATABASE_URL, echo=True, future=True)
