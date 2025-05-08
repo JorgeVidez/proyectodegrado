@@ -331,11 +331,13 @@ export default function ListaInventarioAnimales() {
                 <Label htmlFor="animalId" className="text-right">
                   Animal
                 </Label>
-                <AnimalCombobox
-                  label="Animal"
-                  value={newAnimalId}
-                  onChange={(value) => setNewAnimalId(value ?? 0)}
-                ></AnimalCombobox>
+                <div className="col-span-3">
+                  <AnimalCombobox
+                    label="Animal"
+                    value={newAnimalId}
+                    onChange={(value) => setNewAnimalId(value ?? 0)}
+                  ></AnimalCombobox>
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="fechaIngreso" className="text-right">
@@ -378,11 +380,13 @@ export default function ListaInventarioAnimales() {
                 <Label htmlFor="proveedorCompraId" className="text-right">
                   Proveedor Compra
                 </Label>
-                <ProveedorCombobox
-                  label="Proveedor"
-                  value={newProveedorCompraId ?? null}
-                  onChange={(value) => setNewProveedorCompraId(value ?? null)}
-                />
+                <div className="col-span-3">
+                  <ProveedorCombobox
+                    label="Proveedor"
+                    value={newProveedorCompraId ?? null}
+                    onChange={(value) => setNewProveedorCompraId(value ?? null)}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="precioCompra" className="text-right">
@@ -481,11 +485,13 @@ export default function ListaInventarioAnimales() {
                 <Label htmlFor="animalId" className="text-right">
                   Animal
                 </Label>
-                <AnimalCombobox
-                  label="Animal"
-                  value={newAnimalId}
-                  onChange={(value) => setNewAnimalId(value ?? 0)}
-                ></AnimalCombobox>
+                <div className="col-span-3">
+                  <AnimalCombobox
+                    label="Animal"
+                    value={newAnimalId}
+                    onChange={(value) => setNewAnimalId(value ?? 0)}
+                  ></AnimalCombobox>
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="fechaIngreso" className="text-right">
@@ -531,11 +537,13 @@ export default function ListaInventarioAnimales() {
                 <Label htmlFor="proveedorCompraId" className="text-right">
                   Proveedor Compra
                 </Label>
-                <ProveedorCombobox
-                  label="Proveedor"
-                  value={newProveedorCompraId ?? null}
-                  onChange={(value) => setNewProveedorCompraId(value ?? null)}
-                />
+                <div className="col-span-3">
+                  <ProveedorCombobox
+                    label="Proveedor"
+                    value={newProveedorCompraId ?? null}
+                    onChange={(value) => setNewProveedorCompraId(value ?? null)}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="precioCompra" className="text-right">

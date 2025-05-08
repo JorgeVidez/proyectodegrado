@@ -8,7 +8,7 @@ import {
   ProveedorUpdate,
 } from "@/types/proveedor"; // Asegúrate de tener estas interfaces definidas
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const URL_PROVEEDORES = API_URL + "/proveedor";
 
 export const useProveedores = () => {

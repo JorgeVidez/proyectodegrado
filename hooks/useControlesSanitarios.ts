@@ -17,7 +17,7 @@ export interface ControlSanitario extends ControlSanitarioBase {
   control_id: number;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 

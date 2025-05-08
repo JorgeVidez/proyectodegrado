@@ -50,7 +50,7 @@ class InventarioAnimalOut(BaseModel):
     motivo_ingreso: MotivoIngreso
     proveedor_compra: Optional[ProveedorOut] = None # Changed to ProveedorOut
     precio_compra: Optional[float] = None
-    ubicacion_actual: UbicacionOut # Changed to UbicacionOut
+    ubicacion_actual: Optional[UbicacionOut] = None # Changed to UbicacionOut
     lote_actual_id: int
     fecha_egreso: Optional[date] = None
     motivo_egreso: Optional[MotivoEgreso] = None

@@ -84,8 +84,7 @@ export interface LoteOut extends LoteBase {
 import { useState, useEffect } from "react";
 import axios, { AxiosError } from "axios";
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const URL_LOTES = API_URL + "/lotes";
 
 export const useLotes = () => {
@@ -97,7 +96,7 @@ export const useLotes = () => {
     const fetchLotes = async () => {
       setIsLoading(true);
       try {
-        const response = await axios.get<LoteOut[]>(URL_LOTES);
+        const response = await axios.get<LoteOut[]>(`${URL_LOTES}/`);
         setLotes(response.data);
         setIsLoading(false);
         setError(null);
@@ -116,7 +115,7 @@ export const useLotes = () => {
 
   const create = async (loteData: LoteCreate): Promise<LoteOut | null> => {
     try {
-      const response = await axios.post<LoteOut>(URL_LOTES, loteData);
+      const response = await axios.post<LoteOut>(`${URL_LOTES}/`, loteData);
       setLotes((prevLotes) => [...(prevLotes || []), response.data]);
       setError(null);
       return response.data;
@@ -172,6 +171,21 @@ export const useLotes = () => {
     }
   };
 
+  //obtener lote por id desde la api
+  const getLoteById = async (id: number): Promise<LoteOut | null> => {
+    try {
+      const response = await axios.get<LoteOut>(`${URL_LOTES}/${id}`);
+      return response.data;
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data.detail?.error || err.message);
+      } else {
+        setError("Error desconocido al obtener el lote.");
+      }
+      return null;
+    }
+  };
+
   return {
     lotes,
     isLoading,
@@ -179,5 +193,6 @@ export const useLotes = () => {
     create,
     update,
     remove,
+    getLoteById,
   };
 };

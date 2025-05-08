@@ -4,8 +4,7 @@ import useSWR from 'swr'
 import axios from 'axios'
 import { useCallback } from 'react'
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const URL_ESPECIES = API_URL + "/especies";
 
 export interface Especie {

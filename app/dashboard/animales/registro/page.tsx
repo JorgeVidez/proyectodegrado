@@ -397,22 +397,25 @@ export default function ListaAnimalesPage() {
                 <Label htmlFor="madreId" className="text-right">
                   Madre ID
                 </Label>
-                <AnimalCombobox
-                  label="Madre"
-                  value={newMadreId}
-                  onChange={(id) => setNewMadreId(id)}
-                />
+                <div className="col-span-3">
+                  <AnimalCombobox
+                    label="Madre"
+                    value={newMadreId}
+                    onChange={(id) => setNewMadreId(id)}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="padreId" className="text-right">
                   Padre ID
                 </Label>
-
-                <AnimalCombobox
-                  label="Padre"
-                  value={newPadreId}
-                  onChange={(id) => setNewPadreId(id)}
-                />
+                <div className="col-span-3">
+                  <AnimalCombobox
+                    label="Padre"
+                    value={newPadreId}
+                    onChange={(id) => setNewPadreId(id)}
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="estadoActual" className="text-right">

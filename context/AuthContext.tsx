@@ -11,8 +11,7 @@ import {
 import axios, { AxiosInstance } from "axios";
 import { useRouter } from "next/navigation";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:3000/api";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const TOKEN_KEY = "authToken";
 
 interface RolUsuario {

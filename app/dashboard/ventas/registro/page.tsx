@@ -50,9 +50,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLotes } from "@/hooks/useLotes";
 
 export default function VentasPage() {
   const { ventas, isLoading, isError, refresh } = useVentas();
+  const { lotes, getLoteById } = useLotes();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -136,6 +138,23 @@ export default function VentasPage() {
       setAlert({ type: "error", message: "Error al eliminar la venta." });
     }
     setTimeout(() => setAlert(null), 3000);
+  };
+
+  //funcion para optener la sumatoria del precio total segun lote
+  const getTotalPriceByLote = async (loteId: number) => {
+    if (!lotes) return 0; // Si no hay lotes cargados, retorna 0
+
+    // Busca el lote específico por su ID
+
+    const lote = await getLoteById(loteId);
+    if (!lote) return 0; // Si el lote no existe, retorna 0
+
+    // Filtra los inventarios válidos (con precio_compra definido) y suma sus precios
+    const total = lote.inventarios.reduce((sum, inventario) => {
+      return sum + (inventario.precio_compra || 0);
+    }, 0);
+
+    return total;
   };
 
   if (isLoading) return <div>Cargando ventas...</div>;
@@ -265,13 +284,15 @@ export default function VentasPage() {
                 <Label htmlFor="cliente_id" className="text-right">
                   Cliente
                 </Label>
-                <ClienteCombobox
-                  label="Cliente"
-                  value={formData.cliente_id}
-                  onChange={(clienteId) =>
-                    handleInputChange("cliente_id", clienteId)
-                  }
-                />
+                <div className="col-span-3">
+                  <ClienteCombobox
+                    label="Cliente"
+                    value={formData.cliente_id}
+                    onChange={(clienteId) =>
+                      handleInputChange("cliente_id", clienteId)
+                    }
+                  />
+                </div>
               </div>
 
               {/* Fecha Venta */}
@@ -364,7 +385,7 @@ export default function VentasPage() {
                 </Label>
                 <Input
                   id="precio_venta_total_general"
-                  className="col-span-3"
+                  className="col-span-2"
                   type="number"
                   value={formData.precio_venta_total_general ?? ""}
                   onChange={(e) =>
@@ -374,6 +395,21 @@ export default function VentasPage() {
                     )
                   }
                 />
+
+                <Button
+                  className="col-span-1"
+                  variant="outline"
+                  onClick={async () => {
+                    if (formData.lote_origen_id) {
+                      const total = await getTotalPriceByLote(
+                        formData.lote_origen_id
+                      );
+                      handleInputChange("precio_venta_total_general", total);
+                    }
+                  }}
+                >
+                  Calcular desde Lote
+                </Button>
               </div>
 
               {/* Usuario Registra ID */}

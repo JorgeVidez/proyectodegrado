@@ -28,7 +28,6 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
 } from "@/components/ui/select";
 import {
   Form,
@@ -89,6 +88,8 @@ import {
   InventarioAnimalUpdate,
 } from "@/types/inventarioAnimal";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { Value } from "@radix-ui/react-select";
+import { SelectValue } from "@/components/ui/select";
 
 const AsignacionSchema = z.object({
   ubicacion_actual_id: z.number().optional().nullable(),
@@ -500,9 +501,11 @@ const AsignacionAnimales = () => {
                       <FormLabel>Ubicación</FormLabel>
                       <Select
                         onValueChange={(value) =>
-                          field.onChange(parseInt(value) || null)
+                          field.onChange(
+                            value === "null" ? null : parseInt(value)
+                          )
                         }
-                        value={field.value?.toString() || ""}
+                        value={field.value?.toString() || "null"}
                       >
                         <FormControl>
                           <SelectTrigger>
@@ -510,7 +513,7 @@ const AsignacionAnimales = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Sin ubicación</SelectItem>
+                          <SelectItem value="null">Sin ubicación</SelectItem>
                           {ubicaciones?.map((ubicacion) => (
                             <SelectItem
                               key={ubicacion.ubicacion_id}
@@ -544,7 +547,7 @@ const AsignacionAnimales = () => {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="">Sin lote</SelectItem>
+                          <SelectItem value="null">Sin lote</SelectItem>
                           {lotes?.map((lote) => (
                             <SelectItem
                               key={lote.lote_id}

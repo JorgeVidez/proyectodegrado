@@ -27,7 +27,7 @@ import { useState, useEffect } from "react";
 import axios, { AxiosError } from "axios";
  // Asegúrate de tener estas interfaces definidas
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 const URL_UBICACIONES = API_URL + "/ubicaciones";
 
 export const useUbicaciones = () => {

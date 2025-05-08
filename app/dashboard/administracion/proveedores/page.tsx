@@ -83,6 +83,7 @@ export default function ListaProveedoresPage() {
       persona_contacto: newPersonaContacto,
       tipo_proveedor: newTipoProveedor,
     };
+    console.log("Creating new proveedor:", newProveedor);
     const createdProveedor = await create(newProveedor);
     if (createdProveedor) {
       setAlertMessage("Proveedor creado con éxito.");

@@ -125,6 +125,18 @@ export default function ListaLotes() {
     }, 3000);
   };
 
+  //genera una funciona para generar un codigo de lote aleatorio
+  const generateRandomLoteCode = () => {
+    const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let result = "";
+    for (let i = 0; i < 8; i++) {
+      result += characters.charAt(
+        Math.floor(Math.random() * characters.length)
+      );
+    }
+    return result;
+  };
+
   if (isLoading) return <div>Cargando lotes...</div>;
   if (error) return <div>Error al cargar lotes</div>;
 
@@ -222,12 +234,23 @@ export default function ListaLotes() {
                 <Label htmlFor="codigoLote" className="text-right">
                   Código Lote
                 </Label>
-                <Input
-                  id="codigoLote"
-                  value={newCodigoLote}
-                  onChange={(e) => setNewCodigoLote(e.target.value)}
-                  className="col-span-3"
-                />
+                <div className="col-span-3 flex items-center gap-2">
+                  <Input
+                    id="codigoLote"
+                    value={newCodigoLote}
+                    onChange={(e) => setNewCodigoLote(e.target.value)}
+                  />
+
+                  <Button
+                    onClick={() => {
+                      const randomCode = generateRandomLoteCode();
+                      setNewCodigoLote(randomCode);
+                    }}
+                    className="w-1/2"
+                  >
+                    Generar
+                  </Button>
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="proposito" className="text-right">
