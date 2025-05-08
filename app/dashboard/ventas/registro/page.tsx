@@ -398,7 +398,6 @@ export default function VentasPage() {
 
                 <Button
                   className="col-span-1"
-                  variant="outline"
                   onClick={async () => {
                     if (formData.lote_origen_id) {
                       const total = await getTotalPriceByLote(
@@ -408,7 +407,7 @@ export default function VentasPage() {
                     }
                   }}
                 >
-                  Calcular desde Lote
+                  Calcular
                 </Button>
               </div>
 
