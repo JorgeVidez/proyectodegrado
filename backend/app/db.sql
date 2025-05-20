@@ -74,7 +74,7 @@ CREATE TABLE ubicaciones (
 CREATE TABLE lotes (
     lote_id SERIAL PRIMARY KEY,
     codigo_lote VARCHAR(50) UNIQUE NOT NULL, -- Ej: ENGORDE-2024-01
-    fecha_creacion DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_creacion DATE NOT NULL,
     proposito TEXT, -- Ej: Engorde, Cría, Lechería, Recría
     descripcion TEXT,
     activo BOOLEAN DEFAULT TRUE
@@ -86,20 +86,20 @@ CREATE TABLE lotes (
 
 -- Tabla: usuarios
 CREATE TABLE usuarios (
-    usuario_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    usuario_id BIGINT PRIMARY KEY,
     nombre TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL, -- *** ALMACENAR HASH, NUNCA TEXTO PLANO ***
     rol_id INT NOT NULL REFERENCES roles_usuario(rol_id),
     activo BOOLEAN DEFAULT TRUE,
-    fecha_creacion TIMESTAMPTZ DEFAULT now(),
-    fecha_actualizacion TIMESTAMPTZ
+    fecha_creacion DATE DEFAULT now(),
+    fecha_actualizacion DATE  
 );
 -- Crear un trigger para actualizar fecha_actualizacion automáticamente
 
 -- Tabla: proveedores
 CREATE TABLE proveedores (
-    proveedor_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    proveedor_id BIGINT PRIMARY KEY,
     nombre TEXT NOT NULL,
     identificacion_fiscal VARCHAR(50) UNIQUE, -- NIT, CUIT, RUC, etc.
     telefono TEXT,
@@ -107,27 +107,26 @@ CREATE TABLE proveedores (
     direccion TEXT,
     persona_contacto VARCHAR(150),
     tipo_proveedor TEXT, -- Ej: Animales, Alimento, Medicamentos, Servicios
-    fecha_creacion TIMESTAMPTZ DEFAULT now(),
-    fecha_actualizacion TIMESTAMPTZ
+    fecha_creacion DATE,
+    fecha_actualizacion DATE
 );
 -- Crear un trigger para actualizar fecha_actualizacion automáticamente
 
 -- Tabla: clientes (Compradores)
 CREATE TABLE clientes (
-    cliente_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    cliente_id BIGINT PRIMARY KEY,
     nombre TEXT NOT NULL,
     identificacion_fiscal VARCHAR(50) UNIQUE,
     telefono TEXT,
     email TEXT,
     direccion TEXT,
-    fecha_creacion TIMESTAMPTZ DEFAULT now(),
-    fecha_actualizacion TIMESTAMPTZ
-);
+    fecha_creacion DATE DEFAULT now(),
+    fecha_actualizacion DATE);
 -- Crear un trigger para actualizar fecha_actualizacion automáticamente
 
 -- Tabla: animal (Datos intrínsecos del animal)
 CREATE TABLE animal (
-    animal_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    animal_id BIGINT PRIMARY KEY,
     numero_trazabilidad VARCHAR(50) UNIQUE NOT NULL, -- Caravana, DIIO, etc.
     nombre_identificatorio VARCHAR(100), -- Opcional, para reproductores p.ej.
     especie_id INT NOT NULL REFERENCES especies(especie_id),
@@ -137,14 +136,14 @@ CREATE TABLE animal (
     madre_id BIGINT REFERENCES animal(animal_id) ON DELETE SET NULL, -- Para genealogía
     padre_id BIGINT REFERENCES animal(animal_id) ON DELETE SET NULL, -- Para genealogía
     estado_actual VARCHAR(20) NOT NULL DEFAULT 'Activo' CHECK (estado_actual IN ('Activo', 'Vendido', 'Muerto', 'Descartado')), -- Estado general del animal
-    fecha_registro TIMESTAMPTZ DEFAULT now(),
+    fecha_registro DATE DEFAULT now(),
     observaciones_generales TEXT
 );
 -- Indices para madre_id y padre_id
 
 -- Tabla: inventario_animal (Registro de la estancia del animal en la finca)
 CREATE TABLE inventario_animal (
-    inventario_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    inventario_id BIGINT PRIMARY KEY,
     animal_id BIGINT UNIQUE NOT NULL REFERENCES animal(animal_id) ON DELETE RESTRICT, -- Un animal sólo puede estar una vez en el inventario activo
     fecha_ingreso DATE NOT NULL,
     motivo_ingreso VARCHAR(50) NOT NULL CHECK (motivo_ingreso IN ('Nacimiento', 'Compra', 'TrasladoInterno')),
@@ -162,9 +161,9 @@ CREATE TABLE inventario_animal (
 
 -- Tabla: movimientos_animal (Historial de entradas, salidas y traslados)
 CREATE TABLE movimientos_animal (
-    movimiento_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    movimiento_id BIGINT PRIMARY KEY,
     animal_id BIGINT NOT NULL REFERENCES animal(animal_id) ON DELETE CASCADE,
-    fecha_movimiento TIMESTAMPTZ NOT NULL DEFAULT now(),
+    fecha_movimiento DATE NOT NULL DEFAULT now(),
     tipo_movimiento VARCHAR(50) NOT NULL CHECK (tipo_movimiento IN ('IngresoCompra', 'IngresoNacimiento', 'EgresoVenta', 'EgresoMuerte', 'EgresoDescarte', 'TrasladoInterno', 'CambioLote')),
     origen_ubicacion_id INT REFERENCES ubicaciones(ubicacion_id),
     destino_ubicacion_id INT REFERENCES ubicaciones(ubicacion_id),
@@ -180,9 +179,9 @@ CREATE TABLE movimientos_animal (
 
 -- Tabla: controles_sanitarios (Pesajes, condición corporal, chequeos generales)
 CREATE TABLE controles_sanitarios (
-    control_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    control_id BIGINT PRIMARY KEY,
     animal_id BIGINT NOT NULL REFERENCES animal(animal_id) ON DELETE CASCADE,
-    fecha_control DATE NOT NULL DEFAULT CURRENT_DATE,
+    fecha_control DATE NOT NULL,
     peso_kg DECIMAL(7, 2),
     condicion_corporal DECIMAL(3, 1), -- Escala 1-5 o 1-9 según se use
     altura_cm DECIMAL(5, 1),
@@ -194,7 +193,7 @@ CREATE TABLE controles_sanitarios (
 
 -- Tabla: vacunaciones (Registro específico de cada vacunación)
 CREATE TABLE vacunaciones (
-    vacunacion_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    vacunacion_id BIGINT PRIMARY KEY,
     animal_id BIGINT NOT NULL REFERENCES animal(animal_id) ON DELETE CASCADE,
     fecha_aplicacion DATE NOT NULL,
     tipo_vacuna_id INT NOT NULL REFERENCES tipos_vacuna(tipo_vacuna_id),
@@ -211,7 +210,7 @@ CREATE TABLE vacunaciones (
 
 -- Tabla: tratamientos_sanitarios (Diagnósticos y tratamientos médicos)
 CREATE TABLE tratamientos_sanitarios (
-    tratamiento_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    tratamiento_id BIGINT PRIMARY KEY,
     animal_id BIGINT NOT NULL REFERENCES animal(animal_id) ON DELETE CASCADE,
     fecha_diagnostico DATE NOT NULL,
     sintomas_observados TEXT,
@@ -235,7 +234,7 @@ CREATE TABLE tratamientos_sanitarios (
 
 -- Tabla: alimentaciones (Registro de suministro de alimento)
 CREATE TABLE alimentaciones (
-    alimentacion_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    alimentacion_id BIGINT PRIMARY KEY,
     -- Puede ser para un animal específico o para un lote/ubicación
     animal_id BIGINT REFERENCES animal(animal_id) ON DELETE CASCADE,
     lote_id INT REFERENCES lotes(lote_id),
@@ -254,7 +253,7 @@ CREATE TABLE alimentaciones (
 
 -- Tabla: ventas (Registro de la transacción de venta)
 CREATE TABLE ventas (
-    venta_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    venta_id BIGINT PRIMARY KEY,
     cliente_id BIGINT NOT NULL REFERENCES clientes(cliente_id),
     fecha_venta DATE NOT NULL,
     documento_venta_ref TEXT UNIQUE, -- Factura, Guía de Traslado (Debería ser único por venta)
@@ -262,12 +261,12 @@ CREATE TABLE ventas (
     condicion_pago TEXT, -- Contado, Crédito 30 días, etc.
     lote_origen_id INT REFERENCES lotes(lote_id), -- Opcional: Si la venta corresponde a un lote de manejo predefinido.
     usuario_registra_id BIGINT REFERENCES usuarios(usuario_id),
-    fecha_registro TIMESTAMPTZ DEFAULT now(),
+    fecha_registro DATE DEFAULT now(),
     observaciones TEXT -- Observaciones generales de la venta
 );
 
 CREATE TABLE ventas_detalle (
-    venta_detalle_id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    venta_detalle_id BIGINT PRIMARY KEY,
     venta_id BIGINT NOT NULL REFERENCES ventas(venta_id) ON DELETE CASCADE, -- Si se borra la venta, se borran sus detalles.
     animal_id BIGINT NOT NULL REFERENCES animal(animal_id) ON DELETE RESTRICT, -- No permitir borrar un animal si está en un detalle de venta.
     peso_venta_kg DECIMAL(7, 2), -- Peso del animal al momento de la venta (opcional pero útil)
