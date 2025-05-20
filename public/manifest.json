@@ -1,0 +1,15 @@
+{
+  "name": "Inventario Predictivo",
+  "short_name": "Inventario",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "any",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    { "src": "icons/Logoinventariobovino-192.png", "type": "image/png", "sizes": "192x192" },
+    { "src": "icons/Logoinventariobovino-256.png", "type": "image/png", "sizes": "256x256" },
+    { "src": "icons/Logoinventariobovino-512.png", "type": "image/png", "sizes": "512x512" }
+  ]
+}
