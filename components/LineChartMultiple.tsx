@@ -31,15 +31,11 @@ const chartConfig = {
     label: "Predicciones SVR",
     color: "red",
   },
+  xAxis: {
+    label: "Fecha",
+    color: "black",
+  },
 } satisfies ChartConfig;
-
-// Función para convertir un número ordinal de fecha a un objeto Date de JavaScript
-const ordinalToDate = (ordinal: number): Date => {
-  const epoch = new Date(1900, 0, 1).getTime(); // Inicio de la época para ordinal en pandas (Python)
-  const daysSinceEpoch = ordinal - 1; // Los ordinales en pandas empiezan desde 1
-  const milliseconds = epoch + daysSinceEpoch * 24 * 60 * 60 * 1000;
-  return new Date(milliseconds);
-};
 
 export function LinearChartMultiple() {
   const [chartData, setChartData] = useState<
@@ -49,15 +45,13 @@ export function LinearChartMultiple() {
   useEffect(() => {
     const cargarDatos = () => {
       try {
-        const datos = datosJSON;
+        const datos = datosJSON as any; // Usamos 'any' temporalmente para evitar errores de tipo con la estructura JSON
 
-        const fechas = datos.test_data.X_test.map((ordinal) => {
-          const fechaObj = ordinalToDate(ordinal);
-          return fechaObj.toLocaleDateString();
-        });
+        // Ahora X_test ya contiene strings de fecha, no ordinales
+        const fechas = datos.test_data.X_test as string[]; // Aseguramos que son strings
 
         const data = fechas.map((fecha, index) => ({
-          fecha: fecha,
+          fecha: fecha, // Usamos el string de fecha directamente
           datosReales: datos.test_data.y_test[index],
           prediccionesSVR: datos.predictions.y_pred_svr[index],
         }));
@@ -93,7 +87,9 @@ export function LinearChartMultiple() {
               tickLine={false}
               axisLine={false}
               tickMargin={8}
-              tickFormatter={(value) => value.slice(0, 5)}
+              tickFormatter={(value: string) =>
+                value.split("-")[0] + "/" + value.split("-")[1]
+              }
             />
             <ChartTooltip
               cursor={false}
@@ -130,7 +126,7 @@ export function LinearChartMultiple() {
         <div className="flex gap-2 font-medium leading-none">
           Predicciones de Ganado Faeneado <TrendingUp className="h-4 w-4" />
         </div>
-        <div className="leading-none text-muted-foreground">2005 - 2024</div>
+        <div className="leading-none text-muted-foreground">2005 - 2025</div>
       </CardFooter>
     </Card>
   );
