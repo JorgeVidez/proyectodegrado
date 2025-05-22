@@ -1,12 +1,20 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+<<<<<<< Updated upstream
 from app.routes import usuario, proveedor, rol_usuario, especie, raza, tipo_alimento, tipo_vacuna, medicamento, ubicacion, lote, cliente, animal, inventario_animal, movimientos_animal, controles_sanitarios, vacunaciones, tratamientos_sanitarios, alimentaciones, ventas, ventas_detalle
+=======
+from app.routes import usuario, control, ganado, ventas, proveedor, reporte
+>>>>>>> Stashed changes
 from app.database import engine, Base, initialize_data
 from fastapi.responses import JSONResponse
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import HTTPException
+<<<<<<< Updated upstream
 from .Predictions import GanadoFaeneado, PesoGanado, svr_precio_kg_router, svr_peso_edad_router
+=======
+from . import prediccion #Importamos el nuevo modulo.
+>>>>>>> Stashed changes
 
 
 
@@ -45,6 +53,7 @@ app.include_router(medicamento.router, prefix="/api", tags=["Medicamentos"])
 app.include_router(ubicacion.router, prefix="/api", tags=["Ubicaciones"])
 app.include_router(lote.router, prefix="/api", tags=["Lotes"])
 app.include_router(usuario.router, prefix="/api", tags=["Usuarios"])
+<<<<<<< Updated upstream
 app.include_router(proveedor.router, prefix="/api", tags=["Proveedores"])
 app.include_router(cliente.router, prefix="/api", tags=["Clientes"])
 app.include_router(animal.router, prefix="/api", tags=["Animales"])
@@ -62,6 +71,14 @@ app.include_router(PesoGanado.router, prefix="/api", tags=["Predicción"]) #Incl
 app.include_router(svr_precio_kg_router.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
 app.include_router(svr_peso_edad_router.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
 
+=======
+app.include_router(control.router, prefix="/api", tags=["Controles"])
+app.include_router(ventas.router, prefix="/api", tags=["Ventas"])
+app.include_router(reporte.router, prefix="/api", tags=["Reportes"])
+app.include_router(proveedor.router, prefix="/api", tags=["Proveedores"])
+
+app.include_router(prediccion.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
+>>>>>>> Stashed changes
 
 # Ejecutar Uvicorn solo si el script se ejecuta directamente
 #usar uvicorn main:app --reload para correr el servidor

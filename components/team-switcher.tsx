@@ -6,7 +6,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { ModeToggle } from "./mode-toggle";
 
 export function TeamSwitcher({
   teams,
@@ -40,7 +39,11 @@ export function TeamSwitcher({
             <span className="truncate font-semibold">{activeTeam.name}</span>
             <span className="truncate text-xs">{activeTeam.plan}</span>
           </div>
+<<<<<<< Updated upstream
         </div>
+=======
+        </SidebarMenuButton>
+>>>>>>> Stashed changes
       </SidebarMenuItem>
     </SidebarMenu>
   );

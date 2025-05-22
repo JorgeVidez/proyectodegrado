@@ -42,6 +42,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
+<<<<<<< Updated upstream
       <head>
         <meta name="theme-color" content="#ffffff"></meta>
         <link rel="manifest" href="/manifest.json"></link>
@@ -52,6 +53,8 @@ export default function RootLayout({
           href="/icons/Logoinventariobovino-512.png"
         ></link>
       </head>
+=======
+>>>>>>> Stashed changes
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

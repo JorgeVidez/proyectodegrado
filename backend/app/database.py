@@ -27,6 +27,7 @@ async def get_db():
         yield session
 
 # Función para inicializar la base de datos y agregar usuarios por defecto
+<<<<<<< Updated upstream
 # 🔥 Inicializar datos: roles y usuarios por defecto
 async def initialize_data():
     from app.models.usuario import Usuario
@@ -87,10 +88,38 @@ async def initialize_data():
                     rol_id=rol_id,
                     password_hash=hash_password(user_data["password"]),
                     activo=True
+=======
+async def initialize_data():
+    from app.models.usuario import Usuario
+    from app.routes.usuario import hash_password
+    async with SessionLocal() as db:
+        # Crear tablas si no existen
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        
+        # Verificar si ya hay usuarios
+        result = await db.execute(select(Usuario))
+        existing_users = result.scalars().all()
+
+        if not existing_users:  # Si no hay usuarios, agregamos los predeterminados
+            users = [
+                {"nombre": "Administrador", "email": "admin@gmail.com", "rol": "administrador", "password": "admin123"},
+                {"nombre": "Operador", "email": "operador@gmail.com", "rol": "operador", "password": "123456"},
+                {"nombre": "Veterinario", "email": "veterinario@gmail.com", "rol": "veterinario", "password": "veterinario123"}
+            ]
+
+            for user_data in users:
+                usuario = Usuario(
+                    nombre=user_data["nombre"],
+                    email=user_data["email"],
+                    rol=user_data["rol"],
+                    password=hash_password(user_data["password"])  # Hashear contraseña
+>>>>>>> Stashed changes
                 )
                 db.add(usuario)
 
             await db.commit()
+<<<<<<< Updated upstream
             print("✅ Usuarios por defecto creados.")
 
         # Insertar especies y razas si no existen
@@ -143,6 +172,9 @@ async def initialize_data():
         else:
             print("ℹ️ Especies ya existen, no se insertan duplicados")
 
+=======
+            print("✅ Usuarios por defecto creados en la base de datos.")
+>>>>>>> Stashed changes
 
 # Función para probar la conexión asíncrona
 async def test_connection():

@@ -30,12 +30,19 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
+<<<<<<< Updated upstream
 import { useAuth } from "@/context/AuthContext";
 import { title } from "process";
 import { Item } from "@radix-ui/react-dropdown-menu";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { user, hasPermission } = useAuth(); // Obtiene el usuario y hasPermission del AuthContext
+=======
+import { useAuth } from "@/app/context/AuthContext";
+
+export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth(); // Obtiene el usuario autenticado
+>>>>>>> Stashed changes
 
   // Si el usuario no está autenticado, usa valores por defecto
   const userData = user
@@ -71,6 +78,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ],
     navMain: [
       {
+<<<<<<< Updated upstream
         title: "Resumen",
         url: "/resumen",
         icon: LayoutDashboard, // Reemplaza con tu icono
@@ -109,12 +117,46 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {
             title: "Asignación",
             url: "/dashboard/lotes-ubicaciones/asignacion",
+=======
+        title: "Ganado",
+        url: "/ganado",
+        icon: SquareStack,
+        isActive: true,
+        items: [
+          {
+            title: "Listado",
+            url: "/dashboard/ganado/listado",
+          },
+          {
+            title: "Agregar",
+            url: "/dashboard/ganado/agregar",
+          },
+          {
+            title: "Proveedores",
+            url: "/dashboard/ganado/proveedores",
+          },
+        ],
+      },
+      {
+        title: "Controles",
+        url: "/controles",
+        icon: CalendarCheck,
+        items: [
+          {
+            title: "Registro de controles",
+            url: "/dashboard/controles/registro",
+          },
+          {
+            title: "Reportes",
+            url: "/dashboard/controles/reportes",
+>>>>>>> Stashed changes
           },
         ],
       },
       {
         title: "Ventas",
         url: "/ventas",
+<<<<<<< Updated upstream
         icon: Badge, // Reemplaza con tu icono
         isActive: false,
         items: [
@@ -148,16 +190,51 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           {
             title: "Proveedores",
             url: "/dashboard/administracion/proveedores",
+=======
+        icon: DollarSign,
+        items: [
+          {
+            title: "Historial de ventas",
+            url: "/dashboard/ventas/historial",
+          },
+          {
+            title: "Nueva venta",
+            url: "/dashboard/ventas/nueva",
+          },
+        ],
+      },
+      {
+        title: "Usuarios",
+        url: "/usuarios",
+        icon: Users,
+        items: [
+          {
+            title: "Listado",
+            url: "/dashboard/usuarios/listado",
+          },
+          {
+            title: "Agregar",
+            url: "/dashboard/usuarios/agregar",
+>>>>>>> Stashed changes
           },
         ],
       },
     ],
     projects: [
       {
+<<<<<<< Updated upstream
+=======
+        name: "Monitoreo de Salud",
+        url: "/dashboard/proyectos/salud",
+        icon: Frame,
+      },
+      {
+>>>>>>> Stashed changes
         name: "Prediccion de Ventas",
         url: "/dashboard/predicciones",
         icon: PieChart,
       },
+<<<<<<< Updated upstream
     ],
   };
 
@@ -169,6 +246,16 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     hasPermission(project.url)
   );
 
+=======
+      {
+        name: "Gestión de Alimentación",
+        url: "/proyectos/alimentacion",
+        icon: Map,
+      },
+    ],
+  };
+
+>>>>>>> Stashed changes
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>

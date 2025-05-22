@@ -97,6 +97,7 @@ CREATE TABLE usuarios (
 );
 -- Crear un trigger para actualizar fecha_actualizacion automáticamente
 
+<<<<<<< Updated upstream
 -- Tabla: proveedores
 CREATE TABLE proveedores (
     proveedor_id BIGINT PRIMARY KEY,
@@ -109,6 +110,27 @@ CREATE TABLE proveedores (
     tipo_proveedor TEXT, -- Ej: Animales, Alimento, Medicamentos, Servicios
     fecha_creacion DATE,
     fecha_actualizacion DATE
+=======
+ -- Tabla de proveedores
+CREATE TABLE proveedores (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(255) NOT NULL,
+    telefono VARCHAR(50),
+    direccion VARCHAR(255)
+);
+
+-- Tabla de ganado
+CREATE TABLE ganado (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    tipo VARCHAR(100) NOT NULL,
+    raza VARCHAR(100) NOT NULL,
+    edad INT NOT NULL,
+    peso DECIMAL(5,2) NOT NULL,
+    estado_salud VARCHAR(255) NOT NULL,
+    fecha_ingreso DATE NOT NULL,
+    proveedor_id BIGINT NOT NULL,
+    FOREIGN KEY (proveedor_id) REFERENCES proveedores(id) ON DELETE CASCADE
+>>>>>>> Stashed changes
 );
 -- Crear un trigger para actualizar fecha_actualizacion automáticamente
 

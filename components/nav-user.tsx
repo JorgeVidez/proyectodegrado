@@ -26,7 +26,11 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
+<<<<<<< Updated upstream
 import { useAuth } from "@/context/AuthContext"; // 🔥 Importamos el contexto de autenticación
+=======
+import { useAuth } from "@/app/context/AuthContext"; // 🔥 Importamos el contexto de autenticación
+>>>>>>> Stashed changes
 
 export function NavUser({
   user,
