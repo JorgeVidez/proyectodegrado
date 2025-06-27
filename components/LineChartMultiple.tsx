@@ -56,6 +56,11 @@ export function LinearChartMultiple() {
           prediccionesSVR: datos.predictions.y_pred_svr[index],
         }));
 
+        data.sort(
+          (a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime()
+        );
+
+
         setChartData(data);
       } catch (error) {
         console.error("Error al cargar datos:", error);
