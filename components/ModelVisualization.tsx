@@ -41,6 +41,7 @@ interface DataPoint {
   Edad: number;
   Edad_years: number; // Ambos campos están presentes en tus datos
   Fecha_ordinal: number;
+  Fecha_real?: string; // Add Fecha_real as an optional field
   Tipo_encoded: number;
   Tipo: string;
   PrecioVivo_real: number;
@@ -128,8 +129,8 @@ const ModelVisualization3D = ({
   const plotData3D: Data[] = [
     {
       x: dataPoints.map((d) => d.Edad_years), // Usamos directamente Edad_years que está presente
-      y: dataPoints.map((d) => d.Fecha_ordinal),
-      z: dataPoints.map((d) => d.Tipo_encoded),
+      y: dataPoints.map((d) => d.Fecha_real || d.Fecha_ordinal), // Usamos Fecha_real si está presente, sino Fecha_ordinal
+      z: dataPoints.map((d) => d.Tipo),
       mode: "markers",
       type: "scatter3d",
       name: "Real vs Predicción",
@@ -149,6 +150,7 @@ const ModelVisualization3D = ({
       text: dataPoints.map(
         (d) =>
           `<b>Edad:</b> ${d.Edad_years} años<br>` +
+          `<b>Fecha:</b> ${d.Fecha_real}<br>` +
           `<b>Tipo:</b> ${d.Tipo}<br>` +
           `<b>Real:</b> ${d.PrecioVivo_real.toFixed(2)}<br>` +
           `<b>Predicho:</b> ${d.PrecioVivo_pred.toFixed(2)}<br>` +
@@ -182,6 +184,7 @@ const ModelVisualization3D = ({
       text: dataPoints.map(
         (d) =>
           `<b>Edad:</b> ${d.Edad_years} años<br>` +
+          `<b>Fecha:</b> ${d.Fecha_real}<br>` +
           `<b>Tipo:</b> ${d.Tipo}<br>` +
           `<b>Real:</b> ${d.PrecioVivo_real.toFixed(2)}<br>` +
           `<b>Predicho:</b> ${d.PrecioVivo_pred.toFixed(2)}<br>` +
