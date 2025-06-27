@@ -7,8 +7,25 @@ from app.database import get_db
 from app.models.vacunaciones import Vacunaciones
 from app.schemas.vacunaciones import VacunacionesCreate, VacunacionesOut, VacunacionesUpdate
 from pydantic import ValidationError
+from sqlalchemy.orm import selectinload, load_only
+from app.models.animal import Animal
+from app.models.tipo_vacuna import TipoVacuna
+from app.models.proveedor import Proveedor
+from app.models.usuario import Usuario
 
 router = APIRouter()
+
+# Utilidad para cargar relaciones
+VACUNACION_RELATIONS = (
+    selectinload(Vacunaciones.animal).load_only(
+        Animal.animal_id, 
+        Animal.numero_trazabilidad, 
+        Animal.nombre_identificatorio
+    ),
+    selectinload(Vacunaciones.tipo_vacuna).selectinload(TipoVacuna.especie_destino),
+    selectinload(Vacunaciones.proveedor),
+    selectinload(Vacunaciones.responsable).selectinload(Usuario.rol)
+)
 
 @router.post("/vacunaciones/", response_model=VacunacionesOut)
 async def create_vacunacion(data: VacunacionesCreate, db: AsyncSession = Depends(get_db)):
@@ -16,8 +33,17 @@ async def create_vacunacion(data: VacunacionesCreate, db: AsyncSession = Depends
         vacunacion = Vacunaciones(**data.dict())
         db.add(vacunacion)
         await db.commit()
+
+        # Refrescar con relaciones cargadas
         await db.refresh(vacunacion)
-        return vacunacion
+        result = await db.execute(
+            select(Vacunaciones)
+            .where(Vacunaciones.vacunacion_id == vacunacion.vacunacion_id)
+            .options(*VACUNACION_RELATIONS)
+        )
+        vacunacion_with_relations = result.scalars().first()
+        return vacunacion_with_relations
+
     except ValidationError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.errors())
     except IntegrityError as e:
@@ -29,19 +55,30 @@ async def create_vacunacion(data: VacunacionesCreate, db: AsyncSession = Depends
 
 @router.get("/vacunaciones/", response_model=List[VacunacionesOut])
 async def get_vacunaciones(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Vacunaciones))
+    result = await db.execute(
+        select(Vacunaciones).options(*VACUNACION_RELATIONS)
+    )
     return result.scalars().all()
 
 @router.get("/vacunaciones/{vacunacion_id}", response_model=VacunacionesOut)
 async def get_vacunacion(vacunacion_id: int, db: AsyncSession = Depends(get_db)):
-    vacunacion = await db.get(Vacunaciones, vacunacion_id)
+    result = await db.execute(
+        select(Vacunaciones)
+        .where(Vacunaciones.vacunacion_id == vacunacion_id)
+        .options(*VACUNACION_RELATIONS)
+    )
+    vacunacion = result.scalars().first()
     if not vacunacion:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "Vacunación no encontrada"})
     return vacunacion
 
 @router.put("/vacunaciones/{vacunacion_id}", response_model=VacunacionesOut)
 async def update_vacunacion(vacunacion_id: int, vacunacion_data: VacunacionesUpdate, db: AsyncSession = Depends(get_db)):
-    vacunacion = await db.get(Vacunaciones, vacunacion_id)
+    result = await db.execute(
+        select(Vacunaciones)
+        .where(Vacunaciones.vacunacion_id == vacunacion_id)
+    )
+    vacunacion = result.scalars().first()
     if not vacunacion:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "Vacunación no encontrada"})
 
@@ -52,7 +89,16 @@ async def update_vacunacion(vacunacion_id: int, vacunacion_data: VacunacionesUpd
     try:
         await db.commit()
         await db.refresh(vacunacion)
-        return vacunacion
+
+        # Volver a cargar con relaciones
+        result = await db.execute(
+            select(Vacunaciones)
+            .where(Vacunaciones.vacunacion_id == vacunacion_id)
+            .options(*VACUNACION_RELATIONS)
+        )
+        vacunacion_with_relations = result.scalars().first()
+        return vacunacion_with_relations
+
     except ValidationError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.errors())
     except IntegrityError as e:
