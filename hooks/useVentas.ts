@@ -1,6 +1,14 @@
 // hooks/useVentas.ts
 import useSWR, { mutate as swrMutate } from "swr";
 import axios from "axios";
+import {
+  InventarioAnimalOut,
+  InventarioAnimalUpdate,
+  MotivoEgreso,
+} from "@/types/inventarioAnimal";
+import { useInventarioAnimal } from "@/hooks/useInventarioAnimal";
+
+import { MotivoIngreso } from "../types/inventarioAnimal";
 
 // Pydantic Schemas (converted to TypeScript interfaces)
 export interface VentasBase {
@@ -99,8 +107,7 @@ export interface VentasOut extends VentasBase {
   usuario_registra?: UsuarioOut | null;
 }
 
-const API_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
@@ -124,19 +131,78 @@ export const getVentaById = async (id: number): Promise<VentasOut> => {
 };
 
 export const createVenta = async (
-  payload: VentasCreate
+  payload: VentasCreate,
+  // Añade estos argumentos:
+  inventarioActions: {
+    fetchInventarioByLote: (loteId: number) => Promise<any[]>;
+    updateInventario: (
+      inventarioId: number,
+      inventarioData: any // InventarioAnimalUpdate
+    ) => Promise<any>; // InventarioAnimalOut | undefined
+  }
 ): Promise<VentasOut> => {
-  const res = await axios.post<VentasOut>(`${API_URL}/ventas/`, payload);
-  // Optimistically update the SWR cache
-  swrMutate(
-    `${API_URL}/ventas/`,
-    (currentData: VentasOut[] | undefined) => {
-      if (!currentData) return [res.data]; // Handle the case where there's no existing data
-      return [...currentData, res.data];
-    },
-    { revalidate: false }
-  ); // Prevent re-fetching, we've already updated
-  return res.data;
+  try {
+    console.log("Creando venta con payload:", payload);
+    const res = await axios.post<VentasOut>(`${API_URL}/ventas/`, payload);
+
+    // Si la venta tiene un lote_origen_id, actualizar los animales
+    if (payload.lote_origen_id) {
+      try {
+        // Usa las funciones pasadas como argumento
+        const inventarios = await inventarioActions.fetchInventarioByLote(
+          payload.lote_origen_id
+        );
+
+        const inventariosActivos = inventarios.filter(
+          (inv) => inv.activo_en_finca && inv.motivo_egreso === null
+        );
+
+        if (inventariosActivos.length === 0) {
+          console.warn(
+            `No hay animales activos en el lote ${payload.lote_origen_id}`
+          );
+        } else {
+          await Promise.all(
+            inventariosActivos.map((inventario) => {
+              const updateData = {
+                animal_id: inventario.animal_id,
+                fecha_ingreso: inventario.fecha_ingreso,
+                motivo_ingreso: inventario.motivo_ingreso,
+                proveedor_compra_id: inventario.proveedor_compra_id,
+                precio_compra: inventario.precio_compra,
+                ubicacion_actual_id: null,
+                lote_actual_id: null,
+                fecha_egreso: new Date().toISOString().split("T")[0],
+                motivo_egreso: "Venta", // Asume MotivoEgreso es un string o literal
+              };
+              console.log("Actualizando inventario:", updateData);
+              return inventarioActions.updateInventario(
+                inventario.inventario_id,
+                updateData
+              );
+            })
+          );
+          console.log(`${inventariosActivos.length} animales actualizados`);
+        }
+      } catch (updateError) {
+        console.error("Error al actualizar animales:", updateError);
+        throw new Error(
+          "Venta creada pero falló la actualización de los animales"
+        );
+      }
+    }
+
+    // Optimistic update del cache SWR (si usas SWR para ventas)
+    // swrMutate(`${API_URL}/ventas/`, (currentData: VentasOut[] | undefined) => {
+    //   if (!currentData) return [res.data];
+    //   return [...currentData, res.data];
+    // }, { revalidate: false });
+
+    return res.data;
+  } catch (error) {
+    console.error("Error al crear venta:", error);
+    throw error;
+  }
 };
 
 export const updateVenta = async (
@@ -172,4 +238,47 @@ export const deleteVenta = async (id: number): Promise<void> => {
     },
     { revalidate: false }
   );
+};
+
+// Versión mejorada con hook modificado
+export const updateAnimalesToVendidos = async (
+  loteId: number,
+  ventaId: number
+): Promise<void> => {
+  const { fetchInventarioByLote, updateInventario } = useInventarioAnimal();
+
+  try {
+    const inventarios = await fetchInventarioByLote(loteId);
+
+    const inventariosActivos = inventarios.filter(
+      (inv) => inv.activo_en_finca && inv.motivo_egreso === null
+    );
+
+    if (inventariosActivos.length === 0) {
+      console.warn(`No hay animales activos en el lote ${loteId}`);
+      return;
+    }
+
+    await Promise.all(
+      inventariosActivos.map((inventario) => {
+        const updateData: InventarioAnimalUpdate = {
+          animal_id: inventario.animal_id,
+          fecha_ingreso: inventario.fecha_ingreso,
+          motivo_ingreso: inventario.motivo_ingreso,
+          proveedor_compra_id: inventario.proveedor_compra_id,
+          precio_compra: inventario.precio_compra,
+          ubicacion_actual_id: null,
+          lote_actual_id: null,
+          fecha_egreso: new Date().toISOString().split("T")[0],
+          motivo_egreso: MotivoEgreso.Venta,
+        };
+        return updateInventario(inventario.inventario_id, updateData);
+      })
+    );
+
+    console.log(`${inventariosActivos.length} animales actualizados`);
+  } catch (error) {
+    console.error("Error:", error);
+    throw error;
+  }
 };
