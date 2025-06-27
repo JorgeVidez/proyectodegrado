@@ -8,7 +8,7 @@ class Ventas(Base):
     venta_id = Column(BigInteger, primary_key=True, autoincrement=True)
     cliente_id = Column(BigInteger, ForeignKey("clientes.cliente_id"), nullable=False)
     fecha_venta = Column(Date, nullable=False)
-    documento_venta_ref = Column(TEXT, unique=True)
+    documento_venta_ref = Column(TEXT)
     precio_venta_total_general = Column(DECIMAL(14, 2))
     condicion_pago = Column(TEXT)
     lote_origen_id = Column(Integer, ForeignKey("lotes.lote_id"))
