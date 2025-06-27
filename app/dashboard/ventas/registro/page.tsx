@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Pencil, Trash2 } from "lucide-react";
+import { Eye, Pencil, Trash2 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -51,14 +51,22 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useLotes } from "@/hooks/useLotes";
+import { useInventarioAnimal } from "@/hooks/useInventarioAnimal";
+
+import { useAuth } from "@/context/AuthContext";
+
+import Link from "next/link";
 
 export default function VentasPage() {
   const { ventas, isLoading, isError, refresh } = useVentas();
   const { lotes, getLoteById } = useLotes();
+  const { fetchInventarioByLote, updateInventario } = useInventarioAnimal();
 
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedVenta, setSelectedVenta] = useState<VentasOut | null>(null);
+
+  const { user } = useAuth();
 
   const [formData, setFormData] = useState<VentasBase>({
     cliente_id: 0,
@@ -67,8 +75,8 @@ export default function VentasPage() {
     precio_venta_total_general: undefined,
     condicion_pago: "",
     lote_origen_id: undefined,
-    usuario_registra_id: undefined,
-    observaciones: "",
+    usuario_registra_id: user?.usuario_id,
+    observaciones: "Sin observaciones",
   });
 
   const [alert, setAlert] = useState<{
@@ -99,15 +107,26 @@ export default function VentasPage() {
 
   const handleCreate = async () => {
     try {
-      await createVenta(formData);
+      setAlert(null);
+
+      await createVenta(formData, { fetchInventarioByLote, updateInventario });
+
       refresh();
       setIsCreateDialogOpen(false);
-      setAlert({ type: "success", message: "Venta creada con éxito." });
+      setAlert({
+        type: "success",
+        message: "Venta creada con éxito y animales marcados como vendidos.",
+      });
       resetForm();
-    } catch (e) {
-      setAlert({ type: "error", message: "Error al crear la venta." });
+    } catch (e: any) {
+      setAlert({
+        type: "error",
+        message: e.response?.data?.detail || "Error al crear la venta.",
+      });
+    } finally {
+      setIsCreateDialogOpen(false);
+      setTimeout(() => setAlert(null), 3000);
     }
-    setTimeout(() => setAlert(null), 3000);
   };
 
   const handleEdit = (venta: VentasOut) => {
@@ -139,17 +158,12 @@ export default function VentasPage() {
     }
     setTimeout(() => setAlert(null), 3000);
   };
-
-  //funcion para optener la sumatoria del precio total segun lote
   const getTotalPriceByLote = async (loteId: number) => {
-    if (!lotes) return 0; // Si no hay lotes cargados, retorna 0
-
-    // Busca el lote específico por su ID
+    if (!lotes) return 0;
 
     const lote = await getLoteById(loteId);
-    if (!lote) return 0; // Si el lote no existe, retorna 0
+    if (!lote) return 0;
 
-    // Filtra los inventarios válidos (con precio_compra definido) y suma sus precios
     const total = lote.inventarios.reduce((sum, inventario) => {
       return sum + (inventario.precio_compra || 0);
     }, 0);
@@ -169,11 +183,11 @@ export default function VentasPage() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">Administración </BreadcrumbLink>
+                <BreadcrumbLink href="#">Ventas</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Clientes</BreadcrumbPage>
+                <BreadcrumbPage>Registro</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
@@ -239,6 +253,12 @@ export default function VentasPage() {
                   {v.observaciones}
                 </TableCell>
                 <TableCell className="flex gap-2">
+                  {/* Botón para ver detalles */}
+                  <Link href={`/dashboard/ventas/detalles/${v.venta_id}`}>
+                    <Button size="icon" variant="outline">
+                      <Eye /> {/* Icono de ojo para ver detalles */}
+                    </Button>
+                  </Link>
                   <Button
                     size="icon"
                     variant="outline"
@@ -322,14 +342,22 @@ export default function VentasPage() {
                 <Label htmlFor="documento_venta_ref" className="text-right">
                   Documento Ref
                 </Label>
-                <Input
-                  id="documento_venta_ref"
-                  className="col-span-3"
+                <Select
                   value={formData.documento_venta_ref ?? ""}
-                  onChange={(e) =>
-                    handleInputChange("documento_venta_ref", e.target.value)
+                  onValueChange={(value) =>
+                    handleInputChange("documento_venta_ref", value)
                   }
-                />
+                >
+                  <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder="Selecciona un documento" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Factura">Factura</SelectItem>
+                    <SelectItem value="Boleta">Boleta</SelectItem>
+                    <SelectItem value="Recibo">Recibo</SelectItem>
+                    {/* Aquí puedes agregar más opciones de documentos */}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Condición de Pago */}
@@ -419,14 +447,9 @@ export default function VentasPage() {
                 <Input
                   id="usuario_registra_id"
                   className="col-span-3"
-                  type="number"
-                  value={formData.usuario_registra_id ?? ""}
-                  onChange={(e) =>
-                    handleInputChange(
-                      "usuario_registra_id",
-                      e.target.value ? Number(e.target.value) : undefined
-                    )
-                  }
+                  type="text"
+                  value={user?.nombre ?? ""}
+                  disabled
                 />
                 {/* Aquí podrías colocar un Combobox para usuarios */}
               </div>
