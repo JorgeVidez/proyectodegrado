@@ -1,6 +1,10 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import date
+from .animal import AnimalSimpleOut
+from .tipo_vacuna import TipoVacunaOut
+from .proveedor import ProveedorOut
+from .usuario import UsuarioOut
 
 class VacunacionesBase(BaseModel):
     animal_id: int
@@ -23,6 +27,11 @@ class VacunacionesUpdate(VacunacionesBase):
 
 class VacunacionesOut(VacunacionesBase):
     vacunacion_id: int
+    animal: Optional[AnimalSimpleOut] = None
+    tipo_vacuna: Optional[TipoVacunaOut] = None
+    proveedor: Optional[ProveedorOut] = None
+    responsable: Optional[UsuarioOut] = None
+
 
     class Config:
         from_attributes = True
