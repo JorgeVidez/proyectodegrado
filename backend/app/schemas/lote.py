@@ -3,11 +3,53 @@ from typing import List
 from enum import Enum 
 from typing import Optional
 from datetime import date
-from app.schemas.ubicacion import UbicacionOut
-from app.schemas.animal import AnimalOut
+from app.schemas.ubicacion import UbicacionOut 
 from app.schemas.proveedor import ProveedorOut
+from datetime import datetime
 
+class EspecieOut(BaseModel):
+    especie_id: int
+    nombre_comun: str
+
+    class Config:
+        from_attributes = True
+
+class RazaOut(BaseModel):
+    raza_id: int
+    nombre_raza: str
+
+    class Config:
+        from_attributes = True
+
+class AnimalSimpleOut(BaseModel):
+    animal_id: int
+    numero_trazabilidad: str
+    nombre_identificatorio: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+class EstadoAnimal(str, Enum):
+    Activo = "Activo"
+    Vendido = "Vendido"
+    Muerto = "Muerto"
+    Descartado = "Descartado"
+    
 # Pydantic Models
+class AnimalOut(BaseModel):
+    animal_id: int
+    numero_trazabilidad: str
+    nombre_identificatorio: Optional[str] = None
+    especie: EspecieOut
+    raza: RazaOut
+    sexo: str
+    fecha_nacimiento: Optional[date] = None 
+    estado_actual: EstadoAnimal
+    fecha_registro: datetime
+    observaciones_generales: Optional[str] = None
+
+    class Config:
+        from_attributes = True
 
 class EspecieOut(BaseModel):
     especie_id: int
