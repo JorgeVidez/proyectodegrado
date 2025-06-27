@@ -1,6 +1,8 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import date
+from app.schemas.movimientos_animal import UbicacionOut, UsuarioOut, AnimalOutShort
+
 
 class ControlesSanitariosBase(BaseModel):
     animal_id: int
@@ -20,6 +22,9 @@ class ControlesSanitariosUpdate(ControlesSanitariosBase):
 
 class ControlesSanitariosOut(ControlesSanitariosBase):
     control_id: int
+    animal: AnimalOutShort # Details of the animal associated with the control
+    responsable: Optional[UsuarioOut] = None # Details of the user responsible for the control
+    ubicacion: Optional[UbicacionOut] = None
 
     class Config:
         from_attributes = True
