@@ -2,14 +2,13 @@
 
 import {
   useTratamientosSanitarios,
-  TratamientoSanitario,
-  TratamientoSanitarioBase,
+  TratamientosSanitarios,
+  TratamientosSanitariosBase,
   deleteTratamientoSanitario,
   updateTratamientoSanitario,
   createTratamientoSanitario,
 } from "@/hooks/useTratamientosSanitarios";
 import { useEffect, useState } from "react";
-import React from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -53,70 +52,85 @@ import {
 } from "@/components/ui/select";
 import { ProveedorCombobox } from "@/components/ProveedorCombobox";
 import { useAuth } from "@/context/AuthContext";
+import { z } from "zod";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+
+// Esquema de validación
+const tratamientoSchema = z.object({
+  animal_id: z.number().min(1, "Se requiere un animal"),
+  fecha_diagnostico: z.string().min(1, "Fecha de diagnóstico es requerida"),
+  sintomas_observados: z.string().optional(),
+  diagnostico: z.string().optional(),
+  fecha_inicio_tratamiento: z.string().optional(),
+  medicamento_id: z.number().optional(),
+  dosis_aplicada: z.number().min(0, "Dosis debe ser positiva").optional(),
+  unidad_dosis: z.string().optional(),
+  via_administracion: z.string().optional(),
+  duracion_tratamiento_dias: z
+    .number()
+    .min(0, "Duración debe ser positiva")
+    .optional(),
+  fecha_fin_tratamiento: z.string().optional(),
+  proveedor_medicamento_id: z.number().optional(),
+  responsable_veterinario_id: z.number().optional(),
+  periodo_retiro_aplicable_dias: z
+    .number()
+    .min(0, "Período debe ser positivo")
+    .optional(),
+  fecha_fin_retiro: z.string().optional(),
+  proxima_revision: z.string().optional(),
+  resultado_tratamiento: z.string().optional(),
+  observaciones: z.string().optional(),
+});
+
+type TratamientoFormState = z.infer<typeof tratamientoSchema>;
 
 export default function ListaTratamientosSanitarios() {
   const { tratamientos, isLoading, isError, refresh } =
     useTratamientosSanitarios();
   const { user } = useAuth();
-  const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
-  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
-
-  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
-
+  const [dialogType, setDialogType] = useState<
+    "create" | "edit" | "details" | null
+  >(null);
   const [selectedTratamiento, setSelectedTratamiento] =
-    useState<TratamientoSanitario | null>(null);
+    useState<TratamientosSanitarios | null>(null);
+  const [formState, setFormState] = useState<TratamientoFormState>({
+    animal_id: 0,
+    fecha_diagnostico: "",
+    sintomas_observados: undefined,
+    diagnostico: undefined,
+    fecha_inicio_tratamiento: undefined,
+    medicamento_id: undefined,
+    dosis_aplicada: undefined,
+    unidad_dosis: undefined,
+    via_administracion: undefined,
+    duracion_tratamiento_dias: undefined,
+    fecha_fin_tratamiento: undefined,
+    proveedor_medicamento_id: undefined,
+    responsable_veterinario_id: undefined,
+    periodo_retiro_aplicable_dias: undefined,
+    fecha_fin_retiro: undefined,
+    proxima_revision: undefined,
+    resultado_tratamiento: undefined,
+    observaciones: undefined,
+  });
+  const [errors, setErrors] = useState<Record<string, string>>({});
+  const [alert, setAlert] = useState<{
+    message: string;
+    type: "success" | "error";
+  } | null>(null);
 
-  const [newAnimalId, setNewAnimalId] = useState<number>(0);
-  const [newFechaDiagnostico, setNewFechaDiagnostico] = useState<string>("");
-  const [newSintomasObservados, setNewSintomasObservados] = useState<
-    string | undefined
-  >(undefined);
-  const [newDiagnostico, setNewDiagnostico] = useState<string | undefined>(
-    undefined
-  );
-  const [newFechaInicioTratamiento, setNewFechaInicioTratamiento] = useState<
-    string | undefined
-  >(undefined);
-  const [newMedicamentoId, setNewMedicamentoId] = useState<number | undefined>(
-    undefined
-  );
-  const [newDosisAplicada, setNewDosisAplicada] = useState<number | undefined>(
-    undefined
-  );
-  const [newUnidadDosis, setNewUnidadDosis] = useState<string | undefined>(
-    undefined
-  );
-  const [newViaAdministracion, setNewViaAdministracion] = useState<
-    string | undefined
-  >(undefined);
-  const [newDuracionTratamientoDias, setNewDuracionTratamientoDias] = useState<
-    number | undefined
-  >(undefined);
-  const [newFechaFinTratamiento, setNewFechaFinTratamiento] = useState<
-    string | undefined
-  >(undefined);
-  const [newProveedorMedicamentoId, setNewProveedorMedicamentoId] = useState<
-    number | undefined
-  >(undefined);
-  const [newResponsableVeterinarioId, setNewResponsableVeterinarioId] =
-    useState<number | undefined>(undefined);
-  const [newPeriodoRetiroAplicableDias, setNewPeriodoRetiroAplicableDias] =
-    useState<number | undefined>(undefined);
-  const [newFechaFinRetiro, setNewFechaFinRetiro] = useState<
-    string | undefined
-  >(undefined);
-  const [newProximaRevision, setNewProximaRevision] = useState<
-    string | undefined
-  >(undefined);
-  const [newResultadoTratamiento, setNewResultadoTratamiento] = useState<
-    string | undefined
-  >(undefined);
-  const [newObservaciones, setNewObservaciones] = useState<string | undefined>(
-    undefined
-  );
-
-  const [alertMessage, setAlertMessage] = useState<string | null>(null);
-  const [alertType, setAlertType] = useState<"success" | "error" | null>(null);
+  const [search, setSearch] = useState("");
+  const [resultadoFiltro, setResultadoFiltro] = useState<string | null>(null);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const resultadosPorPagina = 10;
 
   useEffect(() => {
     if (isError) console.error(isError);
@@ -124,140 +138,371 @@ export default function ListaTratamientosSanitarios() {
 
   useEffect(() => {
     if (user?.usuario_id) {
-      setNewResponsableVeterinarioId(user.usuario_id);
+      setFormState((prev) => ({
+        ...prev,
+        responsable_veterinario_id: user.usuario_id,
+      }));
     }
   }, [user]);
 
-  const handleCreateTratamiento = async () => {
-    const newTratamiento: TratamientoSanitarioBase = {
-      animal_id: newAnimalId,
-      fecha_diagnostico: newFechaDiagnostico,
-      sintomas_observados: newSintomasObservados,
-      diagnostico: newDiagnostico,
-      fecha_inicio_tratamiento: newFechaInicioTratamiento,
-      medicamento_id: newMedicamentoId,
-      dosis_aplicada: newDosisAplicada,
-      unidad_dosis: newUnidadDosis,
-      via_administracion: newViaAdministracion,
-      duracion_tratamiento_dias: newDuracionTratamientoDias,
-      fecha_fin_tratamiento: newFechaFinTratamiento,
-      proveedor_medicamento_id: newProveedorMedicamentoId,
-      responsable_veterinario_id: newResponsableVeterinarioId,
-      periodo_retiro_aplicable_dias: newPeriodoRetiroAplicableDias,
-      fecha_fin_retiro: newFechaFinRetiro,
-      proxima_revision: newProximaRevision,
-      resultado_tratamiento: newResultadoTratamiento,
-      observaciones: newObservaciones,
-    };
-    try {
-      await createTratamientoSanitario(newTratamiento);
-      setAlertMessage("Tratamiento sanitario creado con éxito.");
-      setAlertType("success");
-      setIsCreateDialogOpen(false);
-      refresh();
-    } catch (err) {
-      setAlertMessage("Error al crear el tratamiento sanitario.");
-      setAlertType("error");
+  const resetForm = () => {
+    setFormState({
+      animal_id: 0,
+      fecha_diagnostico: "",
+      sintomas_observados: undefined,
+      diagnostico: undefined,
+      fecha_inicio_tratamiento: undefined,
+      medicamento_id: undefined,
+      dosis_aplicada: undefined,
+      unidad_dosis: undefined,
+      via_administracion: undefined,
+      duracion_tratamiento_dias: undefined,
+      fecha_fin_tratamiento: undefined,
+      proveedor_medicamento_id: undefined,
+      responsable_veterinario_id: user?.usuario_id,
+      periodo_retiro_aplicable_dias: undefined,
+      fecha_fin_retiro: undefined,
+      proxima_revision: undefined,
+      resultado_tratamiento: undefined,
+      observaciones: undefined,
+    });
+    setErrors({});
+  };
+
+  const handleOpenDialog = (
+    type: "create" | "edit" | "details",
+    tratamiento?: TratamientosSanitarios
+  ) => {
+    setDialogType(type);
+    if (tratamiento) {
+      setSelectedTratamiento(tratamiento);
+      if (type !== "details") {
+        setFormState({
+          animal_id: tratamiento.animal_id,
+          fecha_diagnostico: tratamiento.fecha_diagnostico,
+          sintomas_observados: tratamiento.sintomas_observados ?? undefined,
+          diagnostico: tratamiento.diagnostico ?? undefined,
+          fecha_inicio_tratamiento:
+            tratamiento.fecha_inicio_tratamiento ?? undefined,
+          medicamento_id: tratamiento.medicamento_id ?? undefined,
+          dosis_aplicada: tratamiento.dosis_aplicada ?? undefined,
+          unidad_dosis: tratamiento.unidad_dosis ?? undefined,
+          via_administracion: tratamiento.via_administracion ?? undefined,
+          duracion_tratamiento_dias:
+            tratamiento.duracion_tratamiento_dias ?? undefined,
+          fecha_fin_tratamiento: tratamiento.fecha_fin_tratamiento ?? undefined,
+          proveedor_medicamento_id:
+            tratamiento.proveedor_medicamento_id ?? undefined,
+          responsable_veterinario_id:
+            tratamiento.responsable_veterinario_id ?? undefined,
+          periodo_retiro_aplicable_dias:
+            tratamiento.periodo_retiro_aplicable_dias ?? undefined,
+          fecha_fin_retiro: tratamiento.fecha_fin_retiro ?? undefined,
+          proxima_revision: tratamiento.proxima_revision ?? undefined,
+          resultado_tratamiento: tratamiento.resultado_tratamiento ?? undefined,
+          observaciones: tratamiento.observaciones ?? undefined,
+        });
+      }
+    } else {
+      resetForm();
     }
-    setTimeout(() => {
-      setAlertMessage(null);
-      setAlertType(null);
-    }, 3000);
   };
 
-  const handleEditTratamiento = (tratamiento: TratamientoSanitario) => {
-    setSelectedTratamiento(tratamiento);
-    setNewAnimalId(tratamiento.animal_id);
-    setNewFechaDiagnostico(tratamiento.fecha_diagnostico);
-    setNewSintomasObservados(tratamiento.sintomas_observados);
-    setNewDiagnostico(tratamiento.diagnostico);
-    setNewFechaInicioTratamiento(tratamiento.fecha_inicio_tratamiento);
-    setNewMedicamentoId(tratamiento.medicamento_id);
-    setNewDosisAplicada(tratamiento.dosis_aplicada);
-    setNewUnidadDosis(tratamiento.unidad_dosis);
-    setNewViaAdministracion(tratamiento.via_administracion);
-    setNewDuracionTratamientoDias(tratamiento.duracion_tratamiento_dias);
-    setNewFechaFinTratamiento(tratamiento.fecha_fin_tratamiento);
-    setNewProveedorMedicamentoId(tratamiento.proveedor_medicamento_id);
-    setNewResponsableVeterinarioId(tratamiento.responsable_veterinario_id);
-    setNewPeriodoRetiroAplicableDias(tratamiento.periodo_retiro_aplicable_dias);
-    setNewFechaFinRetiro(tratamiento.fecha_fin_retiro);
-    setNewProximaRevision(tratamiento.proxima_revision);
-    setNewResultadoTratamiento(tratamiento.resultado_tratamiento);
-    setNewObservaciones(tratamiento.observaciones);
-    setIsEditDialogOpen(true);
+  const handleCloseDialog = () => {
+    setDialogType(null);
+    setSelectedTratamiento(null);
+    resetForm();
   };
 
-  const handleUpdateTratamiento = async () => {
-    if (selectedTratamiento) {
-      const updatedTratamiento: Partial<TratamientoSanitarioBase> = {
-        animal_id: newAnimalId,
-        fecha_diagnostico: newFechaDiagnostico,
-        sintomas_observados: newSintomasObservados,
-        diagnostico: newDiagnostico,
-        fecha_inicio_tratamiento: newFechaInicioTratamiento,
-        medicamento_id: newMedicamentoId,
-        dosis_aplicada: newDosisAplicada,
-        unidad_dosis: newUnidadDosis,
-        via_administracion: newViaAdministracion,
-        duracion_tratamiento_dias: newDuracionTratamientoDias,
-        fecha_fin_tratamiento: newFechaFinTratamiento,
-        proveedor_medicamento_id: newProveedorMedicamentoId,
-        responsable_veterinario_id: newResponsableVeterinarioId,
-        periodo_retiro_aplicable_dias: newPeriodoRetiroAplicableDias,
-        fecha_fin_retiro: newFechaFinRetiro,
-        proxima_revision: newProximaRevision,
-        resultado_tratamiento: newResultadoTratamiento,
-        observaciones: newObservaciones,
-      };
-      try {
+  const handleChange = (field: keyof TratamientoFormState, value: any) => {
+    setFormState((prev) => ({ ...prev, [field]: value }));
+    if (errors[field]) {
+      setErrors((prev) => ({ ...prev, [field]: "" }));
+    }
+  };
+
+  const validateForm = (): boolean => {
+    try {
+      tratamientoSchema.parse(formState);
+      setErrors({});
+      return true;
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const newErrors: Record<string, string> = {};
+        error.errors.forEach((err) => {
+          newErrors[err.path[0]] = err.message;
+        });
+        setErrors(newErrors);
+      }
+      return false;
+    }
+  };
+
+  const showAlert = (message: string, type: "success" | "error") => {
+    setAlert({ message, type });
+    setTimeout(() => setAlert(null), 3000);
+  };
+
+  const handleSubmit = async (type: "create" | "edit") => {
+    if (!validateForm()) return;
+
+    try {
+      if (type === "create") {
+        await createTratamientoSanitario(formState);
+        showAlert("Tratamiento sanitario creado con éxito.", "success");
+      } else if (selectedTratamiento) {
         await updateTratamientoSanitario(
           selectedTratamiento.tratamiento_id,
-          updatedTratamiento
+          formState
         );
-        setAlertMessage("Tratamiento sanitario actualizado con éxito.");
-        setAlertType("success");
-        setIsEditDialogOpen(false);
-        refresh();
-      } catch (err) {
-        setAlertMessage("Error al actualizar el tratamiento sanitario.");
-        setAlertType("error");
+        showAlert("Tratamiento sanitario actualizado con éxito.", "success");
       }
-      setTimeout(() => {
-        setAlertMessage(null);
-        setAlertType(null);
-      }, 3000);
+      refresh();
+      handleCloseDialog();
+    } catch (err) {
+      showAlert(
+        `Error al ${type === "create" ? "crear" : "actualizar"} el tratamiento sanitario.`,
+        "error"
+      );
     }
   };
 
   const handleDeleteTratamiento = async (tratamientoId: number) => {
     try {
       await deleteTratamientoSanitario(tratamientoId);
-      setAlertMessage("Tratamiento sanitario eliminado con éxito.");
-      setAlertType("success");
+      showAlert("Tratamiento sanitario eliminado con éxito.", "success");
       refresh();
     } catch (err) {
-      setAlertMessage("Error al eliminar el tratamiento sanitario.");
-      setAlertType("error");
+      showAlert("Error al eliminar el tratamiento sanitario.", "error");
     }
-    setTimeout(() => {
-      setAlertMessage(null);
-      setAlertType(null);
-    }, 3000);
-  };
-
-  const handleVerDetalles = (tratamiento: TratamientoSanitario) => {
-    setSelectedTratamiento(tratamiento);
-    setIsDetailsDialogOpen(true);
-  };
-
-  const handleCloseDetallesDialog = () => {
-    setIsDetailsDialogOpen(false);
-    setSelectedTratamiento(null);
   };
 
   if (isLoading) return <div>Cargando...</div>;
   if (isError) return <div>Error al cargar tratamientos sanitarios</div>;
+
+  const tratamientosFiltrados =
+    tratamientos?.filter((t) => {
+      const coincideBusqueda =
+        t.animal?.nombre_identificatorio
+          ?.toLowerCase()
+          .includes(search.toLowerCase()) ||
+        t.sintomas_observados?.toLowerCase().includes(search.toLowerCase()) ||
+        t.diagnostico?.toLowerCase().includes(search.toLowerCase());
+
+      const coincideResultado =
+        resultadoFiltro === " " || t.resultado_tratamiento === resultadoFiltro;
+
+      return coincideBusqueda && coincideResultado;
+    }) || [];
+
+  const totalPaginas = Math.ceil(
+    tratamientosFiltrados.length / resultadosPorPagina
+  );
+
+  const tratamientosPaginados = tratamientosFiltrados.slice(
+    (paginaActual - 1) * resultadosPorPagina,
+    paginaActual * resultadosPorPagina
+  );
+
+  const renderFormField = (
+    field: keyof TratamientoFormState,
+    label: string,
+    type:
+      | "text"
+      | "number"
+      | "date"
+      | "select"
+      | "combobox"
+      | "animal"
+      | "medicamento"
+      | "proveedor" = "text",
+    options?: { value: string; label: string }[],
+    extraProps?: any
+  ) => {
+    const value = formState[field];
+    const error = errors[field];
+
+    return (
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor={field} className="text-right">
+          {label}
+        </Label>
+        <div className="col-span-3">
+          {type === "date" ? (
+            <DatePicker
+              value={value as string}
+              onChange={(date) => handleChange(field, date || "")}
+              {...extraProps}
+            />
+          ) : type === "select" && options ? (
+            <Select
+              value={value as string}
+              onValueChange={(val) => handleChange(field, val)}
+              {...extraProps}
+            >
+              <SelectTrigger>
+                <SelectValue
+                  placeholder={`Seleccionar ${label.toLowerCase()}`}
+                />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          ) : type === "animal" ? (
+            <AnimalCombobox
+              value={value as number}
+              onChange={(id) => handleChange(field, id ?? 0)}
+              label={label}
+              {...extraProps}
+            />
+          ) : type === "medicamento" ? (
+            <MedicamentoCombobox
+              value={value as number | undefined}
+              onChange={(id) => handleChange(field, id ?? undefined)}
+              label={label}
+              {...extraProps}
+            />
+          ) : type === "proveedor" ? (
+            <ProveedorCombobox
+              value={value as number | undefined}
+              onChange={(id) => handleChange(field, id ?? undefined)}
+              label={label}
+              {...extraProps}
+            />
+          ) : (
+            <Input
+              id={field}
+              type={type}
+              min={type === "number" ? 0 : undefined}
+              value={value?.toString() || ""}
+              onChange={(e) =>
+                handleChange(
+                  field,
+                  type === "number"
+                    ? e.target.value
+                      ? Number(e.target.value)
+                      : undefined
+                    : e.target.value
+                )
+              }
+              disabled={field === "responsable_veterinario_id"}
+              {...extraProps}
+            />
+          )}
+          {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+        </div>
+      </div>
+    );
+  };
+
+  const renderDetails = () => {
+    if (!selectedTratamiento) return null;
+
+    // Define a mapping for how to display specific keys and their values
+    // This map explicitly tells us how to render each potential key.
+    // Define a mapping for how to display specific keys and their values
+    // This map explicitly tells us how to render each potential key.
+    const displayMap: Record<string, string | null | ((value: any) => string)> =
+      {
+        // Direct mappings for simple fields
+        tratamiento_id: "Tratamiento Id",
+        fecha_diagnostico: "Fecha Diagnóstico",
+        sintomas_observados: "Síntomas Observados",
+        diagnostico: "Diagnóstico",
+        fecha_inicio_tratamiento: "Fecha Inicio Tratamiento",
+        dosis_aplicada: "Dosis Aplicada",
+        unidad_dosis: "Unidad Dosis",
+        via_administracion: "Vía Administración",
+        duracion_tratamiento_dias: "Duración Tratamiento Días",
+        fecha_fin_tratamiento: "Fecha Fin Tratamiento",
+        periodo_retiro_aplicable_dias: "Periodo Retiro Aplicable Días",
+        fecha_fin_retiro: "Fecha Fin Retiro",
+        proxima_revision: "Proxima Revisión",
+        resultado_tratamiento: "Resultado Tratamiento",
+        observaciones: "Observaciones",
+
+        // Special handling for nested objects - these are functions that format the value
+        animal: (value) =>
+          value
+            ? `Id: ${value.animal_id}, Nro. Trazabilidad: ${value.numero_trazabilidad}, Nombre: ${value.nombre_identificatorio}`
+            : "N/A",
+        proveedor_medicamento: (value) =>
+          value ? `Id: ${value.proveedor_id}, Nombre: ${value.nombre}` : "N/A",
+        responsable_veterinario: (value) =>
+          value
+            ? `Id: ${value.usuario_id}, Nombre: ${value.nombre}, Email: ${value.email}`
+            : "N/A",
+        medicamento: (value) =>
+          value
+            ? `Id: ${value.medicamento_id}, Nombre: ${value.nombre_comercial}`
+            : "N/A", // Assuming you might have a 'medicamento' object
+
+        // Explicitly exclude internal IDs if they are redundant with the nested object display
+        animal_id: null,
+        medicamento_id: null,
+        proveedor_medicamento_id: null,
+        responsable_veterinario_id: null,
+      };
+
+    return (
+      <div className="space-y-4">
+        {Object.entries(selectedTratamiento).map(([key, value]) => {
+          // Skip if the value is null or if the key is explicitly set to null for exclusion in displayMap
+          if (value === null || displayMap[key] === null) {
+            return null;
+          }
+
+          let displayLabel = key.replace(/_/g, " "); // Default: convert snake_case to readable
+          let displayValue = value?.toString() || "N/A"; // Default: string representation
+
+          // Check if there's a custom mapping for this key
+          if (displayMap.hasOwnProperty(key)) {
+            const mapEntry = displayMap[key];
+
+            if (typeof mapEntry === "function") {
+              // If it's a function, it means it's a nested object to be formatted
+              displayValue = mapEntry(value);
+              // Use a specific label for these if desired, otherwise default (snake_case replaced)
+              displayLabel = key
+                .replace(/_/g, " ")
+                .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize first letter of each word
+            } else if (typeof mapEntry === "string") {
+              // If it's a string, it's a custom label
+              displayLabel = mapEntry;
+            }
+            // If mapEntry is null, it's already handled by the initial `if (displayMap[key] === null)`
+          } else if (typeof value === "object" && value !== null) {
+            // Fallback for any other unmapped objects: stringify them
+            displayValue = JSON.stringify(value);
+            displayLabel = key
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (char) => char.toUpperCase()); // Capitalize first letter of each word
+          }
+          // Capitalize the first letter of the display label if it's not custom-defined
+          // and we are using the default snake_case conversion.
+          if (
+            typeof displayMap[key] !== "string" &&
+            typeof displayMap[key] !== "function"
+          ) {
+            displayLabel =
+              displayLabel.charAt(0).toUpperCase() + displayLabel.slice(1);
+          }
+
+          return (
+            <div key={key} className="grid grid-cols-4 gap-4">
+              <Label className="text-right">{displayLabel}:</Label>
+              <div className="col-span-3">{displayValue}</div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -268,45 +513,89 @@ export default function ListaTratamientosSanitarios() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">
-                  Building Your Application
-                </BreadcrumbLink>
+                <BreadcrumbLink href="#">Animales</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                <BreadcrumbPage>Tratamientos Sanitarios</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </div>
       </header>
 
-      {/* ... (Breadcrumb, Header, Alert, etc. - similar a ListaInventarioAnimales) */}
       <div className="p-4 flex flex-col">
+        {alert && (
+          <Alert
+            variant={alert.type === "success" ? "default" : "destructive"}
+            className="mb-4"
+          >
+            <AlertTitle>
+              {alert.type === "success" ? "Éxito" : "Error"}
+            </AlertTitle>
+            <AlertDescription>{alert.message}</AlertDescription>
+          </Alert>
+        )}
+
         <header className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">
             Lista de Tratamientos Sanitarios
           </h1>
-          <Button onClick={() => setIsCreateDialogOpen(true)}>
+          <Button onClick={() => handleOpenDialog("create")}>
             Crear Nuevo Tratamiento
           </Button>
         </header>
         <Separator className="my-4" />
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-4">
+          <div className="flex flex-col gap-1 w-full md:max-w-sm">
+            <Label htmlFor="search">Buscar</Label>
+            <Input
+              id="search"
+              placeholder="Buscar por animal, síntomas o diagnóstico..."
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPaginaActual(1);
+              }}
+            />
+          </div>
+
+          <div className="flex flex-col gap-1 w-full md:w-64">
+            <Label htmlFor="resultadoFiltro">Resultado Tratamiento</Label>
+            <Select
+              value={resultadoFiltro ?? ""}
+              onValueChange={(value) => {
+                setResultadoFiltro(value === "" ? null : value);
+                setPaginaActual(1);
+              }}
+            >
+              <SelectTrigger id="resultadoFiltro">
+                <SelectValue placeholder="Todos los resultados" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value=" ">Todos</SelectItem>
+                <SelectItem value="Exitoso">Exitoso</SelectItem>
+                <SelectItem value="Fallido">Fallido</SelectItem>
+                <SelectItem value="En progreso">En progreso</SelectItem>
+                <SelectItem value="Otro">Otro</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="">Animal ID</TableHead>
+              <TableHead className="">Animal</TableHead>
               <TableHead className="hidden md:table-cell">
                 Síntomas Observados
               </TableHead>
               <TableHead className="hidden md:table-cell">
                 Diagnóstico
               </TableHead>
-
               <TableHead className="hidden lg:table-cell">
                 Fecha Fin Tratamiento
               </TableHead>
-
               <TableHead className="hidden lg:table-cell">
                 Próxima Revisión
               </TableHead>
@@ -318,723 +607,213 @@ export default function ListaTratamientosSanitarios() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {tratamientos?.map((t) => (
+            {tratamientosPaginados?.map((t) => (
               <TableRow key={t.tratamiento_id}>
-                <TableCell className="font-medium">{t.animal_id}</TableCell>
+                <TableCell className="font-medium">
+                  {t.animal?.nombre_identificatorio}
+                </TableCell>
                 <TableCell className="hidden md:table-cell">
                   {t.sintomas_observados}
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                   {t.diagnostico}
                 </TableCell>
-
                 <TableCell className="hidden lg:table-cell">
                   {t.fecha_fin_tratamiento}
                 </TableCell>
-
                 <TableCell className="hidden lg:table-cell">
                   {t.proxima_revision}
                 </TableCell>
                 <TableCell className="hidden md:table-cell">
                   {t.resultado_tratamiento}
                 </TableCell>
-                <TableCell className="">{t.observaciones}</TableCell>
-                <TableCell>
+                <TableCell>{t.observaciones}</TableCell>
+                <TableCell className="flex gap-2">
                   <Button
                     variant="outline"
                     size="icon"
-                    onClick={() => handleEditTratamiento(t)}
+                    onClick={() => handleOpenDialog("edit", t)}
                   >
-                    <Pencil></Pencil>
+                    <Pencil size={16} />
                   </Button>
                   <Button
                     variant="destructive"
                     size="icon"
                     onClick={() => handleDeleteTratamiento(t.tratamiento_id)}
                   >
-                    <Trash2></Trash2>
+                    <Trash2 size={16} />
                   </Button>
                   <Button
-                    variant="ghost" // Puedes usar otro variant si lo prefieres
+                    variant="ghost"
                     size="icon"
-                    onClick={() => handleVerDetalles(t)}
+                    onClick={() => handleOpenDialog("details", t)}
                   >
-                    <Eye></Eye>
+                    <Eye size={16} />
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
+        {totalPaginas > 1 && (
+          <Pagination className="mt-6">
+            <PaginationContent>
+              <PaginationItem>
+                <PaginationPrevious
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (paginaActual > 1) setPaginaActual((prev) => prev - 1);
+                  }}
+                />
+              </PaginationItem>
+
+              {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(
+                (pagina) => (
+                  <PaginationItem key={pagina}>
+                    <PaginationLink
+                      href="#"
+                      isActive={pagina === paginaActual}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        setPaginaActual(pagina);
+                      }}
+                    >
+                      {pagina}
+                    </PaginationLink>
+                  </PaginationItem>
+                )
+              )}
+
+              <PaginationItem>
+                <PaginationNext
+                  href="#"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (paginaActual < totalPaginas)
+                      setPaginaActual((prev) => prev + 1);
+                  }}
+                />
+              </PaginationItem>
+            </PaginationContent>
+          </Pagination>
+        )}
       </div>
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
+
+      {/* Diálogos */}
+      <Dialog
+        open={dialogType !== null}
+        onOpenChange={(open) => !open && handleCloseDialog()}
+      >
+        <DialogContent className="sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px] max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Crear Nuevo Tratamiento Sanitario</DialogTitle>
+            <DialogTitle>
+              {dialogType === "create"
+                ? "Crear Nuevo Tratamiento Sanitario"
+                : dialogType === "edit"
+                  ? "Editar Tratamiento Sanitario"
+                  : "Detalles del Tratamiento"}
+            </DialogTitle>
             <DialogDescription>
-              Ingresa los detalles del nuevo tratamiento sanitario.
+              {dialogType === "create"
+                ? "Ingresa los detalles del nuevo tratamiento sanitario."
+                : dialogType === "edit"
+                  ? "Edita los detalles del tratamiento sanitario."
+                  : "Información detallada del tratamiento sanitario."}
             </DialogDescription>
           </DialogHeader>
-          <div
-            className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4 max-h-96 overflow-y-auto"
-            style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
-          >
-            {/* ... (Inputs para todos los campos, similar a los dialogos anteriores) */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="animalId" className="text-right">
-                Animal ID
-              </Label>
-              <div className="col-span-3">
-                <AnimalCombobox
-                  value={newAnimalId}
-                  onChange={(animalId) => setNewAnimalId(animalId ?? 0)}
-                  label={"Animal"}
-                ></AnimalCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fechaDiagnostico" className="text-right">
-                Fecha Diagnóstico
-              </Label>
-              <div className="col-span-3">
-                <DatePicker
-                  value={newFechaDiagnostico}
-                  onChange={(date) => setNewFechaDiagnostico(date || "")}
-                ></DatePicker>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="sintomasObservados" className="text-right">
-                Síntomas Observados
-              </Label>
-              <Input
-                id="sintomasObservados"
-                value={newSintomasObservados || ""}
-                onChange={(e) => setNewSintomasObservados(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="diagnostico" className="text-right">
-                Diagnóstico
-              </Label>
-              <Input
-                id="diagnostico"
-                value={newDiagnostico || ""}
-                onChange={(e) => setNewDiagnostico(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fechaInicioTratamiento" className="text-right">
-                Fecha Inicio Tratamiento
-              </Label>
 
-              <div className="col-span-3">
-                <DatePicker
-                  value={newFechaInicioTratamiento}
-                  onChange={(date) => setNewFechaInicioTratamiento(date || "")}
-                ></DatePicker>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="medicamentoId" className="text-right">
-                Medicamento ID
-              </Label>
-              <div className="col-span-3">
-                <MedicamentoCombobox
-                  value={newMedicamentoId}
-                  onChange={(medicamentoId) =>
-                    setNewMedicamentoId(medicamentoId ?? undefined)
-                  }
-                  label={"Medicamento"}
-                ></MedicamentoCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="dosisAplicada" className="text-right">
-                Dosis Aplicada
-              </Label>
-              <Input
-                id="dosisAplicada"
-                type="number"
-                min={0}
-                value={newDosisAplicada?.toString() || ""}
-                onChange={(e) =>
-                  setNewDosisAplicada(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
+          {dialogType === "details" ? (
+            renderDetails()
+          ) : (
+            <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 py-4">
+              {renderFormField("animal_id", "Animal", "animal")}
+              {renderFormField(
+                "fecha_diagnostico",
+                "Fecha Diagnóstico",
+                "date"
+              )}
+              {renderFormField("sintomas_observados", "Síntomas Observados")}
+              {renderFormField("diagnostico", "Diagnóstico")}
+              {renderFormField(
+                "fecha_inicio_tratamiento",
+                "Fecha Inicio Tratamiento",
+                "date"
+              )}
+              {renderFormField("medicamento_id", "Medicamento", "medicamento")}
+              {renderFormField("dosis_aplicada", "Dosis Aplicada", "number")}
+              {renderFormField("unidad_dosis", "Unidad Dosis", "select", [
+                { value: "ml", label: "ml" },
+                { value: "mg", label: "mg" },
+                { value: "g", label: "g" },
+                { value: "UI", label: "UI" },
+                { value: "dosis", label: "dosis" },
+                { value: "otro", label: "Otro" },
+              ])}
+              {renderFormField(
+                "via_administracion",
+                "Vía Administración",
+                "select",
+                [
+                  { value: "oral", label: "Oral" },
+                  { value: "intravenosa", label: "Intravenosa" },
+                  { value: "intramuscular", label: "Intramuscular" },
+                  { value: "subcutanea", label: "Subcutánea" },
+                  { value: "topica", label: "Tópica" },
+                  { value: "otro", label: "Otro" },
+                ]
+              )}
+              {renderFormField(
+                "duracion_tratamiento_dias",
+                "Duración Tratamiento (días)",
+                "number"
+              )}
+              {renderFormField(
+                "fecha_fin_tratamiento",
+                "Fecha Fin Tratamiento",
+                "date"
+              )}
+              {renderFormField(
+                "proveedor_medicamento_id",
+                "Proveedor Medicamento",
+                "proveedor"
+              )}
+              {renderFormField(
+                "responsable_veterinario_id",
+                "Responsable Veterinario",
+                "text",
+                undefined,
+                {
+                  value: user?.nombre?.toString() || "",
                 }
-                className="col-span-3"
-              />
+              )}
+              {renderFormField(
+                "periodo_retiro_aplicable_dias",
+                "Periodo Retiro (días)",
+                "number"
+              )}
+              {renderFormField("fecha_fin_retiro", "Fecha Fin Retiro", "date")}
+              {renderFormField("proxima_revision", "Próxima Revisión", "date")}
+              {renderFormField(
+                "resultado_tratamiento",
+                "Resultado Tratamiento"
+              )}
+              {renderFormField("observaciones", "Observaciones")}
             </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="unidadDosis" className="text-right">
-                Unidad Dosis
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={newUnidadDosis || ""}
-                  onValueChange={(value) => setNewUnidadDosis(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar unidad de dosis" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ml">ml</SelectItem>
-                    <SelectItem value="mg">mg</SelectItem>
-                    <SelectItem value="g">g</SelectItem>
-                    <SelectItem value="UI">UI</SelectItem>
-                    <SelectItem value="dosis">dosis</SelectItem>
-                    <SelectItem value="otro">Otro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="viaAdministracion" className="text-right">
-                Vía Administración
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={newViaAdministracion || ""}
-                  onValueChange={(value) => setNewViaAdministracion(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar vía de administración" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="oral">Oral</SelectItem>
-                    <SelectItem value="intravenosa">Intravenosa</SelectItem>
-                    <SelectItem value="intramuscular">Intramuscular</SelectItem>
-                    <SelectItem value="subcutanea">Subcutánea</SelectItem>
-                    <SelectItem value="topica">Tópica</SelectItem>
-                    <SelectItem value="otro">Otro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="duracionTratamientoDias" className="text-right">
-                Duración Tratamiento (días)
-              </Label>
-              <Input
-                id="duracionTratamientoDias"
-                type="number"
-                min={0}
-                value={newDuracionTratamientoDias?.toString() || ""}
-                onChange={(e) =>
-                  setNewDuracionTratamientoDias(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fechaFinTratamiento" className="text-right">
-                Fecha Fin Tratamiento
-              </Label>
-              <div className="col-span-3">
-                <DatePicker
-                  value={newFechaFinTratamiento}
-                  onChange={(date) => setNewFechaFinTratamiento(date || "")}
-                ></DatePicker>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="proveedorMedicamentoId" className="text-right">
-                Proveedor Medicamento ID
-              </Label>
-              <div className="col-span-3">
-                <ProveedorCombobox
-                  value={newProveedorMedicamentoId || null}
-                  onChange={(proveedorId) =>
-                    setNewProveedorMedicamentoId(proveedorId ?? undefined)
-                  }
-                  label={"Proveedor Medicamento"}
-                ></ProveedorCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="responsableVeterinarioId" className="text-right">
-                Responsable Veterinario ID
-              </Label>
-              <Input
-                id="responsableVeterinarioId"
-                disabled
-                value={user?.nombre?.toString() || ""}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label
-                htmlFor="periodoRetiroAplicableDias"
-                className="text-right"
-              >
-                Periodo Retiro (días)
-              </Label>
-              <Input
-                id="periodoRetiroAplicableDias"
-                type="number"
-                min={0}
-                value={newPeriodoRetiroAplicableDias?.toString() || ""}
-                onChange={(e) =>
-                  setNewPeriodoRetiroAplicableDias(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fechaFinRetiro" className="text-right">
-                Fecha Fin Retiro
-              </Label>
-              <div className="col-span-3">
-                <DatePicker
-                  value={newFechaFinRetiro}
-                  onChange={(date) => setNewFechaFinRetiro(date || "")}
-                ></DatePicker>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="proximaRevision" className="text-right">
-                Próxima Revisión
-              </Label>
-              <div className="col-span-3">
-                <DatePicker
-                  value={newProximaRevision}
-                  onChange={(date) => setNewProximaRevision(date || "")}
-                ></DatePicker>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="resultadoTratamiento" className="text-right">
-                Resultado Tratamiento
-              </Label>
-              <Input
-                id="resultadoTratamiento"
-                value={newResultadoTratamiento || ""}
-                onChange={(e) => setNewResultadoTratamiento(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="observaciones" className="text-right">
-                Observaciones
-              </Label>
-              <Input
-                id="observaciones"
-                value={newObservaciones || ""}
-                onChange={(e) => setNewObservaciones(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleCreateTratamiento}>
-              Crear Tratamiento Sanitario
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
-          <DialogHeader>
-            <DialogTitle>Editar Tratamiento Sanitario</DialogTitle>
-            <DialogDescription>
-              Edita los detalles del tratamiento sanitario.
-            </DialogDescription>
-          </DialogHeader>
-          <div
-            className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4 max-h-96 overflow-y-auto"
-            style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
-          >
-            {/* ... (Inputs para editar los campos, similar al diálogo de creación) */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="animalId" className="text-right">
-                Animal ID
-              </Label>
-              <div className="col-span-3">
-                <AnimalCombobox
-                  value={newAnimalId}
-                  onChange={(animalId) => setNewAnimalId(animalId ?? 0)}
-                  label={"Animal"}
-                ></AnimalCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fechaDiagnostico" className="text-right">
-                Fecha Diagnóstico
-              </Label>
-              <div className="col-span-3">
-                <DatePicker
-                  value={newFechaDiagnostico}
-                  onChange={(date) => setNewFechaDiagnostico(date || "")}
-                ></DatePicker>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="sintomasObservados" className="text-right">
-                Síntomas Observados
-              </Label>
-              <Input
-                id="sintomasObservados"
-                value={newSintomasObservados || ""}
-                onChange={(e) => setNewSintomasObservados(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="diagnostico" className="text-right">
-                Diagnóstico
-              </Label>
-              <Input
-                id="diagnostico"
-                value={newDiagnostico || ""}
-                onChange={(e) => setNewDiagnostico(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fechaInicioTratamiento" className="text-right">
-                Fecha Inicio Tratamiento
-              </Label>
-              <div className="col-span-3">
-                <DatePicker
-                  value={newFechaInicioTratamiento}
-                  onChange={(date) => setNewFechaInicioTratamiento(date || "")}
-                ></DatePicker>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="medicamentoId" className="text-right">
-                Medicamento ID
-              </Label>
-              <div className="col-span-3">
-                <MedicamentoCombobox
-                  value={newMedicamentoId}
-                  onChange={(medicamentoId) =>
-                    setNewMedicamentoId(medicamentoId ?? undefined)
-                  }
-                  label={"Medicamento"}
-                ></MedicamentoCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="dosisAplicada" className="text-right">
-                Dosis Aplicada
-              </Label>
-              <Input
-                id="dosisAplicada"
-                type="number"
-                min={0}
-                value={newDosisAplicada?.toString() || ""}
-                onChange={(e) =>
-                  setNewDosisAplicada(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="unidadDosis" className="text-right">
-                Unidad Dosis
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={newUnidadDosis || ""}
-                  onValueChange={(value) => setNewUnidadDosis(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar unidad de dosis" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="ml">ml</SelectItem>
-                    <SelectItem value="mg">mg</SelectItem>
-                    <SelectItem value="g">g</SelectItem>
-                    <SelectItem value="UI">UI</SelectItem>
-                    <SelectItem value="dosis">dosis</SelectItem>
-                    <SelectItem value="otro">Otro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="viaAdministracion" className="text-right">
-                Vía Administración
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={newViaAdministracion || ""}
-                  onValueChange={(value) => setNewViaAdministracion(value)}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Seleccionar vía de administración" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="oral">Oral</SelectItem>
-                    <SelectItem value="intravenosa">Intravenosa</SelectItem>
-                    <SelectItem value="intramuscular">Intramuscular</SelectItem>
-                    <SelectItem value="subcutanea">Subcutánea</SelectItem>
-                    <SelectItem value="topica">Tópica</SelectItem>
-                    <SelectItem value="otro">Otro</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="duracionTratamientoDias" className="text-right">
-                Duración Tratamiento (días)
-              </Label>
-              <Input
-                id="duracionTratamientoDias"
-                type="number"
-                min={0}
-                value={newDuracionTratamientoDias?.toString() || ""}
-                onChange={(e) =>
-                  setNewDuracionTratamientoDias(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fechaFinTratamiento" className="text-right">
-                Fecha Fin Tratamiento
-              </Label>
-              <div className="col-span-3">
-                <DatePicker
-                  value={newFechaFinTratamiento}
-                  onChange={(date) => setNewFechaFinTratamiento(date || "")}
-                ></DatePicker>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="proveedorMedicamentoId" className="text-right">
-                Proveedor Medicamento ID
-              </Label>
-              <div className="col-span-3">
-                <ProveedorCombobox
-                  value={newProveedorMedicamentoId || null}
-                  onChange={(proveedorId) =>
-                    setNewProveedorMedicamentoId(proveedorId ?? undefined)
-                  }
-                  label={"Proveedor Medicamento"}
-                ></ProveedorCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="responsableVeterinarioId" className="text-right">
-                Responsable Veterinario ID
-              </Label>
-              <Input
-                id="responsableVeterinarioId"
-                disabled
-                value={newResponsableVeterinarioId?.toString() || ""}
-                onChange={(e) =>
-                  setNewResponsableVeterinarioId(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label
-                htmlFor="periodoRetiroAplicableDias"
-                className="text-right"
-              >
-                Periodo Retiro (días)
-              </Label>
-              <Input
-                id="periodoRetiroAplicableDias"
-                type="number"
-                min={0}
-                value={newPeriodoRetiroAplicableDias?.toString() || ""}
-                onChange={(e) =>
-                  setNewPeriodoRetiroAplicableDias(
-                    e.target.value ? Number(e.target.value) : undefined
-                  )
-                }
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="fechaFinRetiro" className="text-right">
-                Fecha Fin Retiro
-              </Label>
-              <div className="col-span-3">
-                <DatePicker
-                  value={newFechaFinRetiro}
-                  onChange={(date) => setNewFechaFinRetiro(date || "")}
-                ></DatePicker>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="proximaRevision" className="text-right">
-                Próxima Revisión
-              </Label>
-              <div className="col-span-3">
-                <DatePicker
-                  value={newProximaRevision}
-                  onChange={(date) => setNewProximaRevision(date || "")}
-                ></DatePicker>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="resultadoTratamiento" className="text-right">
-                Resultado Tratamiento
-              </Label>
-              <Input
-                id="resultadoTratamiento"
-                value={newResultadoTratamiento || ""}
-                onChange={(e) => setNewResultadoTratamiento(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="observaciones" className="text-right">
-                Observaciones
-              </Label>
-              <Input
-                id="observaciones"
-                value={newObservaciones || ""}
-                onChange={(e) => setNewObservaciones(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleUpdateTratamiento}>
-              Actualizar Tratamiento Sanitario
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          )}
 
-      {selectedTratamiento && (
-        <Dialog
-          open={isDetailsDialogOpen}
-          onOpenChange={handleCloseDetallesDialog}
-        >
-          <DialogContent className="sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
-            <DialogHeader>
-              <DialogTitle>Detalles del Tratamiento Sanitario</DialogTitle>
-              <DialogDescription>
-                Información detallada del tratamiento con ID:{" "}
-                {selectedTratamiento.tratamiento_id}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 py-4">
-              <div>
-                <Label className="text-sm text-gray-600">Animal ID</Label>
-                <p className="font-semibold">{selectedTratamiento.animal_id}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">
-                  Fecha Diagnóstico
-                </Label>
-                <p>{selectedTratamiento.fecha_diagnostico}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">
-                  Síntomas Observados
-                </Label>
-                <p>{selectedTratamiento.sintomas_observados || "N/A"}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">Diagnóstico</Label>
-                <p>{selectedTratamiento.diagnostico || "N/A"}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">
-                  Fecha Inicio Tratamiento
-                </Label>
-                <p>{selectedTratamiento.fecha_inicio_tratamiento || "N/A"}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">Medicamento ID</Label>
-                <p>{selectedTratamiento.medicamento_id || "N/A"}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">Dosis Aplicada</Label>
-                <p>{selectedTratamiento.dosis_aplicada || "N/A"}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">Unidad Dosis</Label>
-                <p>{selectedTratamiento.unidad_dosis || "N/A"}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">
-                  Vía Administración
-                </Label>
-                <p>{selectedTratamiento.via_administracion || "N/A"}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">
-                  Duración Tratamiento (días)
-                </Label>
-                <p>{selectedTratamiento.duracion_tratamiento_dias || "N/A"}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">
-                  Fecha Fin Tratamiento
-                </Label>
-                <p>{selectedTratamiento.fecha_fin_tratamiento || "N/A"}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">
-                  Proveedor Medicamento ID
-                </Label>
-                <p>{selectedTratamiento.proveedor_medicamento_id || "N/A"}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">
-                  Responsable Veterinario ID
-                </Label>
-                <p>{selectedTratamiento.responsable_veterinario_id || "N/A"}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">
-                  Periodo Retiro (días)
-                </Label>
-                <p>
-                  {selectedTratamiento.periodo_retiro_aplicable_dias || "N/A"}
-                </p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">
-                  Fecha Fin Retiro
-                </Label>
-                <p>{selectedTratamiento.fecha_fin_retiro || "N/A"}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">
-                  Próxima Revisión
-                </Label>
-                <p>{selectedTratamiento.proxima_revision || "N/A"}</p>
-              </div>
-              <div>
-                <Label className="text-sm text-gray-600">
-                  Resultado Tratamiento
-                </Label>
-                <p>{selectedTratamiento.resultado_tratamiento || "N/A"}</p>
-              </div>
-              <div className="col-span-full">
-                <Label className="text-sm text-gray-600">Observaciones</Label>
-                <p>{selectedTratamiento.observaciones || "N/A"}</p>
-              </div>
-            </div>
+          {dialogType !== "details" && (
             <DialogFooter>
-              <Button onClick={handleCloseDetallesDialog}>Cerrar</Button>
+              <Button
+                onClick={() => handleSubmit(dialogType as "create" | "edit")}
+              >
+                {dialogType === "create" ? "Crear" : "Actualizar"} Tratamiento
+                Sanitario
+              </Button>
             </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

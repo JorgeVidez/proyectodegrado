@@ -1,8 +1,7 @@
 "use client";
 
-import { useAnimales } from "@/hooks/useAnimales"; // Importa el hook de animales
+import { useAnimales } from "@/hooks/useAnimales";
 import { useEffect, useState } from "react";
-import React from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -34,158 +33,360 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Pencil, Trash2 } from "lucide-react";
-import { AnimalCreate, AnimalUpdate, AnimalOut, EstadoAnimal } from "@/types/animal"; // Importa los tipos de animales
-import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  AnimalCreate,
+  AnimalUpdate,
+  AnimalOut,
+  EstadoAnimal,
+} from "@/types/animal";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { AnimalCombobox } from "@/components/AnimalCombobox";
 import { EspecieCombobox } from "@/components/EspecieCombobox";
 import { RazaCombobox } from "@/components/RazaCombobox";
 import { DatePicker } from "@/components/DatePicker";
-import { hexToRgb } from "@mui/material";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Control, Controller, useForm } from "react-hook-form";
+import { animalFormSchema, AnimalFormSchema } from "@/schemas/animalFormSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+
+const initialStateForm: AnimalFormSchema = {
+  numero_trazabilidad: "",
+  nombre_identificatorio: "",
+  especie_id: 0,
+  raza_id: 0,
+  sexo: "M",
+  estado_actual: EstadoAnimal.Activo,
+  fecha_nacimiento: undefined, // undefined para que el DatePicker lo maneje correctamente
+  madre_id: undefined,
+  padre_id: undefined,
+  observaciones_generales: undefined,
+};
 
 export default function ListaAnimalesPage() {
-  // Renombrar el componente
   const { animales, isLoading, error, create, update, remove } = useAnimales();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isViewDetailsDialogOpen, setIsViewDetailsDialogOpen] = useState(false);
-  const [animaldata, setAnimalData] = useState<AnimalOut | null>(null);
-  const [newNumeroTrazabilidad, setNewNumeroTrazabilidad] = useState("");
-  const [newNombreIdentificatorio, setNewNombreIdentificatorio] = useState("");
-  const [newEspecieId, setNewEspecieId] = useState<number>(0);
-  const [newRazaId, setNewRazaId] = useState<number>(0);
-  const [newSexo, setNewSexo] = useState<string>("M");
-  const [newFechaNacimiento, setNewFechaNacimiento] = useState<
-    string | undefined
-  >(undefined);
-  const [newMadreId, setNewMadreId] = useState<number | undefined>(undefined);
-  const [newPadreId, setNewPadreId] = useState<number | undefined>(undefined);
-  const [newEstadoActual, setNewEstadoActual] = useState<EstadoAnimal>(
-    EstadoAnimal.Activo
-  );
-  const [newObservacionesGenerales, setNewObservacionesGenerales] = useState<
-    string | undefined | ""
-  >(undefined);
-  const [editAnimalId, setEditAnimalId] = useState<number | null>(null);
-  const [editNumeroTrazabilidad, setEditNumeroTrazabilidad] = useState("");
-  const [editNombreIdentificatorio, setEditNombreIdentificatorio] =
-    useState("");
-  const [editEspecieId, setEditEspecieId] = useState<number>(0);
-  const [editRazaId, setEditRazaId] = useState<number>(0);
-  const [editSexo, setEditSexo] = useState<string>("M");
-  const [editFechaNacimiento, setEditFechaNacimiento] = useState<
-    string | undefined
-  >(undefined);
-  const [editMadreId, setEditMadreId] = useState<number | undefined>(undefined);
-  const [editPadreId, setEditPadreId] = useState<number | undefined>(undefined);
-  const [editEstadoActual, setEditEstadoActual] = useState<EstadoAnimal>(
-    EstadoAnimal.Activo
-  );
-  const [editObservacionesGenerales, setEditObservacionesGenerales] = useState<
-    string | undefined | ""
-  >(undefined);
+  const [animalData, setAnimalData] = useState<AnimalOut | null>(null);
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [alertType, setAlertType] = useState<"success" | "error" | null>(null);
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    watch,
+    setValue, // Agregado para poder setear valores programáticamente
+  } = useForm<AnimalFormSchema>({
+    resolver: zodResolver(animalFormSchema),
+    defaultValues: initialStateForm,
+  });
+
+  const especieId = watch("especie_id"); // Observa el cambio de especie_id
+
+  // Filtros y paginación
+  const [filters, setFilters] = useState({
+    numeroTrazabilidad: "",
+    nombre: "",
+    especie: "",
+    estado: " ",
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     if (error) console.error(error);
   }, [error]);
 
-  const handleCreateAnimal = async () => {
-    const newAnimal: AnimalCreate = {
-      numero_trazabilidad: newNumeroTrazabilidad,
-      nombre_identificatorio: newNombreIdentificatorio,
-      especie_id: newEspecieId,
-      raza_id: newRazaId,
-      sexo: newSexo,
-      fecha_nacimiento: newFechaNacimiento,
-      madre_id: newMadreId,
-      padre_id: newPadreId,
-      estado_actual: newEstadoActual,
-      observaciones_generales: newObservacionesGenerales,
-    };
-    const createdAnimal = await create(newAnimal);
-    if (createdAnimal) {
-      setAlertMessage("Animal creado con éxito.");
-      setAlertType("success");
-      setIsCreateDialogOpen(false);
-      setNewNumeroTrazabilidad("");
-      setNewNombreIdentificatorio("");
-      setNewEspecieId(0);
-      setNewRazaId(0);
-      setNewSexo("M");
-      setNewFechaNacimiento(undefined);
-      setNewMadreId(undefined);
-      setNewPadreId(undefined);
-      setNewEstadoActual(EstadoAnimal.Activo);
-      setNewObservacionesGenerales(undefined);
-    } else {
-      setAlertMessage("Error al crear el animal.");
-      setAlertType("error");
-    }
+  const showAlert = (message: string, type: "success" | "error") => {
+    setAlertMessage(message);
+    setAlertType(type);
     setTimeout(() => {
       setAlertMessage(null);
       setAlertType(null);
     }, 3000);
   };
 
-  const handleUpdateAnimal = async () => {
-    if (editAnimalId) {
-      const updatedAnimal: AnimalUpdate = {
-        numero_trazabilidad: editNumeroTrazabilidad,
-        nombre_identificatorio: editNombreIdentificatorio,
-        especie_id: editEspecieId,
-        raza_id: editRazaId,
-        sexo: editSexo,
-        fecha_nacimiento: editFechaNacimiento,
-        madre_id: editMadreId,
-        padre_id: editPadreId,
-        estado_actual: editEstadoActual,
-        observaciones_generales: editObservacionesGenerales,
-      };
-      const updated = await update(editAnimalId, updatedAnimal);
+  const handleCreateAnimal = async (data: AnimalFormSchema) => {
+    console.log("Creating animal with data:", data); // Aquí verás los datos del formulario
+    const createdAnimal = await create(data as AnimalCreate);
+    if (createdAnimal) {
+      showAlert("Animal creado con éxito.", "success");
+      setIsCreateDialogOpen(false);
+      reset(initialStateForm); // Resetea el formulario con los valores iniciales
+    } else {
+      showAlert("Error al crear el animal.", "error");
+    }
+  };
+
+  const handleUpdateAnimal = async (data: AnimalFormSchema) => {
+    if (animalData?.animal_id) {
+      const updated = await update(animalData.animal_id, data as AnimalUpdate);
       if (updated) {
-        setAlertMessage("Animal actualizado con éxito.");
-        setAlertType("success");
+        showAlert("Animal actualizado con éxito.", "success");
         setIsEditDialogOpen(false);
-        setEditAnimalId(null);
-        setEditNumeroTrazabilidad("");
-        setEditNombreIdentificatorio("");
-        setEditEspecieId(0);
-        setEditRazaId(0);
-        setEditSexo("M");
-        setEditFechaNacimiento(undefined);
-        setEditMadreId(undefined);
-        setEditPadreId(undefined);
-        setEditEstadoActual(EstadoAnimal.Activo);
-        setEditObservacionesGenerales(undefined);
+        reset(initialStateForm); // Resetea el formulario
       } else {
-        setAlertMessage("Error al actualizar el animal.");
-        setAlertType("error");
+        showAlert("Error al actualizar el animal.", "error");
       }
-      setTimeout(() => {
-        setAlertMessage(null);
-        setAlertType(null);
-      }, 3000);
     }
   };
 
   const handleDeleteAnimal = async (id: number) => {
     const deleted = await remove(id);
-    if (deleted) {
-      setAlertMessage("Animal eliminado con éxito.");
-      setAlertType("success");
-    } else {
-      setAlertMessage("Error al eliminar el animal.");
-      setAlertType("error");
-    }
-    setTimeout(() => {
-      setAlertMessage(null);
-      setAlertType(null);
-    }, 3000);
+    showAlert(
+      deleted ? "Animal eliminado con éxito." : "Error al eliminar el animal.",
+      deleted ? "success" : "error"
+    );
   };
+
+  const prepareEditForm = (animal: AnimalOut) => {
+    setAnimalData(animal); // Guarda el animal completo para el ID
+    // Utiliza `reset` de react-hook-form para pre-llenar el formulario
+    reset({
+      numero_trazabilidad: animal.numero_trazabilidad,
+      nombre_identificatorio: animal.nombre_identificatorio || "",
+      especie_id: animal.especie.especie_id,
+      raza_id: animal.raza.raza_id,
+      sexo: animal.sexo === "M" ? "M" : "H",
+      fecha_nacimiento: animal.fecha_nacimiento,
+      madre_id: animal.madre?.animal_id,
+      padre_id: animal.padre?.animal_id,
+      estado_actual: animal.estado_actual,
+      observaciones_generales: animal.observaciones_generales,
+    });
+    setIsEditDialogOpen(true);
+  };
+
+  // Filtrar animales
+  const filteredAnimales =
+    animales?.filter((animal) => {
+      return (
+        animal.numero_trazabilidad
+          .toLowerCase()
+          .includes(filters.numeroTrazabilidad.toLowerCase()) &&
+        (animal.nombre_identificatorio
+          ?.toLowerCase()
+          .includes(filters.nombre.toLowerCase()) ||
+          filters.nombre === "") &&
+        animal.especie.nombre_comun
+          .toLowerCase()
+          .includes(filters.especie.toLowerCase()) &&
+        (filters.estado === " " || animal.estado_actual === filters.estado)
+      );
+    }) || [];
+
+  // Paginación
+  const totalPages = Math.ceil(filteredAnimales.length / itemsPerPage);
+  const paginatedAnimales = filteredAnimales.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   if (isLoading) return <div>Cargando...</div>;
   if (error) return <div>Error al cargar animales</div>;
+
+  const AnimalForm = ({
+    control,
+    especieId,
+    setValue,
+  }: {
+    control: Control<AnimalFormSchema>;
+    especieId: number;
+    setValue: (
+      name: keyof AnimalFormSchema,
+      value: any,
+      options?: object
+    ) => void;
+  }) => {
+    const renderField = (
+      label: string,
+      id: string,
+      children: React.ReactNode
+    ) => (
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor={id} className="text-right">
+          {label}
+        </Label>
+        <div className="col-span-3">{children}</div>
+      </div>
+    );
+
+    return (
+      <div className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 py-4 max-h-96 overflow-y-auto">
+        {renderField(
+          "Número Trazabilidad",
+          "numero_trazabilidad",
+          <Controller
+            name="numero_trazabilidad"
+            control={control}
+            render={({ field }) => <Input {...field} />}
+          />
+        )}
+
+        {renderField(
+          "Nombre Identificatorio",
+          "nombre_identificatorio",
+          <Controller
+            name="nombre_identificatorio"
+            control={control}
+            render={({ field }) => <Input {...field} />}
+          />
+        )}
+
+        {renderField(
+          "Especie",
+          "especie_id",
+          <Controller
+            name="especie_id"
+            control={control}
+            render={({ field }) => (
+              <EspecieCombobox
+                label="Especie"
+                value={field.value}
+                onChange={(value) => {
+                  field.onChange(value);
+                  setValue("raza_id", 0); // Resetea la raza cuando cambia la especie
+                }}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Raza",
+          "raza_id",
+          <Controller
+            name="raza_id"
+            control={control}
+            render={({ field }) => (
+              <RazaCombobox
+                label="Raza"
+                especieId={especieId}
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Sexo",
+          "sexo",
+          <Controller
+            name="sexo"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar Sexo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="M">Macho</SelectItem>
+                  <SelectItem value="H">Hembra</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+        )}
+
+        {renderField(
+          "Fecha Nacimiento",
+          "fecha_nacimiento",
+          <Controller
+            name="fecha_nacimiento"
+            control={control}
+            render={({ field }) => (
+              <DatePicker
+                value={field.value}
+                onChange={(date) => field.onChange(date)}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Madre",
+          "madre_id",
+          <Controller
+            name="madre_id"
+            control={control}
+            render={({ field }) => (
+              <AnimalCombobox
+                label="Madre"
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Padre",
+          "padre_id",
+          <Controller
+            name="padre_id"
+            control={control}
+            render={({ field }) => (
+              <AnimalCombobox
+                label="Padre"
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Estado Actual",
+          "estado_actual",
+          <Controller
+            name="estado_actual"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {Object.values(EstadoAnimal).map((estado) => (
+                      <SelectItem key={estado} value={estado}>
+                        {estado}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )}
+          />
+        )}
+
+        {renderField(
+          "Observaciones Generales",
+          "observaciones_generales",
+          <Controller
+            name="observaciones_generales"
+            control={control}
+            render={({ field }) => <Input {...field} />}
+          />
+        )}
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -196,7 +397,7 @@ export default function ListaAnimalesPage() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">Administración </BreadcrumbLink>
+                <BreadcrumbLink href="#">Administración</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
@@ -206,16 +407,17 @@ export default function ListaAnimalesPage() {
           </Breadcrumb>
         </div>
       </header>
+
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         {alertMessage && alertType && (
           <Alert variant={alertType === "success" ? "default" : "destructive"}>
-            {alertType === "error" && <div className="h-4 w-4" />}
             <AlertTitle>
               {alertType === "success" ? "Éxito" : "Error"}
             </AlertTitle>
             <AlertDescription>{alertMessage}</AlertDescription>
           </Alert>
         )}
+
         <div>
           <header className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Lista de Animales</h1>
@@ -226,411 +428,168 @@ export default function ListaAnimalesPage() {
 
           <Separator className="my-4" />
 
+          {/* Filtros */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <Input
+              placeholder="Filtrar por número de trazabilidad"
+              value={filters.numeroTrazabilidad}
+              onChange={(e) =>
+                setFilters({ ...filters, numeroTrazabilidad: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Filtrar por nombre"
+              value={filters.nombre}
+              onChange={(e) =>
+                setFilters({ ...filters, nombre: e.target.value })
+              }
+            />
+            <Input
+              placeholder="Filtrar por especie"
+              value={filters.especie}
+              onChange={(e) =>
+                setFilters({ ...filters, especie: e.target.value })
+              }
+            />
+            <Select
+              value={filters.estado}
+              onValueChange={(value) =>
+                setFilters({ ...filters, estado: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value=" ">Todos</SelectItem>
+                {Object.values(EstadoAnimal).map((estado) => (
+                  <SelectItem key={estado} value={estado}>
+                    {estado}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="">Número Trazabilidad</TableHead>
+                <TableHead>Número Trazabilidad</TableHead>
                 <TableHead>Nombre Identificatorio</TableHead>
                 <TableHead className="hidden md:table-cell">Especie</TableHead>
                 <TableHead className="hidden lg:table-cell">Raza</TableHead>
                 <TableHead>Sexo</TableHead>
+                <TableHead className="hidden md:table-cell">Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {animales?.map((a) => (
-                <TableRow key={a.animal_id}>
-                  <TableCell className="font-medium">
-                    {a.numero_trazabilidad}
-                  </TableCell>
-                  <TableCell className="">
-                    {a.nombre_identificatorio
-                      ? a.nombre_identificatorio
-                      : "N/A"}
+              {paginatedAnimales.map((animal) => (
+                <TableRow key={animal.animal_id}>
+                  <TableCell>{animal.numero_trazabilidad}</TableCell>
+                  <TableCell>
+                    {animal.nombre_identificatorio || "N/A"}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {a.especie.nombre_comun}
+                    {animal.especie.nombre_comun}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    {a.raza.nombre_raza}
+                    {animal.raza.nombre_raza}
                   </TableCell>
-                  <TableCell className="">{a.sexo}</TableCell>
+                  <TableCell>
+                    {animal.sexo === "M" ? "Macho" : "Hembra"}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {animal.estado_actual}
+                  </TableCell>
                   <TableCell className="text-right flex flex-wrap justify-end gap-2">
                     <Button
                       variant="outline"
-                      className=""
                       onClick={() => {
-                        setAnimalData(a);
+                        setAnimalData(animal);
                         setIsViewDetailsDialogOpen(true);
                       }}
                     >
-                      Ver Detalles
+                      Detalles
                     </Button>
-                    <Button
-                      className=""
-                      onClick={() => {
-                        setEditAnimalId(a.animal_id);
-                        setEditNumeroTrazabilidad(a.numero_trazabilidad);
-                        setEditNombreIdentificatorio(
-                          a.nombre_identificatorio || ""
-                        );
-                        setEditEspecieId(a.especie.especie_id);
-                        setEditRazaId(a.raza.raza_id);
-                        setEditSexo(a.sexo);
-                        setEditFechaNacimiento(a.fecha_nacimiento);
-                        setEditMadreId(a.madre?.animal_id);
-                        setEditPadreId(a.padre?.animal_id);
-                        setEditEstadoActual(a.estado_actual);
-                        setEditObservacionesGenerales(
-                          a.observaciones_generales
-                        );
-                        setIsEditDialogOpen(true);
-                      }}
-                    >
-                      <Pencil></Pencil>
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      className=""
-                      onClick={() => handleDeleteAnimal(a.animal_id)}
-                    >
-                      <Trash2> </Trash2>
+                    <Button onClick={() => prepareEditForm(animal)}>
+                      <Pencil size={16} />
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <Pagination className="mt-4">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    isActive={currentPage > 1}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <span className="px-4">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    isActive={currentPage < totalPages}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </div>
 
+        {/* Diálogos */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className=" max-w-sm  sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px] ">
+          <DialogContent className="max-w-sm sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
             <DialogHeader>
               <DialogTitle>Crear Nuevo Animal</DialogTitle>
               <DialogDescription>
                 Ingresa los detalles del nuevo animal.
               </DialogDescription>
             </DialogHeader>
-            <div
-              className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4 max-h-96 overflow-y-auto"
-              style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
-            >
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label
-                  htmlFor="numeroTrazabilidad"
-                  className="text-right overflow-hidden text-ellipsis"
-                >
-                  Número Trazabilidad
-                </Label>
-                <Input
-                  id="numeroTrazabilidad"
-                  value={newNumeroTrazabilidad}
-                  onChange={(e) => setNewNumeroTrazabilidad(e.target.value)}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label
-                  htmlFor="nombreIdentificatorio"
-                  className="text-right overflow-hidden text-ellipsis"
-                >
-                  {" "}
-                  Nombre Identificatorio
-                </Label>
-                <Input
-                  id="nombreIdentificatorio"
-                  value={newNombreIdentificatorio}
-                  onChange={(e) => setNewNombreIdentificatorio(e.target.value)}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="especieId" className="text-right">
-                  Especie
-                </Label>
-                <EspecieCombobox
-                  label="Especie"
-                  value={newEspecieId}
-                  onChange={(especieId) => setNewEspecieId(especieId ?? 0)}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="razaId" className="text-right">
-                  Raza
-                </Label>
-                <RazaCombobox
-                  label="Raza"
-                  value={newRazaId}
-                  onChange={(razaId) => setNewRazaId(razaId ?? 0)}
-                  especieId={newEspecieId}
-                ></RazaCombobox>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="sexo" className="text-right">
-                  Sexo
-                </Label>
-
-                <div className="col-span-3">
-                  <Select value={newSexo} onValueChange={setNewSexo}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar Sexo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="M">Macho</SelectItem>
-                      <SelectItem value="H">Hembra</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="fechaNacimiento" className="text-right">
-                  Fecha Nacimiento
-                </Label>
-                <div className="col-span-3">
-                  <DatePicker
-                    value={newFechaNacimiento}
-                    onChange={setNewFechaNacimiento}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="madreId" className="text-right">
-                  Madre ID
-                </Label>
-                <div className="col-span-3">
-                  <AnimalCombobox
-                    label="Madre"
-                    value={newMadreId}
-                    onChange={(id) => setNewMadreId(id)}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="padreId" className="text-right">
-                  Padre ID
-                </Label>
-                <div className="col-span-3">
-                  <AnimalCombobox
-                    label="Padre"
-                    value={newPadreId}
-                    onChange={(id) => setNewPadreId(id)}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="estadoActual" className="text-right">
-                  Estado Actual
-                </Label>
-
-                <Select
-                  value={newEstadoActual}
-                  onValueChange={(value) =>
-                    setNewEstadoActual(value as EstadoAnimal)
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Seleccionar Estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value={EstadoAnimal.Activo}>
-                        Activo
-                      </SelectItem>
-                      <SelectItem value={EstadoAnimal.Vendido}>
-                        Vendido
-                      </SelectItem>
-                      <SelectItem value={EstadoAnimal.Muerto}>
-                        Muerto
-                      </SelectItem>
-                      <SelectItem value={EstadoAnimal.Descartado}>
-                        Descartado
-                      </SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label
-                  htmlFor="observacionesGenerales"
-                  className="text-right overflow-hidden text-ellipsis"
-                >
-                  Observaciones Generales
-                </Label>
-                <Input
-                  id="observacionesGenerales"
-                  value={newObservacionesGenerales}
-                  onChange={(e) => setNewObservacionesGenerales(e.target.value)}
-                  className="col-span-3"
-                />
-              </div>
-            </div>
-
+            <AnimalForm
+              control={control}
+              especieId={especieId}
+              setValue={setValue}
+            />
             <DialogFooter>
-              <Button onClick={handleCreateAnimal}>Crear Animal</Button>
+              <Button onClick={handleSubmit(handleCreateAnimal)}>
+                Guardar Animal
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-sm  sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px] ">
+          <DialogContent className="max-w-sm sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
             <DialogHeader>
               <DialogTitle>Editar Animal</DialogTitle>
               <DialogDescription>
                 Actualiza los detalles del animal.
               </DialogDescription>
             </DialogHeader>
-            <div
-              className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 py-4 max-h-96 overflow-y-auto"
-              style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
-            >
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label
-                  htmlFor="editNumeroTrazabilidad"
-                  className="text-right overflow-hidden text-ellipsis"
-                >
-                  Número Trazabilidad
-                </Label>
-                <Input
-                  id="editNumeroTrazabilidad"
-                  value={editNumeroTrazabilidad}
-                  onChange={(e) => setEditNumeroTrazabilidad(e.target.value)}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label
-                  htmlFor="editNombreIdentificatorio"
-                  className="text-right overflow-hidden text-ellipsis"
-                >
-                  Nombre Identificatorio
-                </Label>
-                <Input
-                  id="editNombreIdentificatorio"
-                  value={editNombreIdentificatorio}
-                  onChange={(e) => setEditNombreIdentificatorio(e.target.value)}
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="editEspecieId" className="text-right">
-                  Especie
-                </Label>
-                <EspecieCombobox
-                  label="Especie"
-                  value={editEspecieId}
-                  onChange={(especieId) => setEditEspecieId(especieId ?? 0)}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="editRazaId" className="text-right">
-                  Raza
-                </Label>
-                <RazaCombobox
-                  label="Raza"
-                  value={editRazaId}
-                  onChange={(razaId) => setEditRazaId(razaId ?? 0)}
-                  especieId={editEspecieId}
-                ></RazaCombobox>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="editSexo" className="text-right">
-                  Sexo
-                </Label>
-                <div className="col-span-3">
-                  <Select value={editSexo} onValueChange={setEditSexo}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue placeholder="Seleccionar Sexo" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="M">Macho</SelectItem>
-                      <SelectItem value="H">Hembra</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="editFechaNacimiento" className="text-right">
-                  Fecha Nacimiento
-                </Label>
-                <div className="col-span-3">
-                  {/* Cambiado a DatePicker */}
-                  <DatePicker
-                    value={editFechaNacimiento}
-                    onChange={setEditFechaNacimiento}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="editMadreId" className="text-right">
-                  Madre
-                </Label>
-                <AnimalCombobox
-                  label="Madre"
-                  value={editMadreId}
-                  onChange={(id) => setEditMadreId(id)}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="editPadreId" className="text-right">
-                  Padre ID
-                </Label>
-                <AnimalCombobox
-                  label="Padre"
-                  value={editPadreId}
-                  onChange={(id) => setEditPadreId(id)}
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="editEstadoActual" className="text-right">
-                  Estado Actual
-                </Label>
-
-                <Select
-                  value={editEstadoActual}
-                  onValueChange={(value) =>
-                    setEditEstadoActual(value as EstadoAnimal)
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Seleccionar Estado" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value={EstadoAnimal.Activo}>
-                        Activo
-                      </SelectItem>
-                      <SelectItem value={EstadoAnimal.Vendido}>
-                        Vendido
-                      </SelectItem>
-                      <SelectItem value={EstadoAnimal.Muerto}>
-                        Muerto
-                      </SelectItem>
-                      <SelectItem value={EstadoAnimal.Descartado}>
-                        Descartado
-                      </SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label
-                  htmlFor="editObservacionesGenerales"
-                  className="text-right overflow-hidden text-ellipsis"
-                >
-                  Observaciones Generales
-                </Label>
-                <Input
-                  id="editObservacionesGenerales"
-                  value={editObservacionesGenerales}
-                  onChange={(e) =>
-                    setEditObservacionesGenerales(e.target.value)
-                  }
-                  className="col-span-3"
-                />
-              </div>
-            </div>
+            <AnimalForm
+              control={control}
+              especieId={especieId}
+              setValue={setValue}
+            />
             <DialogFooter>
-              <Button onClick={handleUpdateAnimal}>Actualizar Animal</Button>
+              <Button onClick={handleSubmit(handleUpdateAnimal)}>
+                Actualizar Animal
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -641,58 +600,56 @@ export default function ListaAnimalesPage() {
         >
           <DialogContent className="w-full h-5/6 max-w-md sm:max-w-2xl md:max-w-3xl lg:max-w-4xl p-6">
             <DialogHeader className="mb-4">
-              <DialogTitle className="text-2xl font-semibold  ">
+              <DialogTitle className="text-2xl font-semibold">
                 Detalles del Animal
               </DialogTitle>
-              <DialogDescription className="">
+              <DialogDescription>
                 Aquí puedes ver los detalles del animal.
               </DialogDescription>
             </DialogHeader>
 
-            {animaldata && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 overflow-y-auto ">
+            {animalData && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 overflow-y-auto">
                 {[
-                  { label: "ID Animal", value: animaldata.animal_id },
+                  { label: "ID Animal", value: animalData.animal_id },
                   {
                     label: "Número Trazabilidad",
-                    value: animaldata.numero_trazabilidad,
+                    value: animalData.numero_trazabilidad,
                   },
                   {
                     label: "Nombre",
-                    value: animaldata.nombre_identificatorio || "N/A",
+                    value: animalData.nombre_identificatorio || "N/A",
                   },
-                  { label: "Especie", value: animaldata.especie.nombre_comun },
-                  { label: "Raza", value: animaldata.raza.nombre_raza },
+                  { label: "Especie", value: animalData.especie.nombre_comun },
+                  { label: "Raza", value: animalData.raza.nombre_raza },
                   {
                     label: "Sexo",
-                    value: animaldata.sexo === "M" ? "Macho" : "Hembra",
+                    value: animalData.sexo === "M" ? "Macho" : "Hembra",
                   },
                   {
                     label: "Fecha Nacimiento",
-                    value: animaldata.fecha_nacimiento || "No registrada",
+                    value: animalData.fecha_nacimiento || "No registrada",
                   },
-                  { label: "Estado", value: animaldata.estado_actual },
+                  { label: "Estado", value: animalData.estado_actual },
                   {
                     label: "Madre",
-                    value: animaldata.madre
-                      ? animaldata.madre.numero_trazabilidad
-                      : "No registrada",
+                    value:
+                      animalData.madre?.numero_trazabilidad || "No registrada",
                   },
                   {
                     label: "Padre",
-                    value: animaldata.padre
-                      ? animaldata.padre.numero_trazabilidad
-                      : "No registrado",
+                    value:
+                      animalData.padre?.numero_trazabilidad || "No registrado",
                   },
                   {
                     label: "Observaciones",
                     value:
-                      animaldata.observaciones_generales || "Sin observaciones",
+                      animalData.observaciones_generales || "Sin observaciones",
                   },
                 ].map((item, index) => (
                   <div key={index} className="flex flex-col space-y-1">
-                    <span className="text-sm font-medium  ">{item.label}:</span>
-                    <span className="text-base  ">{item.value}</span>
+                    <span className="text-sm font-medium">{item.label}:</span>
+                    <span className="text-base">{item.value}</span>
                   </div>
                 ))}
               </div>

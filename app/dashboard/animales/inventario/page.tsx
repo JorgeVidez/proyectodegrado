@@ -2,7 +2,6 @@
 
 import { useInventarioAnimal } from "@/hooks/useInventarioAnimal";
 import { useEffect, useState } from "react";
-import React from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -49,13 +48,37 @@ import {
   SelectContent,
   SelectGroup,
   SelectItem,
-  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
 import { ProveedorCombobox } from "@/components/ProveedorCombobox";
 import { UbicacionCombobox } from "@/components/UbicacionCombobox";
 import { LoteCombobox } from "@/components/LoteCombobox";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { useForm, Controller, Control } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  inventarioFormSchema,
+  InventarioFormSchema,
+} from "@/schemas/inventarioFormSchema";
+
+const initialStateForm: InventarioFormSchema = {
+  animal_id: 0,
+  fecha_ingreso: "",
+  motivo_ingreso: MotivoIngreso.Nacimiento,
+  proveedor_compra_id: null,
+  precio_compra: null,
+  ubicacion_actual_id: null,
+  lote_actual_id: null,
+  fecha_egreso: null,
+  motivo_egreso: null,
+};
 
 export default function ListaInventarioAnimales() {
   const {
@@ -66,130 +89,322 @@ export default function ListaInventarioAnimales() {
     updateInventario,
     deleteInventario,
   } = useInventarioAnimal();
+
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedInventario, setSelectedInventario] =
     useState<InventarioAnimalOut | null>(null);
-
-  const [newAnimalId, setNewAnimalId] = useState<number>(0);
-  const [newFechaIngreso, setNewFechaIngreso] = useState("");
-  const [newMotivoIngreso, setNewMotivoIngreso] = useState<MotivoIngreso>(
-    MotivoIngreso.Nacimiento
-  );
-  const [newProveedorCompraId, setNewProveedorCompraId] = useState<
-    number | null
-  >(null);
-  const [newPrecioCompra, setNewPrecioCompra] = useState<number | null>(null);
-  const [newUbicacionActualId, setNewUbicacionActualId] = useState<
-    number | null
-  >(null);
-  const [newLoteActualId, setNewLoteActualId] = useState<number | null>(null);
-  const [newFechaEgreso, setNewFechaEgreso] = useState<string | null>(null);
-  const [newMotivoEgreso, setNewMotivoEgreso] = useState<MotivoEgreso | null>(
-    null
-  );
-
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [alertType, setAlertType] = useState<"success" | "error" | null>(null);
+
+  const { control, handleSubmit, reset, setValue } =
+    useForm<InventarioFormSchema>({
+      resolver: zodResolver(inventarioFormSchema),
+      defaultValues: initialStateForm,
+    });
+
+  // Filtros y paginación
+  const [filters, setFilters] = useState({
+    animal: "",
+    motivoIngreso: " ",
+    estado: " ",
+    ubicacion: "",
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     if (error) console.error(error);
   }, [error]);
 
-  const handleCreateInventario = async () => {
-    const newInventario: InventarioAnimalCreate = {
-      animal_id: newAnimalId,
-      fecha_ingreso: newFechaIngreso,
-      motivo_ingreso: newMotivoIngreso,
-      proveedor_compra_id: newProveedorCompraId,
-      precio_compra: newPrecioCompra,
-      ubicacion_actual_id: newUbicacionActualId,
-      lote_actual_id: newLoteActualId,
-      fecha_egreso: newFechaEgreso,
-      motivo_egreso: newMotivoEgreso,
-    };
-    const success = await createInventario(newInventario);
-    if (success !== undefined) {
-      setAlertMessage("Inventario creado con éxito.");
-      setAlertType("success");
-      setIsCreateDialogOpen(false);
-      setNewAnimalId(0);
-      setNewFechaIngreso("");
-      setNewMotivoIngreso(MotivoIngreso.Nacimiento);
-    } else {
-      setAlertMessage("Error al crear el inventario.");
-      setAlertType("error");
-    }
+  const showAlert = (message: string, type: "success" | "error") => {
+    setAlertMessage(message);
+    setAlertType(type);
     setTimeout(() => {
       setAlertMessage(null);
       setAlertType(null);
     }, 3000);
   };
 
+  const handleCreateInventarioSubmit = async (data: InventarioFormSchema) => {
+    console.log("Creating inventario with data:", data);
+    const success = await createInventario(data as InventarioAnimalCreate);
+    if (success !== undefined) {
+      showAlert("Inventario creado con éxito.", "success");
+      setIsCreateDialogOpen(false);
+      reset(initialStateForm); // Resetea el formulario
+    } else {
+      showAlert("Error al crear el inventario.", "error");
+    }
+  };
+
   const handleEditInventario = (inventario: InventarioAnimalOut) => {
     setSelectedInventario(inventario);
-    setNewAnimalId(inventario.animal_id);
-    setNewFechaIngreso(inventario.fecha_ingreso);
-    setNewMotivoIngreso(inventario.motivo_ingreso);
-    setNewProveedorCompraId(inventario.proveedor_compra_id ?? null);
-    setNewPrecioCompra(inventario.precio_compra ?? null);
-    setNewUbicacionActualId(inventario.ubicacion_actual_id ?? null);
-    setNewLoteActualId(inventario.lote_actual_id ?? null);
-    setNewFechaEgreso(inventario.fecha_egreso ?? null);
-    setNewMotivoEgreso(inventario.motivo_egreso ?? null);
+    // Usa reset de react-hook-form para pre-llenar el formulario
+    reset({
+      animal_id: inventario.animal_id,
+      fecha_ingreso: inventario.fecha_ingreso,
+      motivo_ingreso: inventario.motivo_ingreso,
+      proveedor_compra_id: inventario.proveedor_compra_id ?? null,
+      precio_compra: inventario.precio_compra ?? null,
+      ubicacion_actual_id: inventario.ubicacion_actual_id ?? null,
+      lote_actual_id: inventario.lote_actual_id ?? null,
+      fecha_egreso: inventario.fecha_egreso ?? null,
+      motivo_egreso: inventario.motivo_egreso ?? null,
+    });
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateInventario = async () => {
+  const handleUpdateInventarioSubmit = async (data: InventarioFormSchema) => {
     if (selectedInventario) {
-      const updatedInventario: InventarioAnimalUpdate = {
-        animal_id: newAnimalId,
-        fecha_ingreso: newFechaIngreso,
-        motivo_ingreso: newMotivoIngreso,
-        proveedor_compra_id: newProveedorCompraId,
-        precio_compra: newPrecioCompra,
-        ubicacion_actual_id: newUbicacionActualId,
-        lote_actual_id: newLoteActualId,
-        fecha_egreso: newFechaEgreso,
-        motivo_egreso: newMotivoEgreso,
-      };
       const success = await updateInventario(
         selectedInventario.inventario_id,
-        updatedInventario
+        data as InventarioAnimalUpdate
       );
-      if (success !== undefined) {
-        setAlertMessage("Inventario actualizado con éxito.");
-        setAlertType("success");
+
+      if (success && !error) {
+        showAlert("Inventario actualizado con éxito.", "success");
         setIsEditDialogOpen(false);
-        setSelectedInventario(null);
+        reset(initialStateForm); // Resetea el formulario
       } else {
-        setAlertMessage("Error al actualizar el inventario.");
-        setAlertType("error");
+        showAlert("Error al actualizar el inventario.", "error");
       }
-      setTimeout(() => {
-        setAlertMessage(null);
-        setAlertType(null);
-      }, 3000);
     }
   };
 
   const handleDeleteInventario = async (inventarioId: number) => {
     const success = await deleteInventario(inventarioId);
-    if (success !== undefined) {
-      setAlertMessage("Inventario eliminado con éxito.");
-      setAlertType("success");
-    } else {
-      setAlertMessage("Error al eliminar el inventario.");
-      setAlertType("error");
-    }
-    setTimeout(() => {
-      setAlertMessage(null);
-      setAlertType(null);
-    }, 3000);
+    showAlert(
+      success
+        ? "Inventario eliminado con éxito."
+        : "Error al eliminar el inventario.",
+      success ? "success" : "error"
+    );
   };
+
+  // Filtrar inventarios
+  const filteredInventarios =
+    inventarios?.filter((inventario) => {
+      return (
+        (inventario.animal.nombre_identificatorio
+          ?.toLowerCase()
+          .includes(filters.animal.toLowerCase()) ||
+          filters.animal === "") &&
+        (filters.motivoIngreso === " " ||
+          inventario.motivo_ingreso === filters.motivoIngreso) &&
+        (filters.estado === " " ||
+          (filters.estado === "activo" && inventario.activo_en_finca) ||
+          (filters.estado === "inactivo" && !inventario.activo_en_finca)) &&
+        (filters.ubicacion === "" ||
+          inventario.ubicacion_actual?.nombre
+            .toLowerCase()
+            .includes(filters.ubicacion.toLowerCase()))
+      );
+    }) || [];
+
+  // Paginación
+  const totalPages = Math.ceil(filteredInventarios.length / itemsPerPage);
+  const paginatedInventarios = filteredInventarios.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   if (isLoading) return <div>Cargando...</div>;
   if (error) return <div>Error al cargar inventarios</div>;
+
+  const InventarioForm = ({
+    control,
+    setValue,
+  }: {
+    control: Control<InventarioFormSchema>;
+    setValue: (
+      name: keyof InventarioFormSchema,
+      value: any,
+      options?: object
+    ) => void;
+  }) => {
+    const renderField = (
+      label: string,
+      id: string,
+      children: React.ReactNode
+    ) => (
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor={id} className="text-right">
+          {label}
+        </Label>
+        <div className="col-span-3">{children}</div>
+      </div>
+    );
+
+    return (
+      <div className="grid gap-4 py-4 max-h-96 overflow-y-auto">
+        {renderField(
+          "Animal",
+          "animalId",
+          <Controller
+            name="animal_id"
+            control={control}
+            render={({ field }) => (
+              <AnimalCombobox
+                label="animal"
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Fecha Ingreso",
+          "fechaIngreso",
+          <Controller
+            name="fecha_ingreso"
+            control={control}
+            render={({ field }) => (
+              <DatePicker value={field.value} onChange={field.onChange} />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Motivo Ingreso",
+          "motivoIngreso",
+          <Controller
+            name="motivo_ingreso"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un motivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {Object.values(MotivoIngreso).map((motivo) => (
+                      <SelectItem key={motivo} value={motivo}>
+                        {motivo}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )}
+          />
+        )}
+
+        {renderField(
+          "Proveedor Compra",
+          "proveedorCompraId",
+          <Controller
+            name="proveedor_compra_id"
+            control={control}
+            render={({ field }) => (
+              <ProveedorCombobox
+                label="proveedor"
+                value={field.value ?? null}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Precio Compra",
+          "precioCompra",
+          <Controller
+            name="precio_compra"
+            control={control}
+            render={({ field }) => (
+              <Input
+                type="number"
+                value={field.value ?? ""}
+                onChange={(e) =>
+                  field.onChange(e.target.value ? Number(e.target.value) : null)
+                }
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Ubicación Actual",
+          "ubicacionActualId",
+          <Controller
+            name="ubicacion_actual_id"
+            control={control}
+            render={({ field }) => (
+              <UbicacionCombobox
+                label="ubicacion actual"
+                value={field.value ?? null}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Lote Actual",
+          "loteActualId",
+          <Controller
+            name="lote_actual_id"
+            control={control}
+            render={({ field }) => (
+              <LoteCombobox
+                label="lote actual"
+                value={field.value ?? null}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Fecha Egreso",
+          "fechaEgreso",
+          <Controller
+            name="fecha_egreso"
+            control={control}
+            render={({ field }) => (
+              <DatePicker
+                value={field.value || undefined}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Motivo Egreso",
+          "motivoEgreso",
+          <Controller
+            name="motivo_egreso"
+            control={control}
+            render={({ field }) => (
+              <Select
+                value={field.value ?? ""}
+                onValueChange={(value) =>
+                  field.onChange(value === " " ? null : value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecciona un motivo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    <SelectItem value=" ">-- Sin seleccionar --</SelectItem>
+                    {Object.values(MotivoEgreso).map((motivo) => (
+                      <SelectItem key={motivo} value={motivo}>
+                        {motivo}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            )}
+          />
+        )}
+      </div>
+    );
+  };
 
   return (
     <div>
@@ -200,7 +415,7 @@ export default function ListaInventarioAnimales() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">Animales </BreadcrumbLink>
+                <BreadcrumbLink href="#">Animales</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
@@ -210,16 +425,17 @@ export default function ListaInventarioAnimales() {
           </Breadcrumb>
         </div>
       </header>
+
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         {alertMessage && alertType && (
           <Alert variant={alertType === "success" ? "default" : "destructive"}>
-            {alertType === "error" && <div className="h-4 w-4" />}
             <AlertTitle>
               {alertType === "success" ? "Éxito" : "Error"}
             </AlertTitle>
             <AlertDescription>{alertMessage}</AlertDescription>
           </Alert>
         )}
+
         <div>
           <header className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Lista de Inventario</h1>
@@ -227,12 +443,68 @@ export default function ListaInventarioAnimales() {
               Crear Nuevo Inventario
             </Button>
           </header>
+
           <Separator className="my-4" />
+
+          {/* Filtros */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <Input
+              placeholder="Filtrar por animal"
+              value={filters.animal}
+              onChange={(e) =>
+                setFilters({ ...filters, animal: e.target.value })
+              }
+            />
+
+            <Select
+              value={filters.motivoIngreso}
+              onValueChange={(value) =>
+                setFilters({ ...filters, motivoIngreso: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por motivo ingreso" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value=" ">Todos</SelectItem>
+                {Object.values(MotivoIngreso).map((motivo) => (
+                  <SelectItem key={motivo} value={motivo}>
+                    {motivo}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filters.estado}
+              onValueChange={(value) =>
+                setFilters({ ...filters, estado: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por estado" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value=" ">Todos</SelectItem>
+                <SelectItem value="activo">Activos en finca</SelectItem>
+                <SelectItem value="inactivo">Inactivos</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Input
+              placeholder="Filtrar por ubicación"
+              value={filters.ubicacion}
+              onChange={(e) =>
+                setFilters({ ...filters, ubicacion: e.target.value })
+              }
+            />
+          </div>
+
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-[100px]">Animal</TableHead>
-                <TableHead className="">Fecha Ingreso</TableHead>
+                <TableHead>Fecha Ingreso</TableHead>
                 <TableHead className="hidden md:table-cell">
                   Motivo Ingreso
                 </TableHead>
@@ -254,40 +526,42 @@ export default function ListaInventarioAnimales() {
                 <TableHead className="hidden md:table-cell">
                   Motivo Egreso
                 </TableHead>
-                <TableHead className="">Activo en Finca</TableHead>
+                <TableHead>Activo en Finca</TableHead>
                 <TableHead className="w-28 text-end">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {inventarios?.map((i) => (
-                <TableRow key={i.inventario_id}>
+              {paginatedInventarios.map((inventario) => (
+                <TableRow key={inventario.inventario_id}>
                   <TableCell className="font-medium">
-                    {i.animal.nombre_identificatorio}
+                    {inventario.animal.nombre_identificatorio || "N/A"}
                   </TableCell>
-                  <TableCell className="">{i.fecha_ingreso}</TableCell>
+                  <TableCell>{inventario.fecha_ingreso}</TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {i.motivo_ingreso}
+                    {inventario.motivo_ingreso}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    {i.proveedor_compra?.nombre ?? "N/A"}
+                    {inventario.proveedor_compra?.nombre || "N/A"}
                   </TableCell>
                   <TableCell className="hidden lg:table-cell">
-                    {i.precio_compra}
+                    {inventario.precio_compra
+                      ? `$${inventario.precio_compra.toLocaleString()}`
+                      : "N/A"}
                   </TableCell>
                   <TableCell className="hidden xl:table-cell">
-                    {i.ubicacion_actual?.nombre ?? "N/A"}
+                    {inventario.ubicacion_actual?.nombre || "N/A"}
                   </TableCell>
                   <TableCell className="hidden xl:table-cell">
-                    {i.lote_actual?.codigo_lote ?? "N/A"}
+                    {inventario.lote_actual?.codigo_lote || "N/A"}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {i.fecha_egreso}
+                    {inventario.fecha_egreso || "N/A"}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {i.motivo_egreso}
+                    {inventario.motivo_egreso || "N/A"}
                   </TableCell>
-                  <TableCell className="">
-                    {i.activo_en_finca ? (
+                  <TableCell>
+                    {inventario.activo_en_finca ? (
                       <Badge variant="outline">Activo</Badge>
                     ) : (
                       <Badge variant="destructive">Inactivo</Badge>
@@ -297,14 +571,16 @@ export default function ListaInventarioAnimales() {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleEditInventario(i)}
+                      onClick={() => handleEditInventario(inventario)}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="destructive"
                       size="icon"
-                      onClick={() => handleDeleteInventario(i.inventario_id)}
+                      onClick={() =>
+                        handleDeleteInventario(inventario.inventario_id)
+                      }
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
@@ -313,158 +589,52 @@ export default function ListaInventarioAnimales() {
               ))}
             </TableBody>
           </Table>
+
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <Pagination className="mt-4">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    isActive={currentPage > 1}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <span className="px-4">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    isActive={currentPage < totalPages}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </div>
 
+        {/* Diálogos */}
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogContent className="sm:max-w-[425px] ">
+          <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>Crear Nuevo Inventario</DialogTitle>
               <DialogDescription>
                 Ingresa los detalles del nuevo inventario.
               </DialogDescription>
             </DialogHeader>
-            <div
-              className="grid gap-4 py-4 max-h-96 overflow-y-auto"
-              style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
-            >
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="animalId" className="text-right">
-                  Animal
-                </Label>
-                <div className="col-span-3">
-                  <AnimalCombobox
-                    label="Animal"
-                    value={newAnimalId}
-                    onChange={(value) => setNewAnimalId(value ?? 0)}
-                  ></AnimalCombobox>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="fechaIngreso" className="text-right">
-                  Fecha Ingreso
-                </Label>
-                <div className="col-span-3">
-                  <DatePicker
-                    value={newFechaIngreso}
-                    onChange={(dateString) =>
-                      setNewFechaIngreso(dateString || "")
-                    }
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="motivoIngreso" className="text-right">
-                  Motivo Ingreso
-                </Label>
-                <Select
-                  value={newMotivoIngreso}
-                  onValueChange={(value) =>
-                    setNewMotivoIngreso(value as MotivoIngreso)
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Selecciona un motivo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {Object.values(MotivoIngreso).map((motivo) => (
-                        <SelectItem key={motivo} value={motivo}>
-                          {motivo}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="proveedorCompraId" className="text-right">
-                  Proveedor Compra
-                </Label>
-                <div className="col-span-3">
-                  <ProveedorCombobox
-                    label="Proveedor"
-                    value={newProveedorCompraId ?? null}
-                    onChange={(value) => setNewProveedorCompraId(value ?? null)}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="precioCompra" className="text-right">
-                  Precio Compra
-                </Label>
-                <Input
-                  id="precioCompra"
-                  value={newPrecioCompra?.toString() || ""}
-                  onChange={(e) =>
-                    setNewPrecioCompra(
-                      e.target.value ? Number(e.target.value) : null
-                    )
-                  }
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="ubicacionActualId" className="text-right">
-                  Ubicación Actual
-                </Label>
-                <div className="col-span-3">
-                  <UbicacionCombobox
-                    label="Ubicación"
-                    value={newUbicacionActualId ?? null}
-                    onChange={(value) => setNewUbicacionActualId(value ?? null)}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="loteActualId" className="text-right">
-                  Lote Actual
-                </Label>
-                <div className="col-span-3">
-                  <LoteCombobox
-                    label="Lote"
-                    value={newLoteActualId}
-                    onChange={(value) => setNewLoteActualId(value ?? null)}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="fechaEgreso" className="text-right">
-                  Fecha Egreso
-                </Label>
-                <div className="col-span-3">
-                  <DatePicker
-                    value={newFechaEgreso || undefined}
-                    onChange={(date) => setNewFechaEgreso(date || null)}
-                  ></DatePicker>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="motivoEgreso" className="text-right">
-                  Motivo Egreso
-                </Label>
-                <Select
-                  value={newMotivoEgreso || undefined}
-                  onValueChange={(value) =>
-                    setNewMotivoEgreso(value as MotivoEgreso)
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Selecciona un motivo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      {Object.values(MotivoEgreso).map((motivo) => (
-                        <SelectItem key={motivo} value={motivo}>
-                          {motivo}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            <InventarioForm control={control} setValue={setValue} />
             <DialogFooter>
-              <Button onClick={handleCreateInventario}>Crear Inventario</Button>
+              {/* Llama a handleSubmit de useForm y pasa tu función de manejo */}
+              <Button onClick={handleSubmit(handleCreateInventarioSubmit)}>
+                Crear Inventario
+              </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
@@ -474,159 +644,13 @@ export default function ListaInventarioAnimales() {
             <DialogHeader>
               <DialogTitle>Editar Inventario</DialogTitle>
               <DialogDescription>
-                Edita los detalles del inventario.
+                Actualiza los detalles del inventario.
               </DialogDescription>
             </DialogHeader>
-            <div
-              className="grid gap-4 py-4 max-h-96 overflow-y-auto"
-              style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
-            >
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="animalId" className="text-right">
-                  Animal
-                </Label>
-                <div className="col-span-3">
-                  <AnimalCombobox
-                    label="Animal"
-                    value={newAnimalId}
-                    onChange={(value) => setNewAnimalId(value ?? 0)}
-                  ></AnimalCombobox>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="fechaIngreso" className="text-right">
-                  Fecha Ingreso
-                </Label>
-                <div className="col-span-3">
-                  <DatePicker
-                    value={newFechaIngreso}
-                    onChange={(dateString) =>
-                      setNewFechaIngreso(dateString || "")
-                    }
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="motivoIngreso" className="text-right">
-                  Motivo Ingreso
-                </Label>
-                <Select
-                  value={newMotivoIngreso || undefined}
-                  onValueChange={(value) =>
-                    setNewMotivoIngreso(value as MotivoIngreso)
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Selecciona un motivo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="null">
-                        -- Sin seleccionar --
-                      </SelectItem>
-                      {Object.values(MotivoIngreso).map((motivo) => (
-                        <SelectItem key={motivo} value={motivo}>
-                          {motivo}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="proveedorCompraId" className="text-right">
-                  Proveedor Compra
-                </Label>
-                <div className="col-span-3">
-                  <ProveedorCombobox
-                    label="Proveedor"
-                    value={newProveedorCompraId ?? null}
-                    onChange={(value) => setNewProveedorCompraId(value ?? null)}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="precioCompra" className="text-right">
-                  Precio Compra
-                </Label>
-                <Input
-                  id="precioCompra"
-                  value={newPrecioCompra?.toString() || ""}
-                  onChange={(e) =>
-                    setNewPrecioCompra(
-                      e.target.value ? Number(e.target.value) : null
-                    )
-                  }
-                  className="col-span-3"
-                />
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="ubicacionActualId" className="text-right">
-                  Ubicación Actual
-                </Label>
-                <div className="col-span-3">
-                  <UbicacionCombobox
-                    label="Ubicación"
-                    value={newUbicacionActualId ?? null}
-                    onChange={(value) => setNewUbicacionActualId(value ?? null)}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="loteActualId" className="text-right">
-                  Lote Actual
-                </Label>
-                <div className="col-span-3">
-                  <LoteCombobox
-                    label="Lote"
-                    value={newLoteActualId}
-                    onChange={(value) => setNewLoteActualId(value ?? null)}
-                  />
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="fechaEgreso" className="text-right">
-                  Fecha Egreso
-                </Label>
-                <div className="col-span-3">
-                  <DatePicker
-                    value={newFechaEgreso || undefined}
-                    onChange={(date) => setNewFechaEgreso(date || null)}
-                  ></DatePicker>
-                </div>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <Label htmlFor="motivoEgreso" className="text-right">
-                  Motivo Egreso
-                </Label>
-                <Select
-                  value={newMotivoEgreso || undefined}
-                  onValueChange={(value) =>
-                    setNewMotivoEgreso(
-                      value === "null" ? null : (value as MotivoEgreso)
-                    )
-                  }
-                >
-                  <SelectTrigger className="col-span-3">
-                    <SelectValue placeholder="Selecciona un motivo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="null">
-                        -- Sin seleccionar --
-                      </SelectItem>
-                      {Object.values(MotivoEgreso).map((motivo) => (
-                        <SelectItem key={motivo} value={motivo}>
-                          {motivo}
-                        </SelectItem>
-                      ))}
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            <InventarioForm control={control} setValue={setValue} />
             <DialogFooter>
-              <Button onClick={handleUpdateInventario}>
+              {/* Llama a handleSubmit de useForm y pasa tu función de manejo */}
+              <Button onClick={handleSubmit(handleUpdateInventarioSubmit)}>
                 Actualizar Inventario
               </Button>
             </DialogFooter>

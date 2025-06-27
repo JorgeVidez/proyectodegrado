@@ -5,12 +5,10 @@ import {
   TipoMovimiento,
   MovimientoAnimal,
   MovimientoAnimalBase,
-  createMovimientoAnimal,
   updateMovimientoAnimal,
   deleteMovimientoAnimal,
 } from "@/hooks/useMovimientosAnimal";
-import { useEffect, useState } from "react";
-import React from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -55,6 +53,20 @@ import { LoteCombobox } from "@/components/LoteCombobox";
 import { ProveedorCombobox } from "@/components/ProveedorCombobox";
 import { ClienteCombobox } from "@/components/ClienteCombobox";
 import { useAuth } from "@/context/AuthContext";
+import { createMovimientoAnimal } from "../../../../hooks/useMovimientosAnimal";
+import {
+  Pagination,
+  PaginationContent,
+  PaginationItem,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
+import { Controller, useForm, UseFormReturn } from "react-hook-form";
+import {
+  movimientoAnimalFormSchema,
+  MovimientoAnimalFormSchema,
+} from "@/schemas/movimientoAnimalFormSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
 
 export default function ListaMovimientosAnimales() {
   const { movimientos, isLoading, isError, refresh } = useMovimientosAnimal();
@@ -62,166 +74,368 @@ export default function ListaMovimientosAnimales() {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
-
   const [selectedMovimiento, setSelectedMovimiento] =
     useState<MovimientoAnimal | null>(null);
-
-  const [newAnimalId, setNewAnimalId] = useState<number>(0);
-  const [newTipoMovimiento, setNewTipoMovimiento] = useState<TipoMovimiento>(
-    TipoMovimiento.IngresoCompra
-  );
-  const [newOrigenUbicacionId, setNewOrigenUbicacionId] = useState<
-    number | undefined
-  >(undefined);
-  const [newDestinoUbicacionId, setNewDestinoUbicacionId] = useState<
-    number | undefined
-  >(undefined);
-  const [newOrigenLoteId, setNewOrigenLoteId] = useState<number | undefined>(
-    undefined
-  );
-  const [newDestinoLoteId, setNewDestinoLoteId] = useState<number | undefined>(
-    undefined
-  );
-  const [newProveedorId, setNewProveedorId] = useState<number | undefined>(
-    undefined
-  );
-  const [newClienteId, setNewClienteId] = useState<number | undefined>(
-    undefined
-  );
-  const [newDocumentoReferencia, setNewDocumentoReferencia] = useState<
-    string | undefined
-  >(undefined);
-  const [newUsuarioId, setNewUsuarioId] = useState<number | undefined>(
-    undefined
-  );
-
-  // Set the user ID when the user object changes
-  React.useEffect(() => {
-    if (user?.usuario_id) {
-      setNewUsuarioId(user.usuario_id);
-    }
-  }, [user]);
-
-  const [newObservaciones, setNewObservaciones] = useState<string | undefined>(
-    undefined
-  );
-
   const [alertMessage, setAlertMessage] = useState<string | null>(null);
   const [alertType, setAlertType] = useState<"success" | "error" | null>(null);
+
+  // Reference for the form methods to be able to submit from the parent component
+  const createFormMethodsRef =
+    useRef<UseFormReturn<MovimientoAnimalFormSchema> | null>(null);
+
+  const editFormMethodsRef =
+    useRef<UseFormReturn<MovimientoAnimalFormSchema> | null>(null);
+
+  // Filtros y paginación
+  const [filters, setFilters] = useState({
+    animal: "",
+    tipoMovimiento: " ",
+    proveedor: "",
+    cliente: "",
+  });
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     if (isError) console.error(isError);
   }, [isError]);
 
-  const handleCreateMovimiento = async () => {
-    const newMovimiento: MovimientoAnimalBase = {
-      animal_id: newAnimalId,
-      tipo_movimiento: newTipoMovimiento,
-      origen_ubicacion_id: newOrigenUbicacionId,
-      destino_ubicacion_id: newDestinoUbicacionId,
-      origen_lote_id: newOrigenLoteId,
-      destino_lote_id: newDestinoLoteId,
-      proveedor_id: newProveedorId,
-      cliente_id: newClienteId,
-      documento_referencia: newDocumentoReferencia,
-      usuario_id: newUsuarioId,
-      observaciones: newObservaciones,
-    };
-    try {
-      await createMovimientoAnimal(newMovimiento);
-      setAlertMessage("Movimiento creado con éxito.");
-      setAlertType("success");
-      setIsCreateDialogOpen(false);
-      refresh();
-    } catch (err) {
-      setAlertMessage("Error al crear el movimiento.");
-      setAlertType("error");
-    }
+  const resetFormStates = () => {
+    setSelectedMovimiento(null);
+    createFormMethodsRef.current?.reset();
+    editFormMethodsRef.current?.reset();
+  };
+
+  const showAlert = (message: string, type: "success" | "error") => {
+    setAlertMessage(message);
+    setAlertType(type);
     setTimeout(() => {
       setAlertMessage(null);
       setAlertType(null);
     }, 3000);
   };
 
-  const handleEditMovimiento = (movimiento: MovimientoAnimal) => {
-    setSelectedMovimiento(movimiento);
-    setNewAnimalId(movimiento.animal_id);
-    setNewTipoMovimiento(movimiento.tipo_movimiento);
-    setNewOrigenUbicacionId(movimiento.origen_ubicacion_id);
-    setNewDestinoUbicacionId(movimiento.destino_ubicacion_id);
-    setNewOrigenLoteId(movimiento.origen_lote_id);
-    setNewDestinoLoteId(movimiento.destino_lote_id);
-    setNewProveedorId(movimiento.proveedor_id);
-    setNewClienteId(movimiento.cliente_id);
-    setNewDocumentoReferencia(movimiento.documento_referencia);
-    setNewUsuarioId(movimiento.usuario_id);
-    setNewObservaciones(movimiento.observaciones);
-    setIsEditDialogOpen(true);
+  const handleCreateMovimientoSubmit = async (
+    data: MovimientoAnimalFormSchema
+  ) => {
+    try {
+      // Ensure user_id is included from the authenticated user
+      const dataWithUserId = { ...data, usuario_id: user?.usuario_id };
+      console.log("Creating movimiento with data:", dataWithUserId);
+      await createMovimientoAnimal(dataWithUserId as MovimientoAnimalBase);
+      showAlert("Movimiento creado con éxito.", "success");
+      setIsCreateDialogOpen(false);
+      resetFormStates(); // Reset forms
+      refresh();
+    } catch (err) {
+      showAlert("Error al crear el movimiento.", "error");
+    }
   };
 
-  const handleUpdateMovimiento = async () => {
+  const handleEditMovimiento = (movimiento: MovimientoAnimal) => {
+    setSelectedMovimiento(movimiento); // esto hará que se pasen como defaultValues
+    setIsEditDialogOpen(true); // y el form se montará con esos valores
+  };
+
+  const handleUpdateMovimientoSubmit = async (
+    data: MovimientoAnimalFormSchema
+  ) => {
     if (selectedMovimiento) {
-      const updatedMovimiento: Partial<MovimientoAnimalBase> = {
-        animal_id: newAnimalId,
-        tipo_movimiento: newTipoMovimiento,
-        origen_ubicacion_id: newOrigenUbicacionId,
-        destino_ubicacion_id: newDestinoUbicacionId,
-        origen_lote_id: newOrigenLoteId,
-        destino_lote_id: newDestinoLoteId,
-        proveedor_id: newProveedorId,
-        cliente_id: newClienteId,
-        documento_referencia: newDocumentoReferencia,
-        usuario_id: newUsuarioId,
-        observaciones: newObservaciones,
-      };
       try {
         await updateMovimientoAnimal(
           selectedMovimiento.movimiento_id,
-          updatedMovimiento
+          data as Partial<MovimientoAnimalBase>
         );
-        setAlertMessage("Movimiento actualizado con éxito.");
-        setAlertType("success");
+        showAlert("Movimiento actualizado con éxito.", "success");
         setIsEditDialogOpen(false);
+        resetFormStates(); // Reset forms
         refresh();
       } catch (err) {
-        setAlertMessage("Error al actualizar el movimiento.");
-        setAlertType("error");
+        showAlert("Error al actualizar el movimiento.", "error");
       }
-      setTimeout(() => {
-        setAlertMessage(null);
-        setAlertType(null);
-      }, 3000);
     }
   };
 
   const handleDeleteMovimiento = async (movimientoId: number) => {
     try {
       await deleteMovimientoAnimal(movimientoId);
-      setAlertMessage("Movimiento eliminado con éxito.");
-      setAlertType("success");
+      showAlert("Movimiento eliminado con éxito.", "success");
       refresh();
     } catch (err) {
-      setAlertMessage("Error al eliminar el movimiento.");
-      setAlertType("error");
+      showAlert("Error al eliminar el movimiento.", "error");
     }
-    setTimeout(() => {
-      setAlertMessage(null);
-      setAlertType(null);
-    }, 3000);
   };
 
-  const handleOpenDetailsDialog = (movimiento: MovimientoAnimal) => {
-    setSelectedMovimiento(movimiento);
-    setIsDetailsDialogOpen(true);
-  };
+  // Filtrar movimientos
+  const filteredMovimientos =
+    movimientos?.filter((movimiento) => {
+      return (
+        (movimiento.animal.nombre_identificatorio
+          ?.toLowerCase()
+          .includes(filters.animal.toLowerCase()) ||
+          filters.animal === "") &&
+        (filters.tipoMovimiento === " " ||
+          movimiento.tipo_movimiento === filters.tipoMovimiento) &&
+        (filters.proveedor === "" ||
+          movimiento.proveedor?.nombre
+            .toLowerCase()
+            .includes(filters.proveedor.toLowerCase())) &&
+        (filters.cliente === "" ||
+          movimiento.cliente?.nombre
+            .toLowerCase()
+            .includes(filters.cliente.toLowerCase()))
+      );
+    }) || [];
 
-  const handleCloseDetailsDialog = () => {
-    setSelectedMovimiento(null);
-    setIsDetailsDialogOpen(false);
-  };
+  // Paginación
+  const totalPages = Math.ceil(filteredMovimientos.length / itemsPerPage);
+  const paginatedMovimientos = filteredMovimientos.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   if (isLoading) return <div>Cargando...</div>;
   if (isError) return <div>Error al cargar movimientos</div>;
+
+  const MovimientoForm = ({
+    onSubmit,
+    defaultValues,
+    setFormMethods, // New prop to pass useForm methods back to parent
+  }: {
+    onSubmit: (data: MovimientoAnimalFormSchema) => void;
+    defaultValues?: MovimientoAnimalFormSchema;
+    setFormMethods?: (
+      methods: UseFormReturn<MovimientoAnimalFormSchema>
+    ) => void;
+  }) => {
+    const methods = useForm<MovimientoAnimalFormSchema>({
+      resolver: zodResolver(movimientoAnimalFormSchema),
+      defaultValues: defaultValues || {
+        animal_id: 0,
+        tipo_movimiento: TipoMovimiento.IngresoCompra,
+        origen_ubicacion_id: undefined,
+        destino_ubicacion_id: undefined,
+        origen_lote_id: undefined,
+        destino_lote_id: undefined,
+        proveedor_id: undefined,
+        cliente_id: undefined,
+        documento_referencia: "",
+        observaciones: "",
+        usuario_id: undefined, // Will be set by the parent
+      },
+    });
+
+    useEffect(() => {
+      if (defaultValues) {
+        const isDifferent =
+          JSON.stringify(methods.getValues()) !== JSON.stringify(defaultValues);
+        if (isDifferent) {
+          methods.reset(defaultValues);
+        }
+      }
+    }, [defaultValues]);
+
+    useEffect(() => {
+      if (setFormMethods) {
+        setFormMethods(methods);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
+
+    const renderField = (
+      label: string,
+      id: string,
+      children: React.ReactNode
+    ) => (
+      <div className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor={id} className="text-right">
+          {label}
+        </Label>
+        <div className="col-span-3">{children}</div>
+      </div>
+    );
+
+    return (
+      <form
+        onSubmit={methods.handleSubmit(onSubmit)} // Use methods.handleSubmit
+        className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 gap-4 py-4 max-h-96 overflow-y-auto"
+      >
+        {renderField(
+          "Animal",
+          "animalId",
+          <Controller
+            name="animal_id"
+            control={methods.control}
+            render={({ field }) => (
+              <AnimalCombobox
+                label="animal"
+                value={field.value}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Tipo Movimiento",
+          "tipoMovimiento",
+          <Controller
+            name="tipo_movimiento"
+            control={methods.control}
+            render={({ field }) => (
+              <Select value={field.value} onValueChange={field.onChange}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar Tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.values(TipoMovimiento).map((tipo) => (
+                    <SelectItem key={tipo} value={tipo}>
+                      {tipo}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          />
+        )}
+
+        {renderField(
+          "Origen Ubicación",
+          "origenUbicacionId",
+          <Controller
+            name="origen_ubicacion_id"
+            control={methods.control}
+            render={({ field }) => (
+              <UbicacionCombobox
+                label="origen"
+                value={field.value ?? null}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Destino Ubicación",
+          "destinoUbicacionId",
+          <Controller
+            name="destino_ubicacion_id"
+            control={methods.control}
+            render={({ field }) => (
+              <UbicacionCombobox
+                label="destino"
+                value={field.value ?? null}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Origen Lote",
+          "origenLoteId",
+          <Controller
+            name="origen_lote_id"
+            control={methods.control}
+            render={({ field }) => (
+              <LoteCombobox
+                label="origen"
+                value={field.value ?? null}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Destino Lote",
+          "destinoLoteId",
+          <Controller
+            name="destino_lote_id"
+            control={methods.control}
+            render={({ field }) => (
+              <LoteCombobox
+                label="destino"
+                value={field.value ?? null}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Proveedor",
+          "proveedorId",
+          <Controller
+            name="proveedor_id"
+            control={methods.control}
+            render={({ field }) => (
+              <ProveedorCombobox
+                label="proveedor"
+                value={field.value ?? null}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Cliente",
+          "clienteId",
+          <Controller
+            name="cliente_id"
+            control={methods.control}
+            render={({ field }) => (
+              <ClienteCombobox
+                label="cliente"
+                value={field.value ?? undefined}
+                onChange={field.onChange}
+              />
+            )}
+          />
+        )}
+
+        {renderField(
+          "Documento Referencia",
+          "documentoReferencia",
+          <Controller
+            name="documento_referencia"
+            control={methods.control}
+            render={({ field }) => (
+              <Select
+                value={field.value || ""}
+                onValueChange={(value) =>
+                  field.onChange(value === " " ? null : value)
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Seleccionar Documento" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value=" ">Ninguno</SelectItem>
+                  <SelectItem value="Factura">Factura</SelectItem>
+                  <SelectItem value="Recibo">Recibo</SelectItem>
+                  <SelectItem value="Otros">Otros</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+          />
+        )}
+
+        {renderField(
+          "Observaciones",
+          "observaciones",
+          <Controller
+            name="observaciones"
+            control={methods.control}
+            render={({ field }) => (
+              <Input {...field} value={field.value || ""} />
+            )}
+          />
+        )}
+      </form>
+    );
+  };
 
   return (
     <div className="flex h-screen flex-col">
@@ -232,29 +446,27 @@ export default function ListaMovimientosAnimales() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="#">
-                  Building Your Application
-                </BreadcrumbLink>
+                <BreadcrumbLink href="#">Animales</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
-                <BreadcrumbPage>Data Fetching</BreadcrumbPage>
+                <BreadcrumbPage>Movimientos</BreadcrumbPage>
               </BreadcrumbItem>
             </BreadcrumbList>
           </Breadcrumb>
         </div>
       </header>
-      {/* ... (Breadcrumb, Header, Alert, etc. - similar a ListaInventarioAnimales) */}
+
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         {alertMessage && alertType && (
           <Alert variant={alertType === "success" ? "default" : "destructive"}>
-            {alertType === "error" && <div className="h-4 w-4" />}
             <AlertTitle>
               {alertType === "success" ? "Éxito" : "Error"}
             </AlertTitle>
             <AlertDescription>{alertMessage}</AlertDescription>
           </Alert>
         )}
+
         <div>
           <header className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">Lista de Movimientos</h1>
@@ -262,25 +474,68 @@ export default function ListaMovimientosAnimales() {
               Crear Nuevo Movimiento
             </Button>
           </header>
+
           <Separator className="my-4" />
+
+          {/* Filtros */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+            <Input
+              placeholder="Filtrar por animal"
+              value={filters.animal}
+              onChange={(e) =>
+                setFilters({ ...filters, animal: e.target.value })
+              }
+            />
+
+            <Select
+              value={filters.tipoMovimiento}
+              onValueChange={(value) =>
+                setFilters({ ...filters, tipoMovimiento: value })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Filtrar por tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value=" ">Todos</SelectItem>
+                {Object.values(TipoMovimiento).map((tipo) => (
+                  <SelectItem key={tipo} value={tipo}>
+                    {tipo.replace(/([A-Z])/g, " $1").trim()}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Input
+              placeholder="Filtrar por proveedor"
+              value={filters.proveedor}
+              onChange={(e) =>
+                setFilters({ ...filters, proveedor: e.target.value })
+              }
+            />
+
+            <Input
+              placeholder="Filtrar por cliente"
+              value={filters.cliente}
+              onChange={(e) =>
+                setFilters({ ...filters, cliente: e.target.value })
+              }
+            />
+          </div>
+
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="">Animal ID</TableHead>
+                <TableHead>Animal</TableHead>
                 <TableHead>Tipo Movimiento</TableHead>
-
                 <TableHead className="hidden lg:table-cell">
-                  Proveedor ID
+                  Proveedor
                 </TableHead>
-                <TableHead className="hidden lg:table-cell">
-                  Cliente ID
-                </TableHead>
+                <TableHead className="hidden lg:table-cell">Cliente</TableHead>
                 <TableHead className="hidden md:table-cell">
-                  Documento Referencia
+                  Documento
                 </TableHead>
-                <TableHead className="hidden md:table-cell">
-                  Usuario ID
-                </TableHead>
+                <TableHead className="hidden md:table-cell">Usuario</TableHead>
                 <TableHead className="hidden md:table-cell">
                   Observaciones
                 </TableHead>
@@ -288,511 +543,238 @@ export default function ListaMovimientosAnimales() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {movimientos?.map((m) => (
-                <TableRow key={m.movimiento_id}>
-                  <TableCell className="font-medium">{m.animal_id}</TableCell>
-                  <TableCell className="">{m.tipo_movimiento}</TableCell>
-
-                  <TableCell className="hidden lg:table-cell">
-                    {m.proveedor_id}
-                  </TableCell>
-                  <TableCell className="hidden lg:table-cell">
-                    {m.cliente_id}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {m.documento_referencia}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {m.usuario_id}
-                  </TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {m.observaciones}
-                  </TableCell>
+              {paginatedMovimientos.map((movimiento) => (
+                <TableRow key={movimiento.movimiento_id}>
                   <TableCell>
+                    {movimiento.animal.nombre_identificatorio}
+                  </TableCell>
+                  <TableCell>{movimiento.tipo_movimiento}</TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {movimiento.proveedor?.nombre || "N/A"}
+                  </TableCell>
+                  <TableCell className="hidden lg:table-cell">
+                    {movimiento.cliente?.nombre || "N/A"}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {movimiento.documento_referencia || "N/A"}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {movimiento.usuario?.nombre || "N/A"}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {movimiento.observaciones || "N/A"}
+                  </TableCell>
+                  <TableCell className="flex gap-2">
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleOpenDetailsDialog(m)}
-                      className="mr-2"
+                      onClick={() => setIsDetailsDialogOpen(true)}
                     >
-                      <Eye />
+                      <Eye className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleEditMovimiento(m)}
+                      onClick={() => handleEditMovimiento(movimiento)}
                     >
-                      <Pencil></Pencil>
+                      <Pencil className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="destructive"
                       size="icon"
-                      onClick={() => handleDeleteMovimiento(m.movimiento_id)}
+                      onClick={() =>
+                        handleDeleteMovimiento(movimiento.movimiento_id)
+                      }
                     >
-                      <Trash2></Trash2>
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+
+          {/* Paginación */}
+          {totalPages > 1 && (
+            <Pagination className="mt-4">
+              <PaginationContent>
+                <PaginationItem>
+                  <PaginationPrevious
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.max(prev - 1, 1))
+                    }
+                    isActive={currentPage > 1}
+                  />
+                </PaginationItem>
+                <PaginationItem>
+                  <span className="px-4">
+                    Página {currentPage} de {totalPages}
+                  </span>
+                </PaginationItem>
+                <PaginationItem>
+                  <PaginationNext
+                    onClick={() =>
+                      setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+                    }
+                    isActive={currentPage < totalPages}
+                  />
+                </PaginationItem>
+              </PaginationContent>
+            </Pagination>
+          )}
         </div>
-      </div>
 
-      <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-        <DialogContent className="max-w-sm  sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
-          <DialogHeader>
-            <DialogTitle>Crear Nuevo Movimiento</DialogTitle>
-            <DialogDescription>
-              Ingresa los detalles del nuevo movimiento.
-            </DialogDescription>
-          </DialogHeader>
-          <div
-            className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4 max-h-96 overflow-y-auto"
-            style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
-          >
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="animalId" className="text-right ">
-                Animal
-              </Label>
-              <div className="col-span-3">
-                <AnimalCombobox
-                  value={newAnimalId}
-                  onChange={(value) => setNewAnimalId(Number(value))}
-                  label="Animal"
-                ></AnimalCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="tipoMovimiento" className="text-right ">
-                Tipo Movimiento
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={newTipoMovimiento}
-                  onValueChange={(e) =>
-                    setNewTipoMovimiento(e as TipoMovimiento)
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar Sexo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(TipoMovimiento).map((tipo) => (
-                      <SelectItem key={tipo} value={tipo}>
-                        {tipo.replace(/([A-Z])/g, " $1").trim()}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            {/* ... (Inputs para otros campos: origen_ubicacion_id, destino_ubicacion_id, etc.) */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="origenUbicacionId" className="text-right ">
-                Origen Ubicación
-              </Label>
-              <div className="col-span-3">
-                <UbicacionCombobox
-                  value={newOrigenUbicacionId ?? null}
-                  onChange={(value) => setNewOrigenUbicacionId(Number(value))}
-                  label="Ubicación de Origen"
-                ></UbicacionCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="destinoUbicacionId" className="text-right ">
-                Destino Ubicación
-              </Label>
-              <div className="col-span-3">
-                <UbicacionCombobox
-                  value={newDestinoUbicacionId ?? null}
-                  onChange={(value) => setNewDestinoUbicacionId(Number(value))}
-                  label="Ubicación de Destino"
-                ></UbicacionCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="origenLoteId" className="text-right ">
-                Origen Lote
-              </Label>
-              <div className="col-span-3">
-                <LoteCombobox
-                  label="Lote de Origen"
-                  value={newOrigenLoteId ?? null}
-                  onChange={(value) => setNewOrigenLoteId(Number(value))}
-                ></LoteCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="destinoLoteId" className="text-right ">
-                Destino Lote
-              </Label>
-              <div className="col-span-3">
-                <LoteCombobox
-                  label="Lote de Destino"
-                  value={newDestinoLoteId ?? null}
-                  onChange={(value) => setNewDestinoLoteId(Number(value))}
-                ></LoteCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="proveedorId" className="text-right ">
-                Proveedor
-              </Label>
-              <div className="col-span-3">
-                <ProveedorCombobox
-                  value={newProveedorId ?? null}
-                  onChange={(value) => setNewProveedorId(Number(value))}
-                  label="Proveedor"
-                ></ProveedorCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="clienteId" className="text-right">
-                Cliente
-              </Label>
-              <div className="col-span-3">
-                <ClienteCombobox
-                  value={newClienteId ?? undefined}
-                  onChange={(value) => setNewClienteId(Number(value))}
-                  label="Cliente"
-                ></ClienteCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="documentoReferencia" className="text-right ">
-                Documento Referencia
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={newDocumentoReferencia || ""}
-                  onValueChange={(e) => setNewDocumentoReferencia(e)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar Documento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ninguno">Ninguno</SelectItem>
-                    <SelectItem value="Factura">Factura</SelectItem>
-                    <SelectItem value="Recibo">Recibo</SelectItem>
-                    <SelectItem value="Otros">Otros</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+        {/* Diálogos */}
+        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+          <DialogContent className="max-w-sm sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
+            <DialogHeader>
+              <DialogTitle>Crear Nuevo Movimiento</DialogTitle>
+              <DialogDescription>
+                Ingresa los detalles del nuevo movimiento.
+              </DialogDescription>
+            </DialogHeader>
+            <MovimientoForm
+              setFormMethods={(methods) => {
+                createFormMethodsRef.current = methods;
+              }} // Pass setter to get methods
+              onSubmit={handleCreateMovimientoSubmit} // Pass the submit handler
+            />
 
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="documentoReferencia" className="text-right ">
-                Usuario
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="usuarioId"
-                  value={user?.nombre || ""}
-                  className="w-full"
-                  disabled
-                />
-                {user && user.usuario_id && (
-                  <input
-                    type="hidden"
-                    value={user.usuario_id}
-                    onChange={() => {}}
-                  />
-                )}
-              </div>
-            </div>
-
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label
-                htmlFor="observaciones"
-                className="text-right overflow-hidden"
+            <DialogFooter>
+              <Button
+                onClick={() =>
+                  createFormMethodsRef.current?.handleSubmit(
+                    handleCreateMovimientoSubmit
+                  )()
+                }
               >
-                Observaciones
-              </Label>
-              <Input
-                id="observaciones"
-                value={newObservaciones || ""}
-                onChange={(e) => setNewObservaciones(e.target.value)}
-                className="col-span-3"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleCreateMovimiento}>Crear Movimiento</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+                Crear Movimiento
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="max-w-sm  sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
-          <DialogHeader>
-            <DialogTitle>Editar Movimiento</DialogTitle>
-            <DialogDescription>
-              Edita los detalles del movimiento.
-            </DialogDescription>
-          </DialogHeader>
-          <div
-            className="grid sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2  gap-4 py-4 max-h-96 overflow-y-auto"
-            style={{ scrollbarWidth: "thin", scrollbarColor: "#fff #09090b" }}
-          >
-            {/* ... (Inputs para editar los campos, similar al diálogo de creación) */}
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="animalId" className="text-right">
-                Animal
-              </Label>
-              <div className="col-span-3">
-                <AnimalCombobox
-                  value={newAnimalId}
-                  onChange={(value) => setNewAnimalId(Number(value))}
-                  label="Animal"
-                ></AnimalCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="tipoMovimiento" className="text-right">
-                Tipo Movimiento
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={newTipoMovimiento}
-                  onValueChange={(e) =>
-                    setNewTipoMovimiento(e as TipoMovimiento)
-                  }
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar Sexo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.values(TipoMovimiento).map((tipo) => (
-                      <SelectItem key={tipo} value={tipo}>
-                        {tipo.replace(/([A-Z])/g, " $1").trim()}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="origenUbicacionId" className="text-right">
-                Origen Ubicación ID
-              </Label>
-              <div className="col-span-3">
-                <UbicacionCombobox
-                  value={newOrigenUbicacionId ?? null}
-                  onChange={(value) => setNewOrigenUbicacionId(Number(value))}
-                  label="Ubicación de Origen"
-                ></UbicacionCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="destinoUbicacionId" className="text-right">
-                Destino Ubicación ID
-              </Label>
-              <div className="col-span-3">
-                <UbicacionCombobox
-                  value={newDestinoUbicacionId ?? null}
-                  onChange={(value) => setNewDestinoUbicacionId(Number(value))}
-                  label="Ubicación de Destino"
-                ></UbicacionCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="origenLoteId" className="text-right">
-                Origen Lote ID
-              </Label>
-              <div className="col-span-3">
-                <LoteCombobox
-                  label="Lote de Origen"
-                  value={newOrigenLoteId ?? null}
-                  onChange={(value) => setNewOrigenLoteId(Number(value))}
-                ></LoteCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="destinoLoteId" className="text-right">
-                Destino Lote ID
-              </Label>
-              <div className="col-span-3">
-                <LoteCombobox
-                  label="Lote de Destino"
-                  value={newDestinoLoteId ?? null}
-                  onChange={(value) => setNewDestinoLoteId(Number(value))}
-                ></LoteCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="proveedorId" className="text-right">
-                Proveedor ID
-              </Label>
-              <div className="col-span-3">
-                <ProveedorCombobox
-                  value={newProveedorId ?? null}
-                  onChange={(value) => setNewProveedorId(Number(value))}
-                  label="Proveedor"
-                ></ProveedorCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="clienteId" className="text-right">
-                Cliente ID
-              </Label>
-              <div className="col-span-3">
-                <ClienteCombobox
-                  value={newClienteId ?? undefined}
-                  onChange={(value) => setNewClienteId(Number(value))}
-                  label="Cliente"
-                ></ClienteCombobox>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="documentoReferencia" className="text-right">
-                Documento Referencia
-              </Label>
-              <div className="col-span-3">
-                <Select
-                  value={newDocumentoReferencia || ""}
-                  onValueChange={(e) => setNewDocumentoReferencia(e)}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Seleccionar Documento" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Ninguno">Ninguno</SelectItem>
-                    <SelectItem value="Factura">Factura</SelectItem>
-                    <SelectItem value="Recibo">Recibo</SelectItem>
-                    <SelectItem value="Otros">Otros</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="usuarioId" className="text-right">
-                Usuario ID
-              </Label>
-              <div className="col-span-3">
-                <Input
-                  id="usuarioId"
-                  value={user?.nombre || ""}
-                  className="w-full"
-                  disabled
-                />
-                {user && user.usuario_id && (
-                  <input
-                    type="hidden"
-                    value={user.usuario_id}
-                    onChange={() => {}}
-                  />
-                )}
-              </div>
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label
-                htmlFor="observaciones"
-                className="text-right overflow-hidden"
-              >
-                Observaciones
-              </Label>
-              <Input
-                id="observaciones"
-                value={newObservaciones || ""}
-                onChange={(e) => setNewObservaciones(e.target.value)}
-                className="col-span-3"
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent className="max-w-sm sm:max-w-[600px] md:max-w-[750px] lg:max-w-[950px]">
+            <DialogHeader>
+              <DialogTitle>Editar Movimiento</DialogTitle>
+              <DialogDescription>
+                Actualiza los detalles del movimiento.
+              </DialogDescription>
+            </DialogHeader>
+            {selectedMovimiento && ( // Only render form if selectedMovimiento exists
+              <MovimientoForm
+                setFormMethods={(methods) => {
+                  createFormMethodsRef.current = methods; // o editFormMethodsRef.current
+                }}
+                defaultValues={{
+                  ...selectedMovimiento,
+                  documento_referencia:
+                    selectedMovimiento.documento_referencia ?? "",
+                  observaciones: selectedMovimiento.observaciones ?? "",
+                }}
+                onSubmit={handleUpdateMovimientoSubmit} // Pass the submit handler
               />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button onClick={handleUpdateMovimiento}>
-              Actualizar Movimiento
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-      <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>Detalles del Movimiento</DialogTitle>
-            <DialogDescription>
-              Información detallada del movimiento seleccionado.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {selectedMovimiento && (
-              <>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="font-semibold">ID Movimiento:</Label>
-                    <p>{selectedMovimiento.movimiento_id}</p>
-                  </div>
-                  <div>
-                    <Label className="font-semibold">Animal ID:</Label>
-                    <p>{selectedMovimiento.animal_id}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="font-semibold">Tipo Movimiento:</Label>
-                    <p>{selectedMovimiento.tipo_movimiento}</p>
-                  </div>
-                  <div>
-                    <Label className="font-semibold">
-                      Origen Ubicación ID:
-                    </Label>
-                    <p>{selectedMovimiento.origen_ubicacion_id ?? "N/A"}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="font-semibold">
-                      Destino Ubicación ID:
-                    </Label>
-                    <p>{selectedMovimiento.destino_ubicacion_id ?? "N/A"}</p>
-                  </div>
-                  <div>
-                    <Label className="font-semibold">Origen Lote ID:</Label>
-                    <p>{selectedMovimiento.origen_lote_id ?? "N/A"}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="font-semibold">Destino Lote ID:</Label>
-                    <p>{selectedMovimiento.destino_lote_id ?? "N/A"}</p>
-                  </div>
-                  <div>
-                    <Label className="font-semibold">Proveedor ID:</Label>
-                    <p>{selectedMovimiento.proveedor_id ?? "N/A"}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="font-semibold">Cliente ID:</Label>
-                    <p>{selectedMovimiento.cliente_id ?? "N/A"}</p>
-                  </div>
-                  <div>
-                    <Label className="font-semibold">
-                      Documento Referencia:
-                    </Label>
-                    <p>{selectedMovimiento.documento_referencia ?? "N/A"}</p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="font-semibold">Usuario ID:</Label>
-                    <p>{selectedMovimiento.usuario_id ?? "N/A"}</p>
-                  </div>
-                  <div>
-                    <Label className="font-semibold">Observaciones:</Label>
-                    <p>{selectedMovimiento.observaciones ?? "N/A"}</p>
-                  </div>
-                </div>
-              </>
             )}
-          </div>
-          <DialogFooter>
-            <Button onClick={handleCloseDetailsDialog}>Cerrar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+
+            <DialogFooter>
+              <Button
+                onClick={() =>
+                  createFormMethodsRef.current?.handleSubmit(
+                    handleUpdateMovimientoSubmit
+                  )()
+                }
+              >
+                Actualizar Movimiento
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog
+          open={isDetailsDialogOpen}
+          onOpenChange={setIsDetailsDialogOpen}
+        >
+          <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+              <DialogTitle>Detalles del Movimiento</DialogTitle>
+              <DialogDescription>
+                Información detallada del movimiento seleccionado.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              {selectedMovimiento && (
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    {
+                      label: "ID Movimiento",
+                      value: selectedMovimiento.movimiento_id,
+                    },
+                    {
+                      label: "Animal",
+                      value: selectedMovimiento.animal.nombre_identificatorio,
+                    },
+                    {
+                      label: "Tipo Movimiento",
+                      value: selectedMovimiento.tipo_movimiento,
+                    },
+                    {
+                      label: "Origen Ubicación",
+                      value:
+                        selectedMovimiento.origen_ubicacion?.nombre || "N/A",
+                    },
+                    {
+                      label: "Destino Ubicación",
+                      value:
+                        selectedMovimiento.destino_ubicacion?.nombre || "N/A",
+                    },
+                    {
+                      label: "Origen Lote",
+                      value:
+                        selectedMovimiento.origen_lote?.codigo_lote || "N/A",
+                    },
+                    {
+                      label: "Destino Lote",
+                      value:
+                        selectedMovimiento.destino_lote?.codigo_lote || "N/A",
+                    },
+                    {
+                      label: "Proveedor",
+                      value: selectedMovimiento.proveedor?.nombre || "N/A",
+                    },
+                    {
+                      label: "Cliente",
+                      value: selectedMovimiento.cliente?.nombre || "N/A",
+                    },
+                    {
+                      label: "Documento Referencia",
+                      value: selectedMovimiento.documento_referencia || "N/A",
+                    },
+                    {
+                      label: "Usuario",
+                      value: selectedMovimiento.usuario?.nombre || "N/A",
+                    },
+                    {
+                      label: "Observaciones",
+                      value: selectedMovimiento.observaciones || "N/A",
+                    },
+                  ].map((item, index) => (
+                    <div key={index}>
+                      <Label className="font-semibold">{item.label}:</Label>
+                      <p>{item.value}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            <DialogFooter>
+              <Button onClick={() => setIsDetailsDialogOpen(false)}>
+                Cerrar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      </div>
     </div>
   );
 }
