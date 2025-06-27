@@ -16,9 +16,14 @@ import {
 interface DatePickerProps {
   value: string | undefined; // Cambiado a string | undefined
   onChange: (dateString: string | undefined) => void; // Cambiado a string | undefined
+  placeholder?: string; // Añadido para compatibilidad con placeholder
 }
 
-export function DatePicker({ value, onChange }: DatePickerProps) {
+export function DatePicker({
+  value,
+  onChange,
+  placeholder = "Seleccionar fecha",
+}: DatePickerProps) {
   const [date, setDate] = React.useState<Date | undefined>(
     value ? parseISO(value) : undefined
   );
@@ -39,7 +44,7 @@ export function DatePicker({ value, onChange }: DatePickerProps) {
           )}
         >
           <CalendarIcon className="mr-2 h-4 w-4" />
-          {date ? format(date, "dd/MM/yyyy") : <span>Seleccionar fecha</span>}
+          {date ? format(date, "dd/MM/yyyy") : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
