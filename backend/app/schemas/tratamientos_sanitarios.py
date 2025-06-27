@@ -1,6 +1,13 @@
 from pydantic import BaseModel, Field
 from typing import Optional
 from datetime import date
+from app.schemas.movimientos_animal import AnimalOutShort, UsuarioOut, ProveedorOut
+class MedicamentoOut(BaseModel):
+    medicamento_id: int
+    nombre_comercial: str
+    principio_activo: Optional[str] = None 
+    class Config:
+        from_attributes = True
 
 class TratamientosSanitariosBase(BaseModel):
     animal_id: int
@@ -30,6 +37,10 @@ class TratamientosSanitariosUpdate(TratamientosSanitariosBase):
 
 class TratamientosSanitariosOut(TratamientosSanitariosBase):
     tratamiento_id: int
+    animal: AnimalOutShort  
+    medicamento: Optional[MedicamentoOut] = None  
+    proveedor_medicamento: Optional[ProveedorOut] = None
+    responsable_veterinario: Optional[UsuarioOut] = None
 
     class Config:
         from_attributes = True
