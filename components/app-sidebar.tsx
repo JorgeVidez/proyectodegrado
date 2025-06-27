@@ -35,7 +35,7 @@ import { title } from "process";
 import { Item } from "@radix-ui/react-dropdown-menu";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const { user, hasPermission } = useAuth(); // Obtiene el usuario y hasPermission del AuthContext
+  const { user } = useAuth(); // Obtiene el usuario y hasPermission del AuthContext
 
   // Si el usuario no está autenticado, usa valores por defecto
   const userData = user
@@ -75,7 +75,10 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         url: "/resumen",
         icon: LayoutDashboard, // Reemplaza con tu icono
         isActive: false,
-        items: [{ title: "General", url: "/dashboard/resumen/general" }],
+        items: [
+          { title: "General", url: "/dashboard/resumen/general" },
+          { title: "Reportes", url: "/dashboard/resumen/reportes" },
+        ],
       },
       {
         title: "Animales",
@@ -119,7 +122,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         isActive: false,
         items: [
           { title: "Registro", url: "/dashboard/ventas/registro" },
-          { title: "Detalles", url: "/dashboard/ventas/detalles" },
           { title: "Clientes", url: "/dashboard/ventas/clientes" },
         ],
       },
@@ -140,7 +142,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         icon: UserRoundCog, // Reemplaza con tu icono
         isActive: false,
         items: [
-          { title: "Reportes", url: "/dashboard/administracion/reportes" },
           { title: "Usuarios", url: "/dashboard/administracion/usuarios" },
           { title: "Roles", url: "/dashboard/administracion/roles" },
           { title: "Especies", url: "/dashboard/administracion/especies" },
@@ -161,13 +162,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
     ],
   };
 
-  // Filtrar el menú basado en los permisos del usuario
-  const filteredNavMain = data.navMain.filter((item) =>
-    hasPermission(item.url)
-  );
-  const filteredProjects = data.projects.filter((project) =>
-    hasPermission(project.url)
-  );
+   
 
   return (
     <Sidebar collapsible="icon" {...props}>
