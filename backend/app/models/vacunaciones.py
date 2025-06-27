@@ -18,7 +18,7 @@ class Vacunaciones(Base):
     proxima_vacunacion_sugerida = Column(Date)
     observaciones = Column(TEXT)
 
-    animal = relationship("Animal", backref="vacunaciones")
-    tipo_vacuna = relationship("TipoVacuna", backref="vacunaciones")
-    proveedor = relationship("Proveedor", backref="vacunaciones")
-    responsable = relationship("Usuario", backref="vacunaciones")
+    animal = relationship("Animal", backref="vacunaciones", lazy='selectin')
+    tipo_vacuna = relationship("TipoVacuna", backref="vacunaciones", lazy="selectin")
+    proveedor = relationship("Proveedor", backref="vacunaciones", lazy="selectin")
+    responsable = relationship("Usuario", backref="vacunaciones", lazy="selectin")
