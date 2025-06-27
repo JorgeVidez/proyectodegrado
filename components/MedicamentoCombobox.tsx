@@ -56,15 +56,36 @@ export function MedicamentoCombobox({
   );
 
   const handleSelect = (searchText: string) => {
-    const selected = medicamentos?.find(
-      (med) =>
-        med.nombre_comercial?.toLowerCase() === searchText.toLowerCase() ||
-        med.principio_activo?.toLowerCase() === searchText.toLowerCase() ||
-        med.medicamento_id.toString() === searchText
-    );
+    // Opcional: añade logs para depuración si el problema persiste
+    console.log("searchText recibido:", searchText);
+
+    const trimmedSearchText = searchText.toLowerCase().trim(); // Normalizamos el texto de búsqueda
+
+    const selected = medicamentos?.find((med) => {
+      // Normalizamos cada campo del medicamento antes de comparar
+      const trimmedNombreComercial = med.nombre_comercial?.toLowerCase().trim();
+      const trimmedPrincipioActivo = med.principio_activo?.toLowerCase().trim();
+
+      const match =
+        trimmedNombreComercial === trimmedSearchText ||
+        trimmedPrincipioActivo === trimmedSearchText ||
+        med.medicamento_id.toString() === trimmedSearchText; // Esta es poco probable que coincida con texto
+
+      // Opcional: logs de depuración para ver cada comparación
+      // console.log(`  Comparando '${trimmedSearchText}' con:`);
+      // console.log(`    Nombre Comercial ('${trimmedNombreComercial}'): ${trimmedNombreComercial === trimmedSearchText}`);
+      // console.log(`    Principio Activo ('${trimmedPrincipioActivo}'): ${trimmedPrincipioActivo === trimmedSearchText}`);
+      // console.log(`    ID ('${med.medicamento_id.toString()}'): ${med.medicamento_id.toString() === trimmedSearchText}`);
+      // console.log(`  Resultado de la iteración: ${match}`);
+
+      return match;
+    });
+
+    console.log("Medicamento seleccionado:", selected); // Verifica el resultado de la búsqueda
+
     const medicamentoId = selected ? selected.medicamento_id : undefined;
     onChange(medicamentoId);
-    console.log(`${label} seleccionado:`, medicamentoId);
+    console.log(`${label} seleccionado:`, medicamentoId); // Ahora debería mostrar un ID si se encuentra
     setOpen(false);
   };
 
