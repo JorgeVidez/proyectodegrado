@@ -50,14 +50,20 @@ export function TipoVacunaCombobox({
   );
 
   const handleSelect = (searchText: string) => {
+    console.log("Texto seleccionado:", searchText); // Keep for initial check
+
     const selected = tiposVacuna?.find(
       (tv) =>
-        tv.nombre_vacuna.toLowerCase() === searchText.toLowerCase() ||
+        // **Apply .trim() here to tv.nombre_vacuna before comparison**
+        tv.nombre_vacuna.toLowerCase().trim() ===
+          searchText.toLowerCase().trim() ||
         tv.tipo_vacuna_id.toString() === searchText
     );
+
+    console.log("Selected tipo vacuna (after find):", selected); // Verify it's no longer undefined
     const tipoVacunaId = selected ? selected.tipo_vacuna_id : undefined;
     onChange(tipoVacunaId);
-    console.log(`${label} seleccionada:`, tipoVacunaId);
+    console.log(`${label} seleccionada (final):`, tipoVacunaId); // Verify it has the ID
     setOpen(false);
   };
 
