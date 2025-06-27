@@ -1,12 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from app.routes import usuario, proveedor, rol_usuario, especie, raza, tipo_alimento, tipo_vacuna, medicamento, ubicacion, lote, cliente, animal, inventario_animal, movimientos_animal, controles_sanitarios, vacunaciones, tratamientos_sanitarios, alimentaciones, ventas, ventas_detalle
+from app.routes import usuario, proveedor, rol_usuario, especie, raza, tipo_alimento, tipo_vacuna, medicamento, ubicacion, lote, cliente, animal, inventario_animal, movimientos_animal, controles_sanitarios, vacunaciones, tratamientos_sanitarios, alimentaciones, ventas, ventas_detalle, password_reset
 from app.database import engine, Base, initialize_data
 from fastapi.responses import JSONResponse
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import HTTPException
 from .Predictions import GanadoFaeneado, PesoGanado, svr_precio_kg_router, svr_peso_edad_router
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 
@@ -20,6 +23,7 @@ app.add_middleware(
     allow_methods=["*"],  # Permitir todos los métodos (GET, POST, PUT, DELETE, etc.)
     allow_headers=["*"],  # Permitir todos los encabezados
 )
+
 
 # Inicializar base de datos y datos por defecto
 async def init_db():
@@ -61,8 +65,11 @@ app.include_router(GanadoFaeneado.router, prefix="/api", tags=["Predicción"]) #
 app.include_router(PesoGanado.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
 app.include_router(svr_precio_kg_router.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
 app.include_router(svr_peso_edad_router.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
+app.include_router(password_reset.router, prefix="/api", tags=["Password Reset"])
 
-
+@app.get("/test-cors")
+def test_cors():
+    return {"mensaje": "CORS funciona"}
 # Ejecutar Uvicorn solo si el script se ejecuta directamente
 #usar uvicorn main:app --reload para correr el servidor
 if __name__ == "__main__":
