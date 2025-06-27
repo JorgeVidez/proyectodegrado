@@ -26,6 +26,6 @@ class TratamientosSanitarios(Base):
     observaciones = Column(TEXT)
 
     animal = relationship("Animal", backref="tratamientos")
-    medicamento = relationship("Medicamento", backref="tratamientos")
-    proveedor = relationship("Proveedor", backref="tratamientos")
-    responsable = relationship("Usuario", backref="tratamientos")
+    medicamento = relationship("Medicamento", backref="tratamientos_con_medicamento") # Puedes ajustar el backref si hay colisión
+    proveedor_medicamento = relationship("Proveedor", backref="tratamientos_suministrados") # <-- RENOMBRADO de 'proveedor'
+    responsable_veterinario = relationship("Usuario", backref="tratamientos_supervisados") # <-- RENOMBRADO de 'responsable'
