@@ -2,6 +2,7 @@
 import useSWR from "swr";
 import axios from "axios";
 
+// --- Enums ---
 export enum TipoMovimiento {
   IngresoCompra = "IngresoCompra",
   IngresoNacimiento = "IngresoNacimiento",
@@ -11,27 +12,74 @@ export enum TipoMovimiento {
   TrasladoInterno = "TrasladoInterno",
   CambioLote = "CambioLote",
 }
+ 
+export interface UbicacionOut {
+  ubicacion_id: number;
+  nombre: string;
+}
 
+export interface LoteOut {
+  lote_id: number;
+  fecha_creacion: string;  
+  codigo_lote: string;
+  proposito?: string | null;  
+  descripcion?: string | null;
+}
+
+export interface ProveedorOut {
+  proveedor_id: number;
+  fecha_creacion: string;  
+  nombre: string;
+}
+
+export interface ClienteOut {
+  cliente_id: number;
+  fecha_creacion: string;  
+  nombre: string;
+  identificacion_fiscal?: string | null;
+  telefono?: string | null;
+}
+
+export interface UsuarioOut {
+  usuario_id: number;
+  fecha_creacion: string;  
+  nombre: string;
+  email: string;  
+}
+
+export interface AnimalOutShort {
+  animal_id: number;
+  numero_trazabilidad: string;
+  nombre_identificatorio?: string | null;  
+} 
 export interface MovimientoAnimalBase {
   animal_id: number;
   tipo_movimiento: TipoMovimiento;
-  origen_ubicacion_id?: number;
-  destino_ubicacion_id?: number;
-  origen_lote_id?: number;
-  destino_lote_id?: number;
-  proveedor_id?: number;
-  cliente_id?: number;
-  documento_referencia?: string;
-  usuario_id?: number;
-  observaciones?: string;
-}
-
+  origen_ubicacion_id?: number | null;
+  destino_ubicacion_id?: number | null;
+  origen_lote_id?: number | null;
+  destino_lote_id?: number | null;
+  proveedor_id?: number | null;
+  cliente_id?: number | null;
+  documento_referencia?: string | null;
+  usuario_id?: number | null;
+  observaciones?: string | null;
+} 
 export interface MovimientoAnimal extends MovimientoAnimalBase {
   movimiento_id: number;
-  fecha_movimiento: string;
+  fecha_movimiento: string; 
+  animal: AnimalOutShort;  
+  origen_ubicacion?: UbicacionOut | null;
+  destino_ubicacion?: UbicacionOut | null;
+  origen_lote?: LoteOut | null;
+  destino_lote?: LoteOut | null;
+  proveedor?: ProveedorOut | null;
+  cliente?: ClienteOut | null;
+  usuario?: UsuarioOut | null; 
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000/api";
 
 const fetcher = (url: string) => axios.get(url).then((res) => res.data);
 
