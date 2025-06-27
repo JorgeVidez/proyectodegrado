@@ -1,6 +1,6 @@
 // hooks/useAnimales.ts
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import axios, { AxiosError } from "axios";
 import { AnimalOut, AnimalCreate, AnimalUpdate } from "@/types/animal"; // Asegúrate de tener estas interfaces definidas
 
@@ -33,9 +33,24 @@ export const useAnimales = () => {
     fetchAnimales();
   }, []);
 
+  const getById = useCallback(async (id: number): Promise<AnimalOut | null> => {
+    try {
+      const response = await axios.get<AnimalOut>(`${URL_ANIMALES}/${id}`);
+      return response.data;
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data.detail?.error || err.message);
+      } else {
+        setError("Error desconocido al obtener el animal.");
+      }
+      return null;
+    }
+  }, []);
+
   const create = async (
     animalData: AnimalCreate
   ): Promise<AnimalOut | null> => {
+    console.log("Creating animal with data:", animalData);
     try {
       const response = await axios.post<AnimalOut>(
         URL_ANIMALES + "/",
@@ -104,6 +119,7 @@ export const useAnimales = () => {
     animales,
     isLoading,
     error,
+    getById,
     create,
     update,
     remove,
