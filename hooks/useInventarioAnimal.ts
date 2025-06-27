@@ -90,12 +90,17 @@ export const useInventarioAnimal = () => {
         `${API_URL_INVENTARIO}/${inventarioId}`,
         inventarioData
       );
-      setInventarios((prevInventarios) =>
-        prevInventarios.map((inv) =>
-          inv.inventario_id === inventarioId ? response.data : inv
-        )
-      );
-      return response.data;
+      if (response.status === 200 && response.data) {
+        setInventarios((prevInventarios) =>
+          prevInventarios.map((inv) =>
+            inv.inventario_id === inventarioId ? response.data : inv
+          )
+        );
+        return response.data;
+      } else {
+        setError("La respuesta del servidor no fue válida.");
+        return undefined;
+      }
     } catch (err: any) {
       if (axios.isAxiosError(err)) {
         setError(err.response?.data?.detail?.error || err.message);
@@ -131,6 +136,26 @@ export const useInventarioAnimal = () => {
     }
   };
 
+  // En useInventarioAnimal.ts
+  const fetchInventarioByLote = async (
+    loteId: number
+  ): Promise<InventarioAnimalOut[]> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const response = await axios.get<InventarioAnimalOut[]>(
+        `${API_URL_INVENTARIO}/lote/${loteId}`
+      );
+      setInventarios(response.data);
+      return response.data; // Devuelve los datos directamente
+    } catch (err: any) {
+      // ... manejo de errores
+      throw err; // Re-lanza el error para manejo externo
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchInventarios();
   }, []);
@@ -144,5 +169,6 @@ export const useInventarioAnimal = () => {
     createInventario,
     updateInventario,
     deleteInventario,
+    fetchInventarioByLote,
   };
 };
