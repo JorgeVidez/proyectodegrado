@@ -31,27 +31,64 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/context/AuthContext";
-import { title } from "process";
-import { Item } from "@radix-ui/react-dropdown-menu";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth();
 
-  const { user, hasPermission } = useAuth(); // Obtiene el usuario y hasPermission del AuthContext
-
+  React.useEffect(() => {
+    console.log("Usuario autenticado:", user?.rol.nombre_rol);
+  }, [user]);
 
   // Si el usuario no está autenticado, usa valores por defecto
   const userData = user
     ? {
         name: user.nombre,
         email: user.email,
-        avatar: "/images/userdefault.webp", // Puedes actualizar esto si el usuario tiene una imagen
+        avatar: "/images/userdefault.webp",
       }
     : {
         name: "Invitado",
         email: "No autenticado",
         avatar: "/images/userdefault.webp",
       };
-  // Datos para el dashboard del inventario
+
+  // Función para filtrar elementos según el rol
+  const filterByRole = (items: any[], userRole: string | undefined) => {
+    if (!userRole) return []; // Si no hay rol, no mostrar nada
+
+    return items
+      .filter((item) => {
+        // Verificar si el item tiene permisos definidos
+        if (!item.roles || item.roles.length === 0) {
+          return true; // Si no tiene roles definidos, mostrar a todos
+        }
+
+        // Verificar si el rol del usuario está en los roles permitidos
+        return item.roles.includes(userRole);
+      })
+      .map((item) => {
+        // Si el item tiene subitems, también filtrarlos
+        if (item.items && item.items.length > 0) {
+          const filteredSubItems = item.items.filter(
+            (subItem: { roles: string | string[] }) => {
+              if (!subItem.roles || subItem.roles.length === 0) {
+                return true;
+              }
+              return subItem.roles.includes(userRole);
+            }
+          );
+
+          return {
+            ...item,
+            items: filteredSubItems,
+          };
+        }
+
+        return item;
+      });
+  };
+
+  // Datos para el dashboard del inventario con roles definidos
   const data = {
     user: userData,
     teams: [
@@ -75,82 +112,164 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       {
         title: "Resumen",
         url: "/resumen",
-        icon: LayoutDashboard, // Reemplaza con tu icono
+        icon: LayoutDashboard,
         isActive: false,
+        roles: ["Administrador", "Operador", "Veterinario"], // Todos pueden ver
         items: [
-          { title: "General", url: "/dashboard/resumen/general" },
-          { title: "Reportes", url: "/dashboard/resumen/reportes" },
+          {
+            title: "General",
+            url: "/dashboard/resumen/general",
+            roles: ["Administrador", "Operador", "Veterinario"],
+          },
+          {
+            title: "Reportes",
+            url: "/dashboard/resumen/reportes",
+            roles: ["Administrador", "Operador"],
+          },
         ],
       },
       {
         title: "Animales",
         url: "/animales",
-        icon: Vegan, // Reemplaza con tu icono
+        icon: Vegan,
         isActive: false,
+        roles: ["Administrador", "Operador", "Veterinario"],
         items: [
-          { title: "Registro", url: "/dashboard/animales/registro" },
-          { title: "Inventario", url: "/dashboard/animales/inventario" },
-          { title: "Movimientos", url: "/dashboard/animales/movimientos" },
+          {
+            title: "Registro",
+            url: "/dashboard/animales/registro",
+            roles: ["Administrador", "Operador"],
+          },
+          {
+            title: "Inventario",
+            url: "/dashboard/animales/inventario",
+            roles: ["Administrador", "Operador", "Veterinario"],
+          },
+          {
+            title: "Movimientos",
+            url: "/dashboard/animales/movimientos",
+            roles: ["Administrador", "Operador"],
+          },
           {
             title: "Controles Sanitarios",
             url: "/dashboard/animales/controles",
+            roles: ["Administrador", "Veterinario"],
           },
-          { title: "Vacunaciones", url: "/dashboard/animales/vacunaciones" },
-          { title: "Tratamientos", url: "/dashboard/animales/tratamientos" },
-          { title: "Alimentación", url: "/dashboard/animales/alimentacion" },
+          {
+            title: "Vacunaciones",
+            url: "/dashboard/animales/vacunaciones",
+            roles: ["Administrador", "Veterinario"],
+          },
+          {
+            title: "Tratamientos",
+            url: "/dashboard/animales/tratamientos",
+            roles: ["Administrador", "Veterinario"],
+          },
+          {
+            title: "Alimentación",
+            url: "/dashboard/animales/alimentacion",
+            roles: ["Administrador", "Operador", "Veterinario"],
+          },
         ],
       },
       {
         title: "Lotes y Ubicaciones",
         url: "/lotes-ubicaciones",
-        icon: MapPinHouse, // Reemplaza con tu icono
+        icon: MapPinHouse,
         isActive: false,
+        roles: ["Administrador", "Operador"],
         items: [
-          { title: "Lotes", url: "/dashboard/lotes-ubicaciones/lotes" },
+          {
+            title: "Lotes",
+            url: "/dashboard/lotes-ubicaciones/lotes",
+            roles: ["Administrador", "Operador"],
+          },
           {
             title: "Ubicaciones",
             url: "/dashboard/lotes-ubicaciones/ubicaciones",
+            roles: ["Administrador", "Operador"],
           },
           {
             title: "Asignación",
             url: "/dashboard/lotes-ubicaciones/asignacion",
+            roles: ["Administrador", "Operador"],
           },
         ],
       },
       {
         title: "Ventas",
         url: "/ventas",
-        icon: Badge, // Reemplaza con tu icono
+        icon: Badge,
         isActive: false,
+        roles: ["Administrador", "Operador"],
         items: [
-          { title: "Registro", url: "/dashboard/ventas/registro" },
-          { title: "Clientes", url: "/dashboard/ventas/clientes" },
+          {
+            title: "Registro",
+            url: "/dashboard/ventas/registro",
+            roles: ["Administrador", "Operador"],
+          },
+          {
+            title: "Clientes",
+            url: "/dashboard/ventas/clientes",
+            roles: ["Administrador", "Operador"],
+          },
         ],
       },
       {
         title: "Proviciones",
         url: "/proviciones",
-        icon: Handshake, // Reemplaza con tu icono
+        icon: Handshake,
         isActive: false,
+        roles: ["Administrador", "Operador", "Veterinario"],
         items: [
-          { title: "Alimentos", url: "/dashboard/proviciones/alimentos" },
-          { title: "Vacunas", url: "/dashboard/proviciones/vacunas" },
-          { title: "Medicamentos", url: "/dashboard/proviciones/medicamentos" },
+          {
+            title: "Alimentos",
+            url: "/dashboard/proviciones/alimentos",
+            roles: ["Administrador", "Operador"],
+          },
+          {
+            title: "Vacunas",
+            url: "/dashboard/proviciones/vacunas",
+            roles: ["Administrador", "Veterinario"],
+          },
+          {
+            title: "Medicamentos",
+            url: "/dashboard/proviciones/medicamentos",
+            roles: ["Administrador", "Veterinario"],
+          },
         ],
       },
       {
         title: "Administración",
         url: "/administracion",
-        icon: UserRoundCog, // Reemplaza con tu icono
+        icon: UserRoundCog,
         isActive: false,
+        roles: ["Administrador"], // Solo administradores
         items: [
-          { title: "Usuarios", url: "/dashboard/administracion/usuarios" },
-          { title: "Roles", url: "/dashboard/administracion/roles" },
-          { title: "Especies", url: "/dashboard/administracion/especies" },
-          { title: "Razas", url: "/dashboard/administracion/razas" },
+          {
+            title: "Usuarios",
+            url: "/dashboard/administracion/usuarios",
+            roles: ["Administrador"],
+          },
+          {
+            title: "Roles",
+            url: "/dashboard/administracion/roles",
+            roles: ["Administrador"],
+          },
+          {
+            title: "Especies",
+            url: "/dashboard/administracion/especies",
+            roles: ["Administrador"],
+          },
+          {
+            title: "Razas",
+            url: "/dashboard/administracion/razas",
+            roles: ["Administrador"],
+          },
           {
             title: "Proveedores",
             url: "/dashboard/administracion/proveedores",
+            roles: ["Administrador"],
           },
         ],
       },
@@ -160,11 +279,17 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         name: "Prediccion de Ventas",
         url: "/dashboard/predicciones",
         icon: PieChart,
+        roles: ["Administrador"], // Solo administradores pueden ver predicciones
       },
     ],
   };
 
-   
+  // Obtener el rol del usuario actual
+  const userRole = user?.rol?.nombre_rol;
+
+  // Filtrar los elementos de navegación según el rol
+  const filteredNavMain = filterByRole(data.navMain, userRole);
+  const filteredProjects = filterByRole(data.projects, userRole);
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -172,8 +297,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <TeamSwitcher teams={data.teams} />
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavMain items={filteredNavMain} />
+        <NavProjects projects={filteredProjects} />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={userData} />
