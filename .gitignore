@@ -42,3 +42,12 @@ next-env.d.ts
 */__pycache__/*
 /backend/app/Predictions/__pycache__/*
 /backend/app/models/__pycache__/*
+# Python bytecode
+*.pyc
+__pycache__/
+
+# Mac specific (optional, but often useful)
+.DS_Store
+
+# npm specific (optional, if you have a Node.js frontend)
+node_modules/
