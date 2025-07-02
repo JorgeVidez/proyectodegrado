@@ -7,6 +7,7 @@ from app.database import get_db
 from app.models.alimentaciones import Alimentaciones
 from app.schemas.alimentaciones import AlimentacionesCreate, AlimentacionesOut, AlimentacionesUpdate
 from pydantic import ValidationError
+from sqlalchemy.orm import joinedload
 
 router = APIRouter()
 
@@ -17,7 +18,22 @@ async def create_alimentacion(data: AlimentacionesCreate, db: AsyncSession = Dep
         db.add(alimentacion)
         await db.commit()
         await db.refresh(alimentacion)
+
+        # Volver a cargar con relaciones
+        result = await db.execute(
+            select(Alimentaciones)
+            .options(
+                joinedload(Alimentaciones.animal),
+                joinedload(Alimentaciones.lote),
+                joinedload(Alimentaciones.ubicacion),
+                joinedload(Alimentaciones.tipo_alimento),
+            )
+            .where(Alimentaciones.alimentacion_id == alimentacion.alimentacion_id)
+        )
+        alimentacion = result.scalar_one()
+
         return alimentacion
+
     except ValidationError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.errors())
     except IntegrityError as e:
@@ -29,17 +45,40 @@ async def create_alimentacion(data: AlimentacionesCreate, db: AsyncSession = Dep
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"error": "Error de integridad de datos. Verifique los valores ingresados."})
 
+
 @router.get("/alimentaciones/", response_model=List[AlimentacionesOut])
 async def get_alimentaciones(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(Alimentaciones))
+    result = await db.execute(
+        select(Alimentaciones)
+        .options(
+            joinedload(Alimentaciones.animal),
+            joinedload(Alimentaciones.lote),
+            joinedload(Alimentaciones.ubicacion),
+            joinedload(Alimentaciones.tipo_alimento),
+        )
+    )
     return result.scalars().all()
+
 
 @router.get("/alimentaciones/{alimentacion_id}", response_model=AlimentacionesOut)
 async def get_alimentacion(alimentacion_id: int, db: AsyncSession = Depends(get_db)):
-    alimentacion = await db.get(Alimentaciones, alimentacion_id)
+    result = await db.execute(
+        select(Alimentaciones)
+        .options(
+            joinedload(Alimentaciones.animal),
+            joinedload(Alimentaciones.lote),
+            joinedload(Alimentaciones.ubicacion),
+            joinedload(Alimentaciones.tipo_alimento),
+        )
+        .where(Alimentaciones.alimentacion_id == alimentacion_id)
+    )
+    alimentacion = result.scalar_one_or_none()
+
     if not alimentacion:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail={"error": "Alimentación no encontrada"})
+
     return alimentacion
+
 
 @router.put("/alimentaciones/{alimentacion_id}", response_model=AlimentacionesOut)
 async def update_alimentacion(alimentacion_id: int, alimentacion_data: AlimentacionesUpdate, db: AsyncSession = Depends(get_db)):
@@ -54,7 +93,22 @@ async def update_alimentacion(alimentacion_id: int, alimentacion_data: Alimentac
     try:
         await db.commit()
         await db.refresh(alimentacion)
+
+        # Recarga con relaciones
+        result = await db.execute(
+            select(Alimentaciones)
+            .options(
+                joinedload(Alimentaciones.animal),
+                joinedload(Alimentaciones.lote),
+                joinedload(Alimentaciones.ubicacion),
+                joinedload(Alimentaciones.tipo_alimento),
+            )
+            .where(Alimentaciones.alimentacion_id == alimentacion_id)
+        )
+        alimentacion = result.scalar_one()
+
         return alimentacion
+
     except ValidationError as e:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=e.errors())
     except IntegrityError as e:
@@ -65,6 +119,7 @@ async def update_alimentacion(alimentacion_id: int, alimentacion_data: Alimentac
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"error": "Error de restricción de comprobación. Debe especificarse al menos un destino (animal_id, lote_id o ubicacion_id)."})
         else:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"error": "Error de integridad de datos. Verifique los valores ingresados."})
+
 
 @router.delete("/alimentaciones/{alimentacion_id}")
 async def delete_alimentacion(alimentacion_id: int, db: AsyncSession = Depends(get_db)):
