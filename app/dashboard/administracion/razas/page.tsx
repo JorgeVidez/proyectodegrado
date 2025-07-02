@@ -120,7 +120,8 @@ export default function ListaRazas() {
   };
 
   const filteredRazas = (razas ?? []).filter((r) => {
-    const especieMatch = currentEspecie === "all" ? true : r.especie_id.toString() === currentEspecie;
+    const especieMatch =
+      currentEspecie === "" ? true : r.especie_id.toString() === currentEspecie;
     const searchMatch = r.especie.nombre_comun.toLowerCase().includes(searchTerm.toLowerCase());
     return especieMatch && searchMatch;
   });
@@ -167,8 +168,12 @@ export default function ListaRazas() {
           <header className="flex flex-wrap items-center justify-between p-2">
             <h1 className="text-2xl font-bold">Lista de Razas</h1>
             <div className="flex items-center gap-2">
-               
-            <SelectionEspecie value={currentEspecie} onChange={(value: React.SetStateAction<string>)=> setCurrentEspecie(value)} />
+              <SelectionEspecie
+                value={currentEspecie}
+                onChange={(value: React.SetStateAction<string>) =>
+                  setCurrentEspecie(value)
+                }
+              />
 
               <Button onClick={() => setIsCreateDialogOpen(true)}>
                 Crear Nueva Raza
@@ -203,38 +208,32 @@ export default function ListaRazas() {
                     >
                       <Pencil></Pencil>
                     </Button>
-                    <Button
-                      variant="destructive"
-                      className=""
-                      onClick={() => handleDeleteRaza(r.raza_id)}
-                    >
-                      <Trash2> </Trash2>
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
-             
           </Table>
           <div className="flex justify-center items-center gap-2 mt-4">
-                  <Button
-                    variant="outline"
-                    disabled={currentPage === 1}
-                    onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
-                  >
-                    Anterior
-                  </Button>
-                  <span>
-                    Página {currentPage} de {totalPages}
-                  </span>
-                  <Button
-                    variant="outline"
-                    disabled={currentPage === totalPages}
-                    onClick={() => setCurrentPage((prev) => Math.min(prev + 1, totalPages))}
-                  >
-                    Siguiente
-                  </Button>
-                </div>
+            <Button
+              variant="outline"
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((prev) => Math.max(prev - 1, 1))}
+            >
+              Anterior
+            </Button>
+            <span>
+              Página {currentPage} de {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              disabled={currentPage === totalPages}
+              onClick={() =>
+                setCurrentPage((prev) => Math.min(prev + 1, totalPages))
+              }
+            >
+              Siguiente
+            </Button>
+          </div>
         </div>
         <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
           <DialogContent className="sm:max-w-[425px]">
@@ -249,7 +248,12 @@ export default function ListaRazas() {
                 <Label htmlFor="especieId" className="text-right">
                   Especie
                 </Label>
-                <SelectionEspecie value={newEspecieId} onChange={(value: React.SetStateAction<number>) => setNewEspecieId(value)} />
+                <SelectionEspecie
+                  value={newEspecieId}
+                  onChange={(value: React.SetStateAction<number>) =>
+                    setNewEspecieId(value)
+                  }
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="nombreRaza" className="text-right">
@@ -281,7 +285,12 @@ export default function ListaRazas() {
                 <Label htmlFor="editEspecieId" className="text-right">
                   Especie
                 </Label>
-                <SelectionEspecie value={editEspecieId} onChange={(value: React.SetStateAction<number>) => setEditEspecieId(value)} />
+                <SelectionEspecie
+                  value={editEspecieId}
+                  onChange={(value: React.SetStateAction<number>) =>
+                    setEditEspecieId(value)
+                  }
+                />
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="editNombreRaza" className="text-right">

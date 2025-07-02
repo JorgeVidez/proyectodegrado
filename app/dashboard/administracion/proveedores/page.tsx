@@ -255,13 +255,6 @@ export default function ListaProveedoresPage() {
                     >
                       <Pencil></Pencil>
                     </Button>
-                    <Button
-                      variant="destructive"
-                      className=""
-                      onClick={() => handleDeleteProveedor(p.proveedor_id)}
-                    >
-                      <Trash2> </Trash2>
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

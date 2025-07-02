@@ -240,13 +240,6 @@ export default function ListaVacunas() {
                     >
                       <Pencil></Pencil>
                     </Button>
-                    <Button
-                      variant="destructive"
-                      className=""
-                      onClick={() => handleDeleteVacuna(v.tipo_vacuna_id)}
-                    >
-                      <Trash2> </Trash2>
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

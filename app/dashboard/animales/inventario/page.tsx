@@ -575,15 +575,6 @@ export default function ListaInventarioAnimales() {
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() =>
-                        handleDeleteInventario(inventario.inventario_id)
-                      }
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

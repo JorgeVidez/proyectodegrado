@@ -267,13 +267,6 @@ export default function ListaMedicamentos() {
                     >
                       <Pencil></Pencil>
                     </Button>
-                    <Button
-                      variant="destructive"
-                      className=""
-                      onClick={() => handleDeleteMedicamento(m.medicamento_id)}
-                    >
-                      <Trash2> </Trash2>
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

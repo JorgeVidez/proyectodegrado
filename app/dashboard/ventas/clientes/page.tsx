@@ -237,13 +237,6 @@ export default function ListaClientesPage() {
                     >
                       <Pencil></Pencil>
                     </Button>
-                    <Button
-                      variant="destructive"
-                      className=""
-                      onClick={() => handleDeleteCliente(c.cliente_id)}
-                    >
-                      <Trash2> </Trash2>
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

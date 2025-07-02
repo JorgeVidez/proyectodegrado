@@ -460,16 +460,20 @@ export default function ListaAlimentaciones() {
             <TableBody>
               {paginatedData.map((a) => (
                 <TableRow key={a.alimentacion_id}>
-                  <TableCell>{a.animal_id || "-"}</TableCell>
-                  <TableCell className="hidden md:table-cell">
-                    {a.lote_id || "-"}
+                  <TableCell>
+                    {a.animal?.nombre_identificatorio ||
+                      a.animal?.numero_trazabilidad ||
+                      "-"}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {a.ubicacion_id || "-"}
+                    {a.lote?.codigo_lote || "-"}
+                  </TableCell>
+                  <TableCell className="hidden md:table-cell">
+                    {a.ubicacion?.nombre || "-"}
                   </TableCell>
                   <TableCell>{a.fecha_suministro}</TableCell>
                   <TableCell className="hidden md:table-cell">
-                    {a.tipo_alimento_id}
+                    {a.tipo_alimento.nombre || "-"}
                   </TableCell>
                   <TableCell className="hidden md:table-cell">
                     {a.cantidad_suministrada}
@@ -489,15 +493,6 @@ export default function ListaAlimentaciones() {
                       onClick={() => handleOpenDialog("edit", a)}
                     >
                       <Pencil size={16} />
-                    </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() =>
-                        handleDeleteAlimentacion(a.alimentacion_id)
-                      }
-                    >
-                      <Trash2 size={16} />
                     </Button>
                   </TableCell>
                 </TableRow>

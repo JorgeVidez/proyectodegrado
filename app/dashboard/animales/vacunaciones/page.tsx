@@ -599,15 +599,6 @@ export default function ListaVacunaciones() {
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button
-                      variant="destructive"
-                      size="icon"
-                      onClick={() =>
-                        handleDeleteVacunacion(vacunacion.vacunacion_id)
-                      }
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </TableCell>
                 </TableRow>
               ))}

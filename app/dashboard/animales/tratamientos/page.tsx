@@ -637,13 +637,6 @@ export default function ListaTratamientosSanitarios() {
                     <Pencil size={16} />
                   </Button>
                   <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => handleDeleteTratamiento(t.tratamiento_id)}
-                  >
-                    <Trash2 size={16} />
-                  </Button>
-                  <Button
                     variant="ghost"
                     size="icon"
                     onClick={() => handleOpenDialog("details", t)}

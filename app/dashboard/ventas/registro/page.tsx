@@ -266,13 +266,6 @@ export default function VentasPage() {
                   >
                     <Pencil />
                   </Button>
-                  <Button
-                    size="icon"
-                    variant="destructive"
-                    onClick={() => handleDelete(v.venta_id)}
-                  >
-                    <Trash2 />
-                  </Button>
                 </TableCell>
               </TableRow>
             ))}
