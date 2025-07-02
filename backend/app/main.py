@@ -1,15 +1,22 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
+<<<<<<< HEAD
 from app.routes import usuario, proveedor, rol_usuario, especie, raza, tipo_alimento, tipo_vacuna, medicamento, ubicacion, lote, cliente, animal, inventario_animal, movimientos_animal, controles_sanitarios, vacunaciones, tratamientos_sanitarios, alimentaciones, ventas, ventas_detalle, password_reset
+=======
+from app.routes import usuario, proveedor, rol_usuario, especie, raza, tipo_alimento, tipo_vacuna, medicamento, ubicacion, lote, cliente, animal, inventario_animal, movimientos_animal, controles_sanitarios, vacunaciones, tratamientos_sanitarios, alimentaciones, ventas, ventas_detalle
+>>>>>>> parent of 2c08c0a (cambios nuevos)
 from app.database import engine, Base, initialize_data
 from fastapi.responses import JSONResponse
 from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import HTTPException
 from .Predictions import GanadoFaeneado, PesoGanado, svr_precio_kg_router, svr_peso_edad_router
+<<<<<<< HEAD
 from dotenv import load_dotenv
 
 load_dotenv()
+=======
+>>>>>>> parent of 2c08c0a (cambios nuevos)
 
 
 
@@ -67,9 +74,13 @@ app.include_router(svr_precio_kg_router.router, prefix="/api", tags=["Predicció
 app.include_router(svr_peso_edad_router.router, prefix="/api", tags=["Predicción"]) #Incluimos el router de prediccion.
 app.include_router(password_reset.router, prefix="/api", tags=["Password Reset"])
 
+<<<<<<< HEAD
 @app.get("/test-cors")
 def test_cors():
     return {"mensaje": "CORS funciona"}
+=======
+
+>>>>>>> parent of 2c08c0a (cambios nuevos)
 # Ejecutar Uvicorn solo si el script se ejecuta directamente
 #usar uvicorn main:app --reload para correr el servidor
 if __name__ == "__main__":

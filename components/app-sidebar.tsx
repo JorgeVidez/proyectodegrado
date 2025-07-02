@@ -35,7 +35,11 @@ import { title } from "process";
 import { Item } from "@radix-ui/react-dropdown-menu";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+<<<<<<< HEAD
   const { user } = useAuth(); // Obtiene el usuario y hasPermission del AuthContext
+=======
+  const { user, hasPermission } = useAuth(); // Obtiene el usuario y hasPermission del AuthContext
+>>>>>>> parent of 2c08c0a (cambios nuevos)
 
   // Si el usuario no está autenticado, usa valores por defecto
   const userData = user
