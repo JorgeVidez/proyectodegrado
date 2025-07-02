@@ -45,11 +45,11 @@ export default function ProximosCuidadosPage() {
 
   return (
     <div className="">
-        <div className="flex items-center gap-3 mb-6">
-            <Calendar className="w-6 h-6 text-muted-foreground" />
-      <h1 className="text-xl font-bold">
-        Próximas Vacunaciones y Tratamientos
-      </h1>
+      <div className="flex items-center gap-3 mb-6">
+        <Calendar className="w-6 h-6 text-muted-foreground" />
+        <h1 className="text-xl font-bold">
+          Próximas Vacunaciones y Tratamientos
+        </h1>
       </div>
 
       <div className="mb-6 space-y-4">
@@ -61,7 +61,7 @@ export default function ProximosCuidadosPage() {
             <ul className="list-disc pl-5 text-sm">
               {vacunacionesPendientes.map((v) => (
                 <li key={v.vacunacion_id}>
-                  Animal ID: {v.animal_id} – Próxima vacunación:{" "}
+                  Animal: {v.animal.numero_trazabilidad} – Próxima vacunación:{" "}
                   {format(
                     new Date(v.proxima_vacunacion_sugerida!),
                     "dd/MM/yyyy"
@@ -82,7 +82,7 @@ export default function ProximosCuidadosPage() {
             <ul className="list-disc pl-5 text-sm">
               {tratamientosPendientes.map((t) => (
                 <li key={t.tratamiento_id}>
-                  Animal ID: {t.animal.animal_id} – Próxima revisión:{" "}
+                  Animal: {t.animal.numero_trazabilidad} – Próxima revisión:{" "}
                   {format(new Date(t.proxima_revision!), "dd/MM/yyyy")}
                 </li>
               ))}
