@@ -1,7 +1,7 @@
+import asyncio
 import logging
-import datetime
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, Security
+from fastapi import APIRouter, Depends, HTTPException, Security, Request
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -12,6 +12,11 @@ from app.schemas.usuario import UsuarioCreate, UsuarioOut, UsuarioUpdate, LoginS
 from passlib.context import CryptContext
 from typing import List
 from sqlalchemy.orm import selectinload
+import time
+from fastapi.security import OAuth2PasswordRequestForm
+from cachetools import TTLCache
+from datetime import datetime, timedelta
+
 
 
 router = APIRouter()
@@ -24,6 +29,12 @@ SECRET_KEY = "1924828c313d833c45c558745655220e8a99fd3f4651bda9b2a1d19773eab4bf3c
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 
+# Configuración de protección
+MAX_LOGIN_ATTEMPTS = 5
+LOCKOUT_TIME = 300  # 5 minutos en segundos
+FAILED_LOGIN_CACHE = TTLCache(maxsize=1000, ttl=LOCKOUT_TIME)
+DELAY_BASE = 0.5  # Tiempo base para el retraso incremental
+
 # Logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -31,7 +42,7 @@ logger = logging.getLogger(__name__)
 
 def generate_token(email: str, rol: str):
     """Genera un token JWT."""
-    expire = datetime.datetime.utcnow() + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {"sub": email, "rol": rol, "exp": expire}
     return jwt.encode(payload, SECRET_KEY, algorithm=ALGORITHM)
 
@@ -173,15 +184,80 @@ async def delete_usuario(
 
 
 @router.post("/login")
-async def login(data: LoginSchema, db: AsyncSession = Depends(get_db)):
-    """Autenticación y generación de token JWT."""
+async def login(
+    request: Request,
+    data: LoginSchema, 
+    db: AsyncSession = Depends(get_db)
+):
+    """Autenticación con protección contra fuerza bruta."""
+    client_ip = request.client.host
+    
+    # Verificar si la IP está bloqueada temporalmente
+    if client_ip in FAILED_LOGIN_CACHE:
+        attempts, first_attempt = FAILED_LOGIN_CACHE[client_ip]
+        if attempts >= MAX_LOGIN_ATTEMPTS:
+            remaining_time = LOCKOUT_TIME - (time.time() - first_attempt)
+            if remaining_time > 0:
+                minutes = int(remaining_time // 60)
+                seconds = int(remaining_time % 60)
+                
+                if minutes > 0:
+                    time_msg = f"{minutes} minuto{'s' if minutes != 1 else ''} y {seconds} segundo{'s' if seconds != 1 else ''}"
+                else:
+                    time_msg = f"{seconds} segundo{'s' if seconds != 1 else ''}"
+                
+                raise HTTPException(
+                    status_code=429,
+                    detail=f"Cuenta temporalmente bloqueada por demasiados intentos fallidos. Podrá intentar nuevamente en {time_msg}."
+                )
+        else:
+            # Retraso incremental para ralentizar ataques
+            await asyncio.sleep(DELAY_BASE * (attempts + 1))
+    
+    # Autenticación
     result = await db.execute(
         select(Usuario).options(selectinload(Usuario.rol)).where(Usuario.email == data.email)
     )
     usuario = result.scalars().first()
 
-    if not usuario or not verify_password(data.password, usuario.password_hash):
-        raise HTTPException(status_code=400, detail="Credenciales incorrectas")
-
+    # Registrar intento fallido antes de verificar
+    attempts, first_attempt = FAILED_LOGIN_CACHE.get(client_ip, (0, time.time()))
+    new_attempts = attempts + 1
+    remaining_attempts = MAX_LOGIN_ATTEMPTS - new_attempts
+    
+    # Verificar si el usuario existe
+    if not usuario:
+        FAILED_LOGIN_CACHE[client_ip] = (new_attempts, first_attempt)
+        
+        if remaining_attempts > 0:
+            detail = f"El correo electrónico no está registrado. Le quedan {remaining_attempts} intento{'s' if remaining_attempts != 1 else ''} antes del bloqueo temporal."
+        else:
+            detail = "El correo electrónico no está registrado. Su cuenta será bloqueada temporalmente por seguridad."
+        
+        raise HTTPException(
+            status_code=400,
+            detail=detail,
+            headers={"X-RateLimit-Remaining": str(remaining_attempts)}
+        )
+    
+    # Verificar contraseña
+    if not verify_password(data.password, usuario.password_hash):
+        FAILED_LOGIN_CACHE[client_ip] = (new_attempts, first_attempt)
+        
+        if remaining_attempts > 0:
+            detail = f"La contraseña es incorrecta. Le quedan {remaining_attempts} intento{'s' if remaining_attempts != 1 else ''} antes del bloqueo temporal."
+        else:
+            detail = "La contraseña es incorrecta. Su cuenta será bloqueada temporalmente por seguridad."
+        
+        raise HTTPException(
+            status_code=400,
+            detail=detail,
+            headers={"X-RateLimit-Remaining": str(remaining_attempts)}
+        )
+    
+    # Resetear contador si el login es exitoso
+    if client_ip in FAILED_LOGIN_CACHE:
+        del FAILED_LOGIN_CACHE[client_ip]
+    
     token = generate_token(usuario.email, usuario.rol.nombre_rol)
     return {"access_token": token, "token_type": "bearer"}
