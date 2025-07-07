@@ -144,6 +144,8 @@ const DashboardPage = () => {
 
     let filteredInventarios = inventarios.filter((inv) => inv.activo_en_finca);
 
+    console.log("Filtrando inventarios activos:", filteredInventarios.length);
+
     // Filtrar por fecha
     if (dateRange?.from && dateRange?.to) {
       const from = new Date(dateRange.from);
@@ -314,7 +316,7 @@ const DashboardPage = () => {
 
     const alimentosPorTipo = alimentacionesFiltradas?.reduce(
       (acc, ali) => {
-        const tipo = ali.tipo_alimento_id.toString();
+        const tipo = ali.tipo_alimento.nombre.toString();
         acc[tipo] = (acc[tipo] || 0) + ali.cantidad_suministrada;
         return acc;
       },
@@ -332,7 +334,7 @@ const DashboardPage = () => {
 
     // Ventas por fecha
     const ventasPorFecha: Record<string, { total: number; count: number }> = {};
-    ventasFiltradas?.forEach((v) => {
+    ventas?.forEach((v) => {
       const fecha = v.fecha_venta;
       if (!ventasPorFecha[fecha])
         ventasPorFecha[fecha] = { total: 0, count: 0 };
