@@ -42,7 +42,7 @@ type AuthContextType = {
   user: UsuarioOut | null;
   role: string | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (email: string, password: string) => Promise<true | string>;
   logout: () => void;
   hasPermission: (path: string) => boolean;
   // Operaciones CRUD
@@ -143,7 +143,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
   }, [api, logout]);
 
-  const login = async (email: string, password: string) => {
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<true | string> => {
     try {
       setLoading(true);
       const response = await api.post<{ access_token: string }>("/login", {
@@ -154,9 +157,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       updateToken(response.data.access_token);
       await fetchUser();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Login failed:", error);
-      return false;
+
+      // Captura mensaje personalizado de FastAPI
+      if (error.response) {
+        const detail = error.response.data?.detail;
+        const rateLimitRemaining =
+          error.response.headers?.["x-ratelimit-remaining"];
+
+        // Devolvé el mensaje de error para mostrarlo al usuario
+        return detail || "Error desconocido al intentar iniciar sesión.";
+      }
+
+      return "No se pudo conectar con el servidor.";
     } finally {
       setLoading(false);
     }
