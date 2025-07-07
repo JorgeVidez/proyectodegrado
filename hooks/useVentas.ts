@@ -9,6 +9,7 @@ import {
 import { useInventarioAnimal } from "@/hooks/useInventarioAnimal";
 
 import { MotivoIngreso } from "../types/inventarioAnimal";
+import { act } from "react";
 
 // Pydantic Schemas (converted to TypeScript interfaces)
 export interface VentasBase {
@@ -141,9 +142,18 @@ export const createVenta = async (
     ) => Promise<any>; // InventarioAnimalOut | undefined
   }
 ): Promise<VentasOut> => {
+  if (!payload || (payload.lote_origen_id && payload.lote_origen_id <= 0)) {
+    throw new Error("Datos de venta inválidos");
+  }
+
   try {
     console.log("Creando venta con payload:", payload);
     const res = await axios.post<VentasOut>(`${API_URL}/ventas/`, payload);
+
+    // Validar respuesta
+    if (!res.data || !res.data.venta_id) {
+      throw new Error("Respuesta inválida del servidor");
+    }
 
     // Si la venta tiene un lote_origen_id, actualizar los animales
     if (payload.lote_origen_id) {
@@ -154,7 +164,7 @@ export const createVenta = async (
         );
 
         const inventariosActivos = inventarios.filter(
-          (inv) => inv.activo_en_finca && inv.motivo_egreso === null
+          (inv) => inv.activo_en_finca
         );
 
         if (inventariosActivos.length === 0) {
@@ -170,10 +180,11 @@ export const createVenta = async (
                 motivo_ingreso: inventario.motivo_ingreso,
                 proveedor_compra_id: inventario.proveedor_compra_id,
                 precio_compra: inventario.precio_compra,
-                ubicacion_actual_id: null,
-                lote_actual_id: null,
+                ubicacion_actual_id: inventario.ubicacion_actual_id, // Mantiene la ubicación actual
+                lote_actual_id: inventario.lote_actual_id, // Mantiene el lote actual
                 fecha_egreso: new Date().toISOString().split("T")[0],
                 motivo_egreso: "Venta", // Asume MotivoEgreso es un string o literal
+                activo_en_finca: false, // Actualiza a false si es vendido
               };
               console.log("Actualizando inventario:", updateData);
               return inventarioActions.updateInventario(

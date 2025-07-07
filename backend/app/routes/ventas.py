@@ -48,14 +48,16 @@ async def create_venta(data: VentasCreate, db: AsyncSession = Depends(get_db)):
 
     except IntegrityError as e:
         await db.rollback()
-        print(f"Error de integridad original: {e.orig}") # <-- Agrega esta línea
-        print(f"Detalles del error: {str(e.orig)}") # <-- Y esta línea para ver el string completo
-        if "FOREIGN KEY" in str(e.orig):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"error": "Error de clave foránea. Verifique las claves foráneas."})
-        elif "UNIQUE" in str(e.orig):
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"error": "Error de unicidad. El documento_venta_ref debe ser único."})
-        else:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail={"error": "Error de integridad de datos. Verifique los valores ingresados."})
+        import traceback
+        traceback.print_exc()
+        error_msg = str(e.orig)
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail={
+                "error": "Error de integridad de datos",
+                "detalle_sql": error_msg
+            }
+        )
 
 @router.get("/ventas/", response_model=List[VentasOut])
 async def get_ventas(db: AsyncSession = Depends(get_db)):
