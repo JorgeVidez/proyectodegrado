@@ -11,7 +11,7 @@ class MotivoIngreso(enum.Enum):
 class MotivoEgreso(enum.Enum):
     Venta = "Venta"
     Muerte = "Muerte"
-    Descarte = "Descartado"
+    Descarte = "Descarte"
     TrasladoExterno = "TrasladoExterno"
 
 class InventarioAnimal(Base):

@@ -11,6 +11,8 @@ from sqlalchemy.orm import selectinload, joinedload
 from app.models.animal import Animal
 from datetime import date
 from sqlalchemy import and_, or_
+from typing import Optional
+
 
 router = APIRouter(tags=["Inventario Animal"])
 
@@ -194,7 +196,7 @@ async def delete_inventario_animal(
 @router.get("/inventario_animal/lote/{lote_id}", response_model=List[InventarioAnimalOut])
 async def get_inventario_animal_by_lote(
     lote_id: int, 
-    activo: bool = True,
+    activo: Optional[bool] = None,  # 👈 ahora es opcional
     db: AsyncSession = Depends(get_db)
 ):
     query = select(InventarioAnimal).where(

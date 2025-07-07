@@ -151,6 +151,7 @@ export default function ListaInventarioAnimales() {
       lote_actual_id: inventario.lote_actual_id ?? null,
       fecha_egreso: inventario.fecha_egreso ?? null,
       motivo_egreso: inventario.motivo_egreso ?? null,
+      activo_en_finca: inventario.activo_en_finca,
     });
     setIsEditDialogOpen(true);
   };

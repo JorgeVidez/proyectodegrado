@@ -85,10 +85,16 @@ export const useInventarioAnimal = () => {
   ) => {
     setIsLoading(true);
     setError(null);
+    console.log("Actualizando inventario:", inventarioData);
+    // Si motivo_egreso es vacío, envíalo como null o undefined
+    const payload = {
+      ...inventarioData,
+      motivo_egreso: inventarioData.motivo_egreso || null,
+    };
     try {
       const response = await axios.put<InventarioAnimalOut>(
         `${API_URL_INVENTARIO}/${inventarioId}`,
-        inventarioData
+        payload
       );
       if (response.status === 200 && response.data) {
         setInventarios((prevInventarios) =>
@@ -144,7 +150,7 @@ export const useInventarioAnimal = () => {
     setError(null);
     try {
       const response = await axios.get<InventarioAnimalOut[]>(
-        `${API_URL_INVENTARIO}/lote/${loteId}`
+        `${API_URL_INVENTARIO}/lote/${loteId}?activo=false`
       );
       setInventarios(response.data);
       return response.data; // Devuelve los datos directamente

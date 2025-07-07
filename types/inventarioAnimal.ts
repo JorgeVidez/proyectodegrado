@@ -14,7 +14,7 @@ export enum MotivoIngreso {
 export enum MotivoEgreso {
   Venta = "Venta",
   Muerte = "Muerte",
-  Descarte = "Descartado",
+  Descarte = "Descarte",
   TrasladoExterno = "TrasladoExterno",
 }
 
@@ -32,7 +32,9 @@ export interface InventarioAnimalBase {
 
 export interface InventarioAnimalCreate extends InventarioAnimalBase {}
 
-export interface InventarioAnimalUpdate extends InventarioAnimalBase {}
+export interface InventarioAnimalUpdate extends InventarioAnimalBase {
+  activo_en_finca?: boolean;
+}
 
 export interface InventarioAnimalOut extends InventarioAnimalBase {
   inventario_id: number;

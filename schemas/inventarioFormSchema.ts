@@ -12,6 +12,7 @@ export const inventarioFormSchema = z.object({
   lote_actual_id: z.number().nullable().optional(),
   fecha_egreso: z.string().nullable().optional(),
   motivo_egreso: z.nativeEnum(MotivoEgreso).nullable().optional(),
+  activo_en_finca: z.boolean().optional(),
 });
 
 export type InventarioFormSchema = z.infer<typeof inventarioFormSchema>;
