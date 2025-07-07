@@ -42,9 +42,9 @@ export default function LoginPage() {
     setLoading(true);
     setError("");
 
-    const success = await login(data.email, data.password);
+    const result = await login(data.email, data.password);
 
-    if (success) {
+    if (result === true) {
       const redirectPath = sessionStorage.getItem("redirectAfterLogin");
       if (redirectPath) {
         sessionStorage.removeItem("redirectAfterLogin");
@@ -65,11 +65,13 @@ export default function LoginPage() {
         }
       }
     } else {
-      setError("Credenciales inválidas o error del servidor");
+      // Acá mostramos el mensaje de error personalizado que devuelve el backend
+      setError(result);
     }
 
     setLoading(false);
   };
+  
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
