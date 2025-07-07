@@ -64,7 +64,7 @@ async def get_animales(db: AsyncSession = Depends(get_db)):
         selectinload(Animal.raza),
         selectinload(Animal.madre),
         selectinload(Animal.padre)
-    ))
+    ).order_by(Animal.fecha_registro.desc()))
     animales = result.scalars().all()
     animales_out = []
     for animal in animales:
