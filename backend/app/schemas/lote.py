@@ -82,7 +82,7 @@ class MotivoIngreso(str, Enum):
 class MotivoEgreso(str, Enum):
     Venta = "Venta"
     Muerte = "Muerte"
-    Descarte = "Descartado"
+    Descarte = "Descarte"
     TrasladoExterno = "TrasladoExterno"
     
 class InventarioAnimalOut(BaseModel):
